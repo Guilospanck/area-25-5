@@ -26,6 +26,7 @@ const INITIAL_BALL_DIRECTION: Vec2 = Vec2::new(0.5, -0.5);
 
 const WALL_THICKNESS: f32 = 10.0;
 // INFO: For 2D, the origin (X=0.0; Y=0.0) is at the center of the screen by default.
+// And it grows left->right and bottom->top
 // x coordinates
 const LEFT_WALL: f32 = -450.;
 const RIGHT_WALL: f32 = 450.;
@@ -100,6 +101,9 @@ struct CollisionEvent;
 #[derive(Component)]
 struct Brick;
 
+#[derive(Component)]
+struct Wall;
+
 #[derive(Resource, Deref)]
 struct CollisionSound(Handle<AudioSource>);
 
@@ -109,6 +113,7 @@ struct WallBundle {
     // You can nest bundles inside of other bundles like this
     // Allowing you to compose their functionality
     sprite_bundle: SpriteBundle,
+    wall: Wall,
     collider: Collider,
 }
 
@@ -172,6 +177,7 @@ impl WallBundle {
                 },
                 ..default()
             },
+            wall: Wall,
             collider: Collider,
         }
     }
@@ -325,26 +331,42 @@ fn move_paddle(
     time: Res<Time>,
 ) {
     let mut paddle_transform = query.single_mut();
-    let mut direction = 0.0;
+    let mut direction_x = 0.0;
+    let mut direction_y = 0.0;
 
-    if keyboard_input.pressed(KeyCode::ArrowLeft) {
-        direction -= 1.0;
+    if keyboard_input.pressed(KeyCode::KeyH) {
+        direction_x -= 1.0;
     }
 
-    if keyboard_input.pressed(KeyCode::ArrowRight) {
-        direction += 1.0;
+    if keyboard_input.pressed(KeyCode::KeyL) {
+        direction_x += 1.0;
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyJ) {
+        direction_y -= 1.0;
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyK) {
+        direction_y += 1.0;
     }
 
     // Calculate the new horizontal paddle position based on player input
-    let new_paddle_position =
-        paddle_transform.translation.x + direction * PADDLE_SPEED * time.delta_seconds();
+    let new_paddle_horizontal_position =
+        paddle_transform.translation.x + direction_x * PADDLE_SPEED * time.delta_seconds();
+
+    // Calculate the new vertical paddle position based on player input
+    let new_paddle_vertical_position =
+        paddle_transform.translation.y + direction_y * PADDLE_SPEED * time.delta_seconds();
 
     // Update the paddle position,
     // making sure it doesn't cause the paddle to leave the arena
     let left_bound = LEFT_WALL + WALL_THICKNESS / 2.0 + PADDLE_SIZE.x / 2.0 + PADDLE_PADDING;
     let right_bound = RIGHT_WALL - WALL_THICKNESS / 2.0 - PADDLE_SIZE.x / 2.0 - PADDLE_PADDING;
+    let top_bound = TOP_WALL - WALL_THICKNESS / 2.0 - PADDLE_SIZE.y / 2.0 - PADDLE_PADDING;
+    let bottom_bound = BOTTOM_WALL + WALL_THICKNESS / 2.0 + PADDLE_SIZE.y / 2.0 + PADDLE_PADDING;
 
-    paddle_transform.translation.x = new_paddle_position.clamp(left_bound, right_bound);
+    paddle_transform.translation.x = new_paddle_horizontal_position.clamp(left_bound, right_bound);
+    paddle_transform.translation.y = new_paddle_vertical_position.clamp(bottom_bound, top_bound);
 }
 
 fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
@@ -363,12 +385,12 @@ fn check_for_collisions(
     mut commands: Commands,
     mut score: ResMut<Score>,
     mut ball_query: Query<(&mut Velocity, &Transform), With<Ball>>,
-    collider_query: Query<(Entity, &Transform, Option<&Brick>), With<Collider>>,
+    collider_query: Query<(Entity, &Transform, Option<&Brick>, Option<&Wall>), With<Collider>>,
     mut collision_events: EventWriter<CollisionEvent>,
 ) {
     let (mut ball_velocity, ball_transform) = ball_query.single_mut();
 
-    for (collider_entity, collider_transform, maybe_brick) in &collider_query {
+    for (collider_entity, collider_transform, maybe_brick, maybe_wall) in &collider_query {
         let collision = ball_collision(
             BoundingCircle::new(ball_transform.translation.truncate(), BALL_DIAMETER / 2.),
             Aabb2d::new(
@@ -380,6 +402,11 @@ fn check_for_collisions(
         if let Some(collision) = collision {
             // Sends a collision event so that other systems can react to the collision
             collision_events.send_default();
+
+            // ATM only resets the score
+            if maybe_wall.is_some() && collision == Collision::Top {
+                **score = 0;
+            }
 
             // Bricks should be despawned and increment the scoreboard on collision
             if maybe_brick.is_some() {
@@ -461,4 +488,3 @@ fn ball_collision(ball: BoundingCircle, bounding_box: Aabb2d) -> Option<Collisio
 
     Some(side)
 }
-
