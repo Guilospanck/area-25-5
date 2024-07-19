@@ -53,6 +53,8 @@ const WALL_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
 const TEXT_COLOR: Color = Color::srgb(0.5, 0.5, 1.0);
 const SCORE_COLOR: Color = Color::srgb(1.0, 0.5, 0.5);
 
+const PADDLE_Y: f32 = BOTTOM_WALL + GAP_BETWEEN_PADDLE_AND_FLOOR;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -190,6 +192,77 @@ struct Score(usize);
 #[derive(Component)]
 struct ScoreboardUi;
 
+fn restart(
+    score: &mut ResMut<Score>,
+    commands: &mut Commands,
+    bricks_query: &Query<Entity, With<Brick>>,
+    // mut paddle: Query<&mut, Transform, With<Paddle>>,
+) {
+    // reset score
+    ***score = 0usize;
+    // Remove all bricks
+    for brick in bricks_query.iter() {
+        commands.entity(brick).despawn_recursive();
+    }
+    // Spawn all of them again
+    spawn_bricks(commands);
+}
+
+fn spawn_bricks(commands: &mut Commands) {
+    let total_width_of_bricks = (RIGHT_WALL - LEFT_WALL) - 2. * GAP_BETWEEN_BRICKS_AND_SIDES;
+    let bottom_edge_of_bricks = PADDLE_Y + GAP_BETWEEN_PADDLE_AND_BRICKS;
+    let total_height_of_bricks = TOP_WALL - bottom_edge_of_bricks - GAP_BETWEEN_BRICKS_AND_CEILING;
+
+    assert!(total_width_of_bricks > 0.0);
+    assert!(total_height_of_bricks > 0.0);
+
+    // Given the space available, compute how many rows and columns of bricks we can fit
+    let n_columns = (total_width_of_bricks / (BRICK_SIZE.x + GAP_BETWEEN_BRICKS)).floor() as usize;
+    let n_rows = (total_height_of_bricks / (BRICK_SIZE.y + GAP_BETWEEN_BRICKS)).floor() as usize;
+    let n_vertical_gaps = n_columns - 1;
+
+    // Because we need to round the number of columns,
+    // the space on the top and sides of the bricks only captures a lower bound, not an exact value
+    let center_of_bricks = (LEFT_WALL + RIGHT_WALL) / 2.0;
+    let left_edge_of_bricks = center_of_bricks
+        // Space taken up by the bricks
+        - (n_columns as f32 / 2.0 * BRICK_SIZE.x)
+        // Space taken up by the gaps
+        - n_vertical_gaps as f32 / 2.0 * GAP_BETWEEN_BRICKS;
+
+    // In Bevy, the `translation` of an entity describes the center point,
+    // not its bottom-left corner
+    let offset_x = left_edge_of_bricks + BRICK_SIZE.x / 2.;
+    let offset_y = bottom_edge_of_bricks + BRICK_SIZE.y / 2.;
+
+    for row in 0..n_rows {
+        for column in 0..n_columns {
+            let brick_position = Vec2::new(
+                offset_x + column as f32 * (BRICK_SIZE.x + GAP_BETWEEN_BRICKS),
+                offset_y + row as f32 * (BRICK_SIZE.y + GAP_BETWEEN_BRICKS),
+            );
+
+            // brick
+            commands.spawn((
+                SpriteBundle {
+                    sprite: Sprite {
+                        color: BRICK_COLOR,
+                        ..default()
+                    },
+                    transform: Transform {
+                        translation: brick_position.extend(0.0),
+                        scale: Vec3::new(BRICK_SIZE.x, BRICK_SIZE.y, 1.0),
+                        ..default()
+                    },
+                    ..default()
+                },
+                Brick,
+                Collider,
+            ));
+        }
+    }
+}
+
 // Add the game's entities to our world
 fn setup(
     mut commands: Commands,
@@ -205,13 +278,13 @@ fn setup(
     commands.insert_resource(CollisionSound(ball_collision_sound));
 
     // Paddle
-    let paddle_y = BOTTOM_WALL + GAP_BETWEEN_PADDLE_AND_FLOOR;
+    // let PADDLE_Y = BOTTOM_WALL + GAP_BETWEEN_PADDLE_AND_FLOOR;
 
     // Spawns the paddle
     commands.spawn((
         SpriteBundle {
             transform: Transform {
-                translation: Vec3::new(0.0, paddle_y, 0.0),
+                translation: Vec3::new(0.0, PADDLE_Y, 0.0),
                 scale: PADDLE_SIZE.extend(1.0),
                 ..default()
             },
@@ -271,58 +344,7 @@ fn setup(
     commands.spawn(WallBundle::new(WallLocation::Top));
 
     // Bricks
-    let total_width_of_bricks = (RIGHT_WALL - LEFT_WALL) - 2. * GAP_BETWEEN_BRICKS_AND_SIDES;
-    let bottom_edge_of_bricks = paddle_y + GAP_BETWEEN_PADDLE_AND_BRICKS;
-    let total_height_of_bricks = TOP_WALL - bottom_edge_of_bricks - GAP_BETWEEN_BRICKS_AND_CEILING;
-
-    assert!(total_width_of_bricks > 0.0);
-    assert!(total_height_of_bricks > 0.0);
-
-    // Given the space available, compute how many rows and columns of bricks we can fit
-    let n_columns = (total_width_of_bricks / (BRICK_SIZE.x + GAP_BETWEEN_BRICKS)).floor() as usize;
-    let n_rows = (total_height_of_bricks / (BRICK_SIZE.y + GAP_BETWEEN_BRICKS)).floor() as usize;
-    let n_vertical_gaps = n_columns - 1;
-
-    // Because we need to round the number of columns,
-    // the space on the top and sides of the bricks only captures a lower bound, not an exact value
-    let center_of_bricks = (LEFT_WALL + RIGHT_WALL) / 2.0;
-    let left_edge_of_bricks = center_of_bricks
-        // Space taken up by the bricks
-        - (n_columns as f32 / 2.0 * BRICK_SIZE.x)
-        // Space taken up by the gaps
-        - n_vertical_gaps as f32 / 2.0 * GAP_BETWEEN_BRICKS;
-
-    // In Bevy, the `translation` of an entity describes the center point,
-    // not its bottom-left corner
-    let offset_x = left_edge_of_bricks + BRICK_SIZE.x / 2.;
-    let offset_y = bottom_edge_of_bricks + BRICK_SIZE.y / 2.;
-
-    for row in 0..n_rows {
-        for column in 0..n_columns {
-            let brick_position = Vec2::new(
-                offset_x + column as f32 * (BRICK_SIZE.x + GAP_BETWEEN_BRICKS),
-                offset_y + row as f32 * (BRICK_SIZE.y + GAP_BETWEEN_BRICKS),
-            );
-
-            // brick
-            commands.spawn((
-                SpriteBundle {
-                    sprite: Sprite {
-                        color: BRICK_COLOR,
-                        ..default()
-                    },
-                    transform: Transform {
-                        translation: brick_position.extend(0.0),
-                        scale: Vec3::new(BRICK_SIZE.x, BRICK_SIZE.y, 1.0),
-                        ..default()
-                    },
-                    ..default()
-                },
-                Brick,
-                Collider,
-            ));
-        }
-    }
+    spawn_bricks(&mut commands);
 }
 
 fn move_paddle(
@@ -387,6 +409,7 @@ fn check_for_collisions(
     mut ball_query: Query<(&mut Velocity, &Transform), With<Ball>>,
     collider_query: Query<(Entity, &Transform, Option<&Brick>, Option<&Wall>), With<Collider>>,
     mut collision_events: EventWriter<CollisionEvent>,
+    bricks_query: Query<Entity, With<Brick>>,
 ) {
     let (mut ball_velocity, ball_transform) = ball_query.single_mut();
 
@@ -405,7 +428,7 @@ fn check_for_collisions(
 
             // ATM only resets the score
             if maybe_wall.is_some() && collision == Collision::Top {
-                **score = 0;
+                restart(&mut score, &mut commands, &bricks_query);
             }
 
             // Bricks should be despawned and increment the scoreboard on collision
