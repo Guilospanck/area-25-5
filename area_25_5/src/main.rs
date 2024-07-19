@@ -30,7 +30,11 @@ struct Background;
 #[derive(Component)]
 struct Foreground;
 
-fn setup_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_sprite(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+) {
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("textures/apartment_background.png"),
@@ -51,11 +55,27 @@ fn setup_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
         PIXEL_PERFECT_LAYERS,
     ));
 
+    // Grid starts at top-left
+    let texture_handle = asset_server.load("textures/player_spritesheet.png");
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(44), 6, 8, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+
     commands.spawn((
         SpriteBundle {
-            texture: asset_server.load("textures/player_spritesheet.png"),
+            sprite: Sprite {
+                rect: Some(Rect {
+                    min: Vec2::new(0.0, 0.0),
+                    max: Vec2::new(32.0, 44.0),
+                }),
+                ..default()
+            },
+            texture: texture_handle,
             transform: Transform::from_xyz(-40., -20., 4.),
             ..default()
+        },
+        TextureAtlas {
+            layout: texture_atlas_layout,
+            index: 0usize,
         },
         Player,
         PIXEL_PERFECT_LAYERS,
