@@ -11,6 +11,27 @@ fn main() {
         .run();
 }
 
+struct RectangularDimensions {
+    width: u32,
+    height: u32,
+}
+
+struct TileInfo {
+    dimensions: RectangularDimensions,
+    offset_x: u32,
+    offset_y: u32,
+}
+
+// Whole spritesheet: 432x192
+const BLACK_TILE_DIMENSIONS: TileInfo = TileInfo {
+    dimensions: RectangularDimensions {
+        width: 97u32,
+        height: 63u32,
+    },
+    offset_y: 129u32,
+    offset_x: 96u32,
+};
+
 #[derive(Component)]
 struct InGameCamera;
 
@@ -19,6 +40,9 @@ struct AlienIdle;
 
 #[derive(Component)]
 struct AlienRun;
+
+#[derive(Component)]
+struct TileBackground;
 
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
@@ -45,37 +69,12 @@ fn setup_sprite(
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    // Grid starts at top-left
-    let texture_handle = asset_server.load("textures/Alien/Alien_run.png");
-    let layout = TextureAtlasLayout::from_grid(
-        UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
-        6,
-        1,
-        None,
-        None,
+    setup_tile_sprite(
+        &mut commands,
+        &asset_server,
+        &mut texture_atlas_layouts,
+        BLACK_TILE_DIMENSIONS,
     );
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    let animation_indices = AnimationIndices { first: 0, last: 5 };
-
-    commands.spawn((
-        SpriteBundle {
-            texture: texture_handle,
-            transform: Transform {
-                rotation: Quat::default(),
-                translation: Vec3::new(64., 0., 1.),
-                scale: Vec3::new(4., 4., 0.),
-            },
-            ..default()
-        },
-        TextureAtlas {
-            layout: texture_atlas_layout,
-            index: animation_indices.first,
-        },
-        animation_indices,
-        AnimationTimer(Timer::from_seconds(ANIMATION_TIMER, TimerMode::Repeating)),
-        AlienRun,
-        PIXEL_PERFECT_LAYERS,
-    ));
     setup_alien_idle_sprite(
         &mut commands,
         &asset_server,
@@ -116,8 +115,8 @@ fn setup_alien_idle_sprite(
             texture: texture_handle,
             transform: Transform {
                 rotation: Quat::default(),
-                translation: Vec3::new(0., 0., 1.),
-                scale: Vec3::new(4., 4., 0.),
+                translation: Vec3::new(199., 0., 1.),
+                scale: Vec3::new(4., 4., 1.),
             },
             ..default()
         },
@@ -155,7 +154,7 @@ fn setup_alien_run_sprite(
             transform: Transform {
                 rotation: Quat::default(),
                 translation: Vec3::new(4., 0., 1.),
-                scale: Vec3::new(4., 4., 0.),
+                scale: Vec3::new(4., 4., 1.),
             },
             ..default()
         },
@@ -194,21 +193,36 @@ fn _get_texture_atlas_and_animation_indices(
     (texture_handle, texture_atlas_layout, animation_indices)
 }
 
-// fn setup_tile_sprite(
-//     mut commands: Commands,
-//     asset_server: Res<AssetServer>,
-//     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-// ) {
-//     commands.spawn((
-//         SpriteBundle {
-//             texture: asset_server.load("textures/apartment_background.png"),
-//             transform: Transform::from_xyz(0., 0., 2.),
-//             ..default()
-//         },
-//         Background,
-//         PIXEL_PERFECT_LAYERS,
-//     ));
-// }
+fn setup_tile_sprite(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    tile: TileInfo,
+) {
+    let texture_handle: Handle<Image> = asset_server.load("textures/Tiles/RunnerTileSet.png");
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(tile.dimensions.width, tile.dimensions.height),
+        1,
+        1,
+        None,
+        Some(UVec2::new(tile.offset_x, tile.offset_y)),
+    );
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+
+    commands.spawn((
+        SpriteBundle {
+            texture: texture_handle,
+            transform: Transform::from_xyz(0., 0., 0.),
+            ..default()
+        },
+        TextureAtlas {
+            layout: texture_atlas_layout,
+            index: 0usize,
+        },
+        TileBackground,
+        PIXEL_PERFECT_LAYERS,
+    ));
+}
 
 fn animate_sprite(
     time: Res<Time>,
