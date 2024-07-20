@@ -14,10 +14,18 @@ const PLAYER_TEXTURE_CHAR_WIDTH: u32 = 32;
 const PLAYER_TEXTURE_CHAR_HEIGHT: u32 = 46;
 const PLAYER_TEXTURE_COLUMNS: u32 = 6;
 const PLAYER_TEXTURE_ROWS: u32 = 8;
+// Player not moving
+const PLAYER_ANIMATION_STAND_STILL_TIMER: f32 = 0.1;
 const PLAYER_FACING_FORWARD_STAND_STILL: (usize, usize) = (0, 5);
 const PLAYER_FACING_LEFT_STAND_STILL: (usize, usize) = (6, 11);
 const PLAYER_FACING_BACK_STAND_STILL: (usize, usize) = (12, 17);
 const PLAYER_FACING_RIGHT_STAND_STILL: (usize, usize) = (18, 23);
+// Player Walking
+const PLAYER_ANIMATION_WALKING_TIMER: f32 = 0.1;
+const PLAYER_FACING_FORWARD_WALKING: (usize, usize) = (24, 29);
+const PLAYER_FACING_LEFT_WALKING: (usize, usize) = (30, 35);
+const PLAYER_FACING_BACK_WALKING: (usize, usize) = (36, 41);
+const PLAYER_FACING_RIGHT_WALKING: (usize, usize) = (42, 46);
 
 fn main() {
     App::new()
@@ -117,7 +125,10 @@ fn setup_sprite(
             index: animation_indices.first,
         },
         animation_indices,
-        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+        AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_STAND_STILL_TIMER,
+            TimerMode::Repeating,
+        )),
         Player,
         PIXEL_PERFECT_LAYERS,
     ));
@@ -148,36 +159,103 @@ fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<Player>>,
     time: Res<Time>,
-    mut animate_query: Query<(&mut AnimationIndices, &mut TextureAtlas)>,
+    mut animate_query: Query<(
+        &mut AnimationIndices,
+        &mut TextureAtlas,
+        &mut AnimationTimer,
+    )>,
 ) {
     let mut direction_x = 0.;
     let mut direction_y = 0.;
     let mut char_transform = query.single_mut();
-    let (mut animate, mut atlas) = animate_query.single_mut();
+    let (mut animate, mut atlas, mut timer) = animate_query.single_mut();
 
+    // left
+    if keyboard_input.just_pressed(KeyCode::KeyH) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_WALKING_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_LEFT_WALKING.0;
+        animate.first = PLAYER_FACING_LEFT_WALKING.0;
+        animate.last = PLAYER_FACING_LEFT_WALKING.1;
+    }
     if keyboard_input.pressed(KeyCode::KeyH) {
         direction_x -= 1.0;
+    }
+    if keyboard_input.just_released(KeyCode::KeyH) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_STAND_STILL_TIMER,
+            TimerMode::Repeating,
+        ));
         atlas.index = PLAYER_FACING_LEFT_STAND_STILL.0;
         animate.first = PLAYER_FACING_LEFT_STAND_STILL.0;
         animate.last = PLAYER_FACING_LEFT_STAND_STILL.1;
     }
 
+    // right
+    if keyboard_input.just_pressed(KeyCode::KeyL) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_WALKING_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_RIGHT_WALKING.0;
+        animate.first = PLAYER_FACING_RIGHT_WALKING.0;
+        animate.last = PLAYER_FACING_RIGHT_WALKING.1;
+    }
     if keyboard_input.pressed(KeyCode::KeyL) {
         direction_x += 1.0;
+    }
+    if keyboard_input.just_released(KeyCode::KeyL) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_STAND_STILL_TIMER,
+            TimerMode::Repeating,
+        ));
         atlas.index = PLAYER_FACING_RIGHT_STAND_STILL.0;
         animate.first = PLAYER_FACING_RIGHT_STAND_STILL.0;
         animate.last = PLAYER_FACING_RIGHT_STAND_STILL.1;
     }
 
+    // down
+    if keyboard_input.just_pressed(KeyCode::KeyJ) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_WALKING_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_FORWARD_WALKING.0;
+        animate.first = PLAYER_FACING_FORWARD_WALKING.0;
+        animate.last = PLAYER_FACING_FORWARD_WALKING.1;
+    }
     if keyboard_input.pressed(KeyCode::KeyJ) {
         direction_y -= 1.0;
+    }
+    if keyboard_input.just_released(KeyCode::KeyJ) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_STAND_STILL_TIMER,
+            TimerMode::Repeating,
+        ));
         atlas.index = PLAYER_FACING_FORWARD_STAND_STILL.0;
         animate.first = PLAYER_FACING_FORWARD_STAND_STILL.0;
         animate.last = PLAYER_FACING_FORWARD_STAND_STILL.1;
     }
 
+    if keyboard_input.just_pressed(KeyCode::KeyK) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_WALKING_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_BACK_WALKING.0;
+        animate.first = PLAYER_FACING_BACK_WALKING.0;
+        animate.last = PLAYER_FACING_BACK_WALKING.1;
+    }
     if keyboard_input.pressed(KeyCode::KeyK) {
         direction_y += 1.0;
+    }
+    if keyboard_input.just_released(KeyCode::KeyK) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_STAND_STILL_TIMER,
+            TimerMode::Repeating,
+        ));
         atlas.index = PLAYER_FACING_BACK_STAND_STILL.0;
         animate.first = PLAYER_FACING_BACK_STAND_STILL.0;
         animate.last = PLAYER_FACING_BACK_STAND_STILL.1;
