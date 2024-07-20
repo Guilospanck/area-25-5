@@ -1,18 +1,11 @@
 use bevy::{
-    math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume},
+    math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
-    reflect::{List, ReflectRef},
+    reflect::List,
     render::view::RenderLayers,
-    window::WindowResized,
 };
 
 const PIXEL_PERFECT_LAYERS: RenderLayers = RenderLayers::layer(0);
-
-/// In-game resolution width.
-const RES_WIDTH: u32 = 800;
-
-/// In-game resolution height.
-const RES_HEIGHT: u32 = 600;
 
 // Player related
 const PLAYER_SPEED: f32 = 100.;
@@ -46,29 +39,28 @@ First obs: 138, 62   =>
     center: (-331, 166)
 
 -400, 238  =>  -262, 300
-o
 
 
 Problems:
 - player collision should think about his feet;
-- collision is shifted +x
 
-*
-*
-*
-*
-*
-*
-*
-*
-* */
+TODO:
+- add other obstacles for the fg and bg
+- limit movement of the player when obstacle (but not too much,
+he needs to be able to get out of that place :D)
+
+*/
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(Msaa::Off)
+        .insert_resource(IsOnObstacle(false))
         .add_systems(Startup, (setup_camera, setup_ui, setup_sprite))
-        .add_systems(Update, (move_char, animate_sprite, check_for_collisions))
+        .add_systems(
+            FixedUpdate,
+            (move_char, animate_sprite, check_for_collisions),
+        )
         .run();
 }
 
@@ -96,6 +88,10 @@ struct Collider;
 
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
+
+// This resource tracks the game's score
+#[derive(Resource, Deref, DerefMut)]
+struct IsOnObstacle(bool);
 
 fn animate_sprite(
     time: Res<Time>,
@@ -258,19 +254,6 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-/// Scales camera projection to fit the window (integer multiples only).
-// fn fit_canvas(
-//     mut resize_events: EventReader<WindowResized>,
-//     mut projections: Query<&mut OrthographicProjection, With<InGameCamera>>,
-// ) {
-//     for event in resize_events.read() {
-//         let h_scale = event.width / RES_WIDTH as f32;
-//         let v_scale = event.height / RES_HEIGHT as f32;
-//         let mut projection = projections.single_mut();
-//         projection.scale = 1. / h_scale.min(v_scale).round();
-//     }
-// }
-
 fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<Player>>,
@@ -280,7 +263,12 @@ fn move_char(
         &mut TextureAtlas,
         &mut AnimationTimer,
     )>,
+    obstacle: Res<IsOnObstacle>,
 ) {
+    if **obstacle {
+        return;
+    }
+
     let mut direction_x = 0.;
     let mut direction_y = 0.;
     let mut char_transform = query.single_mut();
@@ -382,33 +370,28 @@ fn move_char(
 }
 
 fn check_for_collisions(
-    collider_query: Query<(&Transform, &Player, &Foreground), With<Collider>>,
     mut player_query: Query<&Transform, With<Player>>,
+    mut obstacle: ResMut<IsOnObstacle>,
 ) {
     let player_transform = player_query.single_mut();
 
-    let mut foreground_objects: Vec<Aabb2d> = Vec::new();
+    let foreground_objects: Vec<Aabb2d> =
+        vec![Aabb2d::new(Vec2::new(-331., 166.), Vec2::new(69., 31.))];
 
-    foreground_objects = vec![Aabb2d::new(Vec2::new(-331., 166.), Vec2::new(69., 31.))];
-
-    let _collided = check_player_collision(
+    let collided = check_player_collision(
         Aabb2d::new(
             player_transform.translation.truncate(),
             player_transform.scale.truncate() / 2.,
         ),
         foreground_objects,
     );
+
+    **obstacle = collided;
 }
 
 fn check_player_collision(player: Aabb2d, obstacles: Vec<Aabb2d>) -> bool {
     obstacles.iter().any(|obstacle| {
         let obs = obstacle.downcast_ref::<Aabb2d>().unwrap();
-        let collided = player.intersects(obs);
-        if collided {
-            println!("{:?}", obs);
-        } else {
-            println!("nope");
-        }
-        collided
+        player.intersects(obs)
     })
 }
