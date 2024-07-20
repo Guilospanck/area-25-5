@@ -238,21 +238,10 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         Label,
                     ));
                 });
-
-            parent.spawn(NodeBundle {
-                style: Style {
-                    width: Val::Px(138.0),
-                    height: Val::Px(62.0),
-                    position_type: PositionType::Absolute,
-                    left: Val::Px(0.),
-                    top: Val::Px(0.),
-                    ..default()
-                },
-                background_color: Color::srgb(0.4, 0.4, 1.).into(),
-                ..default()
-            });
         });
 }
+
+static FOREGROUND_OBSTACLES: [f32; 4] = [-331., 166., 69., 31.];
 
 fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -265,10 +254,6 @@ fn move_char(
     )>,
     obstacle: Res<IsOnObstacle>,
 ) {
-    if **obstacle {
-        return;
-    }
-
     let mut direction_x = 0.;
     let mut direction_y = 0.;
     let mut char_transform = query.single_mut();
@@ -365,6 +350,21 @@ fn move_char(
         animate.last = PLAYER_FACING_BACK_STAND_STILL.1;
     }
 
+    let old_pos_x = char_transform.translation.x;
+    let old_pos_y = char_transform.translation.y;
+
+    let char_new_pos_x = old_pos_x + direction_x * PLAYER_SPEED * time.delta_seconds();
+    let char_new_pos_y = old_pos_y + direction_y * PLAYER_SPEED * time.delta_seconds();
+
+    let is_in_obstacle_x = FOREGROUND_OBSTACLES[0] - FOREGROUND_OBSTACLES[2] <= char_new_pos_x
+        && char_new_pos_x <= FOREGROUND_OBSTACLES[0] + FOREGROUND_OBSTACLES[2];
+    let is_in_obstacle_y = FOREGROUND_OBSTACLES[1] - FOREGROUND_OBSTACLES[3] <= char_new_pos_y
+        && char_new_pos_y <= FOREGROUND_OBSTACLES[1] + FOREGROUND_OBSTACLES[3];
+
+    if is_in_obstacle_x && is_in_obstacle_y {
+        return;
+    }
+
     char_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
     char_transform.translation.y += direction_y * PLAYER_SPEED * time.delta_seconds();
 }
@@ -374,16 +374,17 @@ fn check_for_collisions(
     mut obstacle: ResMut<IsOnObstacle>,
 ) {
     let player_transform = player_query.single_mut();
-
-    let foreground_objects: Vec<Aabb2d> =
-        vec![Aabb2d::new(Vec2::new(-331., 166.), Vec2::new(69., 31.))];
+    let foreground_obstacles: Vec<Aabb2d> = vec![Aabb2d::new(
+        Vec2::new(FOREGROUND_OBSTACLES[0], FOREGROUND_OBSTACLES[1]),
+        Vec2::new(FOREGROUND_OBSTACLES[2], FOREGROUND_OBSTACLES[3]),
+    )];
 
     let collided = check_player_collision(
         Aabb2d::new(
             player_transform.translation.truncate(),
             player_transform.scale.truncate() / 2.,
         ),
-        foreground_objects,
+        foreground_obstacles,
     );
 
     **obstacle = collided;
