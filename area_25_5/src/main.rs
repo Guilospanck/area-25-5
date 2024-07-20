@@ -1,4 +1,14 @@
-use bevy::{prelude::*, render::view::RenderLayers, window::WindowResized};
+use bevy::{
+    a11y::{
+        accesskit::{NodeBuilder, Role},
+        AccessibilityNode,
+    },
+    color::palettes::basic::*,
+    input::mouse::{MouseScrollUnit, MouseWheel},
+    prelude::*,
+    render::view::RenderLayers,
+    window::WindowResized,
+};
 
 const PIXEL_PERFECT_LAYERS: RenderLayers = RenderLayers::layer(0);
 
@@ -31,7 +41,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(Msaa::Off)
-        .add_systems(Startup, (setup_camera, setup_sprite))
+        .add_systems(Startup, (setup_camera, setup_ui, setup_sprite))
         .add_systems(Update, (fit_canvas, move_char, animate_sprite))
         .run();
 }
@@ -140,6 +150,69 @@ fn setup_camera(mut commands: Commands) {
         InGameCamera,
         PIXEL_PERFECT_LAYERS,
     ));
+}
+
+fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::SpaceBetween,
+                ..default()
+            },
+            ..default()
+        })
+        .with_children(|parent| {
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        top: Val::Px(10.0),
+                        right: Val::Px(10.0),
+                        ..default()
+                    },
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        NodeBundle {
+                            style: Style {
+                                width: Val::Px(50.0),
+                                height: Val::Px(50.0),
+                                ..default()
+                            },
+                            ..default()
+                        },
+                        UiImage::new(asset_server.load("textures/profile.png")),
+                    ));
+                });
+
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        top: Val::Px(60.0),
+                        right: Val::Px(50.0),
+                        width: Val::Px(10.0),
+                        ..default()
+                    },
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_section(
+                            "Larry",
+                            TextStyle {
+                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                font_size: 10.0,
+                                ..default()
+                            },
+                        ),
+                        Label,
+                    ));
+                });
+        });
 }
 
 /// Scales camera projection to fit the window (integer multiples only).
