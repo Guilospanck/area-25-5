@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::view::RenderLayers};
+use bevy::{asset::AssetPath, prelude::*, render::view::RenderLayers};
 
 const PIXEL_PERFECT_LAYERS: RenderLayers = RenderLayers::layer(0);
 
@@ -46,38 +46,6 @@ fn setup_sprite(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     // Grid starts at top-left
-    let texture_handle = asset_server.load("textures/Alien/Alien_idle.png");
-    let layout = TextureAtlasLayout::from_grid(
-        UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
-        4,
-        1,
-        None,
-        None,
-    );
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    let animation_indices = AnimationIndices { first: 0, last: 3 };
-
-    commands.spawn((
-        SpriteBundle {
-            texture: texture_handle,
-            transform: Transform {
-                rotation: Quat::default(),
-                translation: Vec3::new(0., 0., 1.),
-                scale: Vec3::new(4., 4., 0.),
-            },
-            ..default()
-        },
-        TextureAtlas {
-            layout: texture_atlas_layout,
-            index: animation_indices.first,
-        },
-        animation_indices,
-        AnimationTimer(Timer::from_seconds(ANIMATION_TIMER, TimerMode::Repeating)),
-        AlienIdle,
-        PIXEL_PERFECT_LAYERS,
-    ));
-
-    // Grid starts at top-left
     let texture_handle = asset_server.load("textures/Alien/Alien_run.png");
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
@@ -108,7 +76,139 @@ fn setup_sprite(
         AlienRun,
         PIXEL_PERFECT_LAYERS,
     ));
+    setup_alien_idle_sprite(
+        &mut commands,
+        &asset_server,
+        &mut texture_atlas_layouts,
+        "textures/Alien/Alien_idle.png".into(),
+        4,
+        1,
+    );
+    setup_alien_run_sprite(
+        &mut commands,
+        &asset_server,
+        &mut texture_atlas_layouts,
+        "textures/Alien/Alien_run.png".into(),
+        6,
+        1,
+    );
 }
+
+fn setup_alien_idle_sprite(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    asset_path: AssetPath,
+    columns: u32,
+    rows: u32,
+) {
+    let (texture_handle, texture_atlas_layout, animation_indices) =
+        _get_texture_atlas_and_animation_indices(
+            asset_server,
+            texture_atlas_layouts,
+            asset_path,
+            columns,
+            rows,
+        );
+
+    commands.spawn((
+        SpriteBundle {
+            texture: texture_handle,
+            transform: Transform {
+                rotation: Quat::default(),
+                translation: Vec3::new(0., 0., 1.),
+                scale: Vec3::new(4., 4., 0.),
+            },
+            ..default()
+        },
+        TextureAtlas {
+            layout: texture_atlas_layout,
+            index: animation_indices.first,
+        },
+        animation_indices,
+        AnimationTimer(Timer::from_seconds(ANIMATION_TIMER, TimerMode::Repeating)),
+        AlienIdle,
+        PIXEL_PERFECT_LAYERS,
+    ));
+}
+
+fn setup_alien_run_sprite(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    asset_path: AssetPath,
+    columns: u32,
+    rows: u32,
+) {
+    let (texture_handle, texture_atlas_layout, animation_indices) =
+        _get_texture_atlas_and_animation_indices(
+            asset_server,
+            texture_atlas_layouts,
+            asset_path,
+            columns,
+            rows,
+        );
+
+    commands.spawn((
+        SpriteBundle {
+            texture: texture_handle,
+            transform: Transform {
+                rotation: Quat::default(),
+                translation: Vec3::new(4., 0., 1.),
+                scale: Vec3::new(4., 4., 0.),
+            },
+            ..default()
+        },
+        TextureAtlas {
+            layout: texture_atlas_layout,
+            index: animation_indices.first,
+        },
+        animation_indices,
+        AnimationTimer(Timer::from_seconds(ANIMATION_TIMER, TimerMode::Repeating)),
+        AlienRun,
+        PIXEL_PERFECT_LAYERS,
+    ));
+}
+
+fn _get_texture_atlas_and_animation_indices(
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    asset_path: AssetPath,
+    columns: u32,
+    rows: u32,
+) -> (Handle<Image>, Handle<TextureAtlasLayout>, AnimationIndices) {
+    // Grid starts at top-left
+    let texture_handle: Handle<Image> = asset_server.load(asset_path);
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
+        columns,
+        rows,
+        None,
+        None,
+    );
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+    let last = columns - 1u32;
+    let last: usize = last.try_into().unwrap();
+    let animation_indices = AnimationIndices { first: 0, last };
+
+    (texture_handle, texture_atlas_layout, animation_indices)
+}
+
+// fn setup_tile_sprite(
+//     mut commands: Commands,
+//     asset_server: Res<AssetServer>,
+//     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+// ) {
+//     commands.spawn((
+//         SpriteBundle {
+//             texture: asset_server.load("textures/apartment_background.png"),
+//             transform: Transform::from_xyz(0., 0., 2.),
+//             ..default()
+//         },
+//         Background,
+//         PIXEL_PERFECT_LAYERS,
+//     ));
+// }
 
 fn animate_sprite(
     time: Res<Time>,
