@@ -1,11 +1,7 @@
 use bevy::{
-    a11y::{
-        accesskit::{NodeBuilder, Role},
-        AccessibilityNode,
-    },
-    color::palettes::basic::*,
-    input::mouse::{MouseScrollUnit, MouseWheel},
+    math::bounding::{Aabb2d, BoundingCircle, BoundingVolume, IntersectsVolume},
     prelude::*,
+    reflect::{List, ReflectRef},
     render::view::RenderLayers,
     window::WindowResized,
 };
@@ -37,12 +33,42 @@ const PLAYER_FACING_LEFT_WALKING: (usize, usize) = (30, 35);
 const PLAYER_FACING_BACK_WALKING: (usize, usize) = (36, 41);
 const PLAYER_FACING_RIGHT_WALKING: (usize, usize) = (42, 46);
 
+/*
+Foreground (800x600):
+Top-left: (-400, 300)
+Top-right: (400, 300)
+Bottom-left: (-400, -300)
+Bottom-right: (400, -300)
+Black-empty-rect: (-400, 300) (400, 197)
+
+First obs: 138, 62   =>
+    rect: (-400, 197) (-262, 135)
+    center: (-331, 166)
+
+-400, 238  =>  -262, 300
+o
+
+
+Problems:
+- player collision should think about his feet;
+- collision is shifted +x
+
+*
+*
+*
+*
+*
+*
+*
+*
+* */
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_ui, setup_sprite))
-        .add_systems(Update, (fit_canvas, move_char, animate_sprite))
+        .add_systems(Update, (move_char, animate_sprite, check_for_collisions))
         .run();
 }
 
@@ -64,6 +90,9 @@ struct AnimationIndices {
     first: usize,
     last: usize,
 }
+
+#[derive(Component)]
+struct Collider;
 
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
@@ -92,7 +121,7 @@ fn setup_sprite(
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("textures/apartment_background.png"),
-            transform: Transform::from_xyz(-40., 20., 2.),
+            transform: Transform::from_xyz(0., 0., 2.),
             ..default()
         },
         Background,
@@ -102,11 +131,12 @@ fn setup_sprite(
     commands.spawn((
         SpriteBundle {
             texture: asset_server.load("textures/apartment_foreground.png"),
-            transform: Transform::from_xyz(-40., 20., 3.),
+            transform: Transform::from_xyz(0., 0., 3.),
             ..default()
         },
         Foreground,
         PIXEL_PERFECT_LAYERS,
+        Collider,
     ));
 
     // Grid starts at top-left
@@ -127,7 +157,7 @@ fn setup_sprite(
     commands.spawn((
         SpriteBundle {
             texture: texture_handle,
-            transform: Transform::from_xyz(-40., -20., 4.),
+            transform: Transform::from_xyz(0., 0., 4.),
             ..default()
         },
         TextureAtlas {
@@ -212,21 +242,34 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         Label,
                     ));
                 });
+
+            parent.spawn(NodeBundle {
+                style: Style {
+                    width: Val::Px(138.0),
+                    height: Val::Px(62.0),
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.),
+                    top: Val::Px(0.),
+                    ..default()
+                },
+                background_color: Color::srgb(0.4, 0.4, 1.).into(),
+                ..default()
+            });
         });
 }
 
 /// Scales camera projection to fit the window (integer multiples only).
-fn fit_canvas(
-    mut resize_events: EventReader<WindowResized>,
-    mut projections: Query<&mut OrthographicProjection, With<InGameCamera>>,
-) {
-    for event in resize_events.read() {
-        let h_scale = event.width / RES_WIDTH as f32;
-        let v_scale = event.height / RES_HEIGHT as f32;
-        let mut projection = projections.single_mut();
-        projection.scale = 1. / h_scale.min(v_scale).round();
-    }
-}
+// fn fit_canvas(
+//     mut resize_events: EventReader<WindowResized>,
+//     mut projections: Query<&mut OrthographicProjection, With<InGameCamera>>,
+// ) {
+//     for event in resize_events.read() {
+//         let h_scale = event.width / RES_WIDTH as f32;
+//         let v_scale = event.height / RES_HEIGHT as f32;
+//         let mut projection = projections.single_mut();
+//         projection.scale = 1. / h_scale.min(v_scale).round();
+//     }
+// }
 
 fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -336,4 +379,36 @@ fn move_char(
 
     char_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
     char_transform.translation.y += direction_y * PLAYER_SPEED * time.delta_seconds();
+}
+
+fn check_for_collisions(
+    collider_query: Query<(&Transform, &Player, &Foreground), With<Collider>>,
+    mut player_query: Query<&Transform, With<Player>>,
+) {
+    let player_transform = player_query.single_mut();
+
+    let mut foreground_objects: Vec<Aabb2d> = Vec::new();
+
+    foreground_objects = vec![Aabb2d::new(Vec2::new(-331., 166.), Vec2::new(69., 31.))];
+
+    let _collided = check_player_collision(
+        Aabb2d::new(
+            player_transform.translation.truncate(),
+            player_transform.scale.truncate() / 2.,
+        ),
+        foreground_objects,
+    );
+}
+
+fn check_player_collision(player: Aabb2d, obstacles: Vec<Aabb2d>) -> bool {
+    obstacles.iter().any(|obstacle| {
+        let obs = obstacle.downcast_ref::<Aabb2d>().unwrap();
+        let collided = player.intersects(obs);
+        if collided {
+            println!("{:?}", obs);
+        } else {
+            println!("nope");
+        }
+        collided
+    })
 }
