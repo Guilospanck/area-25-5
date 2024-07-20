@@ -17,7 +17,7 @@ const PLAYER_TEXTURE_ROWS: u32 = 8;
 const PLAYER_FACING_FORWARD_STAND_STILL: (usize, usize) = (0, 5);
 const PLAYER_FACING_LEFT_STAND_STILL: (usize, usize) = (6, 11);
 const PLAYER_FACING_BACK_STAND_STILL: (usize, usize) = (12, 17);
-const PLAYER_FACING_RIGHT_STAND_STILL: (usize, usize) = (18, 22);
+const PLAYER_FACING_RIGHT_STAND_STILL: (usize, usize) = (18, 23);
 
 fn main() {
     App::new()
@@ -41,7 +41,7 @@ struct Background;
 #[derive(Component)]
 struct Foreground;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct AnimationIndices {
     first: usize,
     last: usize,
@@ -148,25 +148,39 @@ fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut Transform, With<Player>>,
     time: Res<Time>,
+    mut animate_query: Query<(&mut AnimationIndices, &mut TextureAtlas)>,
 ) {
     let mut direction_x = 0.;
     let mut direction_y = 0.;
     let mut char_transform = query.single_mut();
+    let (mut animate, mut atlas) = animate_query.single_mut();
 
     if keyboard_input.pressed(KeyCode::KeyH) {
         direction_x -= 1.0;
+        atlas.index = PLAYER_FACING_LEFT_STAND_STILL.0;
+        animate.first = PLAYER_FACING_LEFT_STAND_STILL.0;
+        animate.last = PLAYER_FACING_LEFT_STAND_STILL.1;
     }
 
     if keyboard_input.pressed(KeyCode::KeyL) {
         direction_x += 1.0;
+        atlas.index = PLAYER_FACING_RIGHT_STAND_STILL.0;
+        animate.first = PLAYER_FACING_RIGHT_STAND_STILL.0;
+        animate.last = PLAYER_FACING_RIGHT_STAND_STILL.1;
     }
 
     if keyboard_input.pressed(KeyCode::KeyJ) {
         direction_y -= 1.0;
+        atlas.index = PLAYER_FACING_FORWARD_STAND_STILL.0;
+        animate.first = PLAYER_FACING_FORWARD_STAND_STILL.0;
+        animate.last = PLAYER_FACING_FORWARD_STAND_STILL.1;
     }
 
     if keyboard_input.pressed(KeyCode::KeyK) {
         direction_y += 1.0;
+        atlas.index = PLAYER_FACING_BACK_STAND_STILL.0;
+        animate.first = PLAYER_FACING_BACK_STAND_STILL.0;
+        animate.last = PLAYER_FACING_BACK_STAND_STILL.1;
     }
 
     char_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
