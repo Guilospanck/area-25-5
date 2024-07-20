@@ -8,14 +8,23 @@ const RES_WIDTH: u32 = 800;
 /// In-game resolution height.
 const RES_HEIGHT: u32 = 600;
 
+// Player related
 const PLAYER_SPEED: f32 = 100.;
+const PLAYER_TEXTURE_CHAR_WIDTH: u32 = 32;
+const PLAYER_TEXTURE_CHAR_HEIGHT: u32 = 46;
+const PLAYER_TEXTURE_COLUMNS: u32 = 6;
+const PLAYER_TEXTURE_ROWS: u32 = 8;
+const PLAYER_FACING_FORWARD_STAND_STILL: (usize, usize) = (0, 5);
+const PLAYER_FACING_LEFT_STAND_STILL: (usize, usize) = (6, 11);
+const PLAYER_FACING_BACK_STAND_STILL: (usize, usize) = (12, 17);
+const PLAYER_FACING_RIGHT_STAND_STILL: (usize, usize) = (18, 22);
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite))
-        .add_systems(Update, (fit_canvas, move_char))
+        .add_systems(Update, (fit_canvas, move_char, animate_sprite))
         .run();
 }
 
@@ -31,6 +40,31 @@ struct Background;
 
 #[derive(Component)]
 struct Foreground;
+
+#[derive(Component)]
+struct AnimationIndices {
+    first: usize,
+    last: usize,
+}
+
+#[derive(Component, Deref, DerefMut)]
+struct AnimationTimer(Timer);
+
+fn animate_sprite(
+    time: Res<Time>,
+    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas)>,
+) {
+    for (indices, mut timer, mut atlas) in &mut query {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            atlas.index = if atlas.index == indices.last {
+                indices.first
+            } else {
+                atlas.index + 1
+            };
+        }
+    }
+}
 
 fn setup_sprite(
     mut commands: Commands,
@@ -59,29 +93,31 @@ fn setup_sprite(
 
     // Grid starts at top-left
     let texture_handle = asset_server.load("textures/player_spritesheet.png");
-    // Grid tiles area squared
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(44), 6, 8, None, None);
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(PLAYER_TEXTURE_CHAR_WIDTH, PLAYER_TEXTURE_CHAR_HEIGHT),
+        PLAYER_TEXTURE_COLUMNS,
+        PLAYER_TEXTURE_ROWS,
+        None,
+        None,
+    );
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
+    let animation_indices = AnimationIndices {
+        first: PLAYER_FACING_FORWARD_STAND_STILL.0,
+        last: PLAYER_FACING_FORWARD_STAND_STILL.1,
+    };
 
     commands.spawn((
         SpriteBundle {
-            sprite: Sprite {
-                // Because tiles are squared, we must crop it at the right
-                // size of our element
-                rect: Some(Rect {
-                    min: Vec2::new(0.0, 0.0),
-                    max: Vec2::new(32.0, 44.0),
-                }),
-                ..default()
-            },
             texture: texture_handle,
             transform: Transform::from_xyz(-40., -20., 4.),
             ..default()
         },
         TextureAtlas {
             layout: texture_atlas_layout,
-            index: 0usize,
+            index: animation_indices.first,
         },
+        animation_indices,
+        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         Player,
         PIXEL_PERFECT_LAYERS,
     ));
