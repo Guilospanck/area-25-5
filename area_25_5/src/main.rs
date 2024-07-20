@@ -3,17 +3,19 @@ use bevy::{prelude::*, render::view::RenderLayers, window::WindowResized};
 const PIXEL_PERFECT_LAYERS: RenderLayers = RenderLayers::layer(0);
 
 /// In-game resolution width.
-const RES_WIDTH: u32 = 640;
+const RES_WIDTH: u32 = 800;
 
 /// In-game resolution height.
-const RES_HEIGHT: u32 = 640;
+const RES_HEIGHT: u32 = 600;
+
+const PLAYER_SPEED: f32 = 100.;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite))
-        .add_systems(Update, fit_canvas)
+        .add_systems(Update, (fit_canvas, move_char))
         .run();
 }
 
@@ -57,12 +59,15 @@ fn setup_sprite(
 
     // Grid starts at top-left
     let texture_handle = asset_server.load("textures/player_spritesheet.png");
+    // Grid tiles area squared
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(44), 6, 8, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
+                // Because tiles are squared, we must crop it at the right
+                // size of our element
                 rect: Some(Rect {
                     min: Vec2::new(0.0, 0.0),
                     max: Vec2::new(32.0, 44.0),
@@ -101,4 +106,33 @@ fn fit_canvas(
         let mut projection = projections.single_mut();
         projection.scale = 1. / h_scale.min(v_scale).round();
     }
+}
+
+fn move_char(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<&mut Transform, With<Player>>,
+    time: Res<Time>,
+) {
+    let mut direction_x = 0.;
+    let mut direction_y = 0.;
+    let mut char_transform = query.single_mut();
+
+    if keyboard_input.pressed(KeyCode::KeyH) {
+        direction_x -= 1.0;
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyL) {
+        direction_x += 1.0;
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyJ) {
+        direction_y -= 1.0;
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyK) {
+        direction_y += 1.0;
+    }
+
+    char_transform.translation.x += direction_x * PLAYER_SPEED * time.delta_seconds();
+    char_transform.translation.y += direction_y * PLAYER_SPEED * time.delta_seconds();
 }

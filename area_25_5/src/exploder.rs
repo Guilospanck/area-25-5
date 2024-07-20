@@ -277,9 +277,6 @@ fn setup(
     let ball_collision_sound = asset_server.load("sounds/breakout_collision.ogg");
     commands.insert_resource(CollisionSound(ball_collision_sound));
 
-    // Paddle
-    // let PADDLE_Y = BOTTOM_WALL + GAP_BETWEEN_PADDLE_AND_FLOOR;
-
     // Spawns the paddle
     commands.spawn((
         SpriteBundle {
