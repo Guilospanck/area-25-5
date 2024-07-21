@@ -185,6 +185,16 @@ fn setup_alien_sprite(
     });
 }
 
+#[derive(Bundle)]
+struct TileBundle {
+    marker: TileBackground,
+    sprite: SpriteBundle,
+    atlas: TextureAtlas,
+    // animation_idx: ads,
+    // animation_timer: ads,
+    layer: RenderLayers,
+}
+
 fn setup_tile_sprite(
     commands: &mut Commands,
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
@@ -201,8 +211,9 @@ fn setup_tile_sprite(
     );
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
-    commands.spawn((
-        SpriteBundle {
+    commands.spawn(TileBundle {
+        marker: TileBackground,
+        sprite: SpriteBundle {
             texture: tile.source,
             transform: Transform {
                 rotation: Quat::default(),
@@ -211,13 +222,12 @@ fn setup_tile_sprite(
             },
             ..default()
         },
-        TextureAtlas {
+        atlas: TextureAtlas {
             layout: texture_atlas_layout.clone(),
             index: 0usize,
         },
-        TileBackground,
-        GAME_LAYER,
-    ));
+        layer: GAME_LAYER,
+    });
 }
 
 fn render_tiles_to_bottom(
