@@ -1,5 +1,5 @@
 use bevy::{
-    asset::AssetPath, prelude::*, render::view::RenderLayers, transform::commands,
+    asset::AssetPath, ecs::observer::TriggerTargets, prelude::*, render::view::RenderLayers,
     window::WindowResolution,
 };
 
@@ -9,6 +9,21 @@ const CHAR_Z_INDEX: f32 = 1.;
 
 const ANIMATION_TIMER: f32 = 0.1;
 const ALIEN_PIXEL_SIZE: u32 = 32;
+const ALIEN_SPEED: f32 = 100.;
+const ALIEN_ANIMATION_TIMER: f32 = 0.1;
+
+// Player not moving
+const PLAYER_ANIMATION_STAND_STILL_TIMER: f32 = 0.1;
+const PLAYER_FACING_FORWARD_STAND_STILL: (usize, usize) = (0, 5);
+const PLAYER_FACING_LEFT_STAND_STILL: (usize, usize) = (6, 11);
+const PLAYER_FACING_BACK_STAND_STILL: (usize, usize) = (12, 17);
+const PLAYER_FACING_RIGHT_STAND_STILL: (usize, usize) = (18, 23);
+// Player Walking
+const PLAYER_ANIMATION_WALKING_TIMER: f32 = 0.1;
+const PLAYER_FACING_FORWARD_WALKING: (usize, usize) = (24, 29);
+const PLAYER_FACING_LEFT_WALKING: (usize, usize) = (30, 35);
+const PLAYER_FACING_BACK_WALKING: (usize, usize) = (36, 41);
+const PLAYER_FACING_RIGHT_WALKING: (usize, usize) = (42, 46);
 
 struct CustomWindowResolution {
     x_px: f32,
@@ -39,7 +54,7 @@ fn main() {
         )
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite))
-        .add_systems(FixedUpdate, animate_sprite)
+        .add_systems(FixedUpdate, (animate_sprite, move_char))
         .run();
 }
 
@@ -87,7 +102,7 @@ struct InGameCamera;
 struct AlienIdle;
 
 #[derive(Component)]
-struct AlienRun;
+struct AlienWalking;
 
 #[derive(Component)]
 struct TileBackground;
@@ -205,7 +220,7 @@ fn setup_alien_run_sprite(
         },
         animation_indices,
         AnimationTimer(Timer::from_seconds(ANIMATION_TIMER, TimerMode::Repeating)),
-        AlienRun,
+        AlienWalking,
         GAME_LAYER,
     ));
 }
@@ -362,4 +377,79 @@ fn _get_texture_atlas_and_animation_indices(
     let animation_indices = AnimationIndices { first: 0, last };
 
     (texture_handle, texture_atlas_layout, animation_indices)
+}
+
+fn move_char(
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<&mut Transform, With<AlienIdle>>,
+    time: Res<Time>,
+    mut animate_query: Query<(
+        &mut AnimationIndices,
+        &mut TextureAtlas,
+        &mut AnimationTimer,
+    )>,
+) {
+    let mut direction_x = 0.;
+    let mut direction_y = 0.;
+
+    let mut char_transform = query.single_mut();
+    println!("sjdfjas");
+
+    let (mut animate, mut atlas, mut timer) = animate_query.single_mut();
+
+    // left
+    if keyboard_input.just_pressed(KeyCode::KeyH) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            ALIEN_ANIMATION_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_LEFT_WALKING.0;
+        animate.first = PLAYER_FACING_LEFT_WALKING.0;
+        animate.last = PLAYER_FACING_LEFT_WALKING.1;
+    }
+    if keyboard_input.pressed(KeyCode::KeyH) {
+        direction_x -= 1.0;
+    }
+    if keyboard_input.just_released(KeyCode::KeyH) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_STAND_STILL_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_LEFT_STAND_STILL.0;
+        animate.first = PLAYER_FACING_LEFT_STAND_STILL.0;
+        animate.last = PLAYER_FACING_LEFT_STAND_STILL.1;
+    }
+
+    // right
+    if keyboard_input.just_pressed(KeyCode::KeyL) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            ALIEN_ANIMATION_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_RIGHT_WALKING.0;
+        animate.first = PLAYER_FACING_RIGHT_WALKING.0;
+        animate.last = PLAYER_FACING_RIGHT_WALKING.1;
+    }
+    if keyboard_input.pressed(KeyCode::KeyL) {
+        direction_x += 1.0;
+    }
+    if keyboard_input.just_released(KeyCode::KeyL) {
+        *timer = AnimationTimer(Timer::from_seconds(
+            PLAYER_ANIMATION_STAND_STILL_TIMER,
+            TimerMode::Repeating,
+        ));
+        atlas.index = PLAYER_FACING_RIGHT_STAND_STILL.0;
+        animate.first = PLAYER_FACING_RIGHT_STAND_STILL.0;
+        animate.last = PLAYER_FACING_RIGHT_STAND_STILL.1;
+    }
+
+    let old_pos_x = char_transform.translation.x;
+    let old_pos_y = char_transform.translation.y;
+
+    let char_new_pos_x = old_pos_x + direction_x * ALIEN_SPEED * time.delta_seconds();
+    let char_new_pos_y = old_pos_y + direction_y * ALIEN_SPEED * time.delta_seconds();
+
+    char_transform.translation.x = char_new_pos_x;
+    char_transform.translation.y = char_new_pos_y;
 }
