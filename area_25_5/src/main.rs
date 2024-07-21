@@ -1,4 +1,7 @@
-use bevy::{asset::AssetPath, prelude::*, render::view::RenderLayers, window::WindowResolution};
+use bevy::{
+    asset::AssetPath, prelude::*, render::view::RenderLayers, transform::commands,
+    window::WindowResolution,
+};
 
 const GAME_LAYER: RenderLayers = RenderLayers::layer(0);
 const TILE_Z_INDEX: f32 = 0.;
@@ -40,11 +43,13 @@ fn main() {
         .run();
 }
 
+#[derive(Clone, Copy)]
 struct RectangularDimensions {
     width: u32,
     height: u32,
 }
 
+#[derive(Clone, Copy)]
 struct TileInfo<'a> {
     dimensions: RectangularDimensions,
     offset_x: u32,
@@ -105,7 +110,7 @@ fn setup_sprite(
     asset_server: Res<AssetServer>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    setup_tile_sprite(
+    render_tiles_to_bottom(
         &mut commands,
         &asset_server,
         &mut texture_atlas_layouts,
@@ -210,6 +215,8 @@ fn setup_tile_sprite(
     asset_server: &Res<AssetServer>,
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
     tile: TileInfo,
+    x_offset: f32,
+    y_offset: f32,
 ) {
     let texture_handle: Handle<Image> = asset_server.load(tile.source.to_string());
     let layout = TextureAtlasLayout::from_grid(
@@ -221,6 +228,67 @@ fn setup_tile_sprite(
     );
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
+    commands.spawn((
+        SpriteBundle {
+            texture: texture_handle.clone(),
+            transform: Transform {
+                rotation: Quat::default(),
+                translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
+                scale: Vec3::new(1., 1., 1.),
+            },
+            ..default()
+        },
+        TextureAtlas {
+            layout: texture_atlas_layout.clone(),
+            index: 0usize,
+        },
+        TileBackground,
+        GAME_LAYER,
+    ));
+}
+
+fn render_tiles_to_bottom(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    tile: TileInfo,
+) {
+    let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
+
+    // number of tiles in a row
+    let x_items = WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;
+    let x_items: u32 = x_items.ceil() as u32;
+
+    // number of tiles in a column
+    let y_items = WINDOW_RESOLUTION.y_px / tile.dimensions.height as f32;
+    let y_items: u32 = y_items.ceil() as u32;
+
+    let y_offset: f32 =
+        origin.y - (y_items * tile.dimensions.height - (tile.dimensions.height)) as f32;
+    let mut x_offset: f32 = origin.x + (tile.dimensions.width / 2) as f32;
+
+    for j in 0..x_items {
+        if j != 0 {
+            x_offset += tile.dimensions.width as f32;
+        }
+
+        setup_tile_sprite(
+            commands,
+            asset_server,
+            texture_atlas_layouts,
+            tile,
+            x_offset,
+            y_offset,
+        );
+    }
+}
+
+fn render_tiles_on_whole_screen(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    tile: TileInfo,
+) {
     let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
 
     // number of tiles in a row
@@ -244,23 +312,14 @@ fn setup_tile_sprite(
                 x_offset += tile.dimensions.width as f32;
             }
 
-            commands.spawn((
-                SpriteBundle {
-                    texture: texture_handle.clone(),
-                    transform: Transform {
-                        rotation: Quat::default(),
-                        translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
-                        scale: Vec3::new(1., 1., 1.),
-                    },
-                    ..default()
-                },
-                TextureAtlas {
-                    layout: texture_atlas_layout.clone(),
-                    index: 0usize,
-                },
-                TileBackground,
-                GAME_LAYER,
-            ));
+            setup_tile_sprite(
+                commands,
+                asset_server,
+                texture_atlas_layouts,
+                tile,
+                x_offset,
+                y_offset,
+            );
         }
     }
 }
