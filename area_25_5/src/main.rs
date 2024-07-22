@@ -3,6 +3,7 @@ use bevy::{prelude::*, render::view::RenderLayers, window::WindowResolution};
 const GAME_LAYER: RenderLayers = RenderLayers::layer(0);
 const TILE_Z_INDEX: f32 = 0.;
 const CHAR_Z_INDEX: f32 = 1.;
+const ALIEN_MOVE_SPEED: f32 = 100.0;
 
 struct CustomWindowResolution {
     x_px: f32,
@@ -34,6 +35,7 @@ fn main() {
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite))
         .add_systems(FixedUpdate, animate_sprite)
+        .add_systems(Update, move_char)
         .run();
 }
 
@@ -363,76 +365,83 @@ fn animate_sprite(
     }
 }
 
-// fn move_char(
-//     mut commands: Commands,
-//     keyboard_input: Res<ButtonInput<KeyCode>>,
-//     mut query: Query<&mut Transform, With<AlienIdle>>,
-//     time: Res<Time>,
-//     mut animate_query: Query<(
-//         &mut AnimationIndices,
-//         &mut TextureAtlas,
-//         &mut AnimationTimer,
-//     )>,
-// ) {
-//     let mut direction_x = 0.;
-//     let mut direction_y = 0.;
-//
-//     let mut char_transform = query.single_mut();
-//
-//     let (mut animate, mut atlas, mut timer) = animate_query.single_mut();
-//
-//     // left
-//     if keyboard_input.just_pressed(KeyCode::KeyH) {
-//         *timer = AnimationTimer(Timer::from_seconds(
-//             ALIEN_ANIMATION_TIMER,
-//             TimerMode::Repeating,
-//         ));
-//         atlas.index = PLAYER_FACING_LEFT_WALKING.0;
-//         animate.first = PLAYER_FACING_LEFT_WALKING.0;
-//         animate.last = PLAYER_FACING_LEFT_WALKING.1;
-//     }
-//     if keyboard_input.pressed(KeyCode::KeyH) {
-//         direction_x -= 1.0;
-//     }
-//     if keyboard_input.just_released(KeyCode::KeyH) {
-//         *timer = AnimationTimer(Timer::from_seconds(
-//             PLAYER_ANIMATION_STAND_STILL_TIMER,
-//             TimerMode::Repeating,
-//         ));
-//         atlas.index = PLAYER_FACING_LEFT_STAND_STILL.0;
-//         animate.first = PLAYER_FACING_LEFT_STAND_STILL.0;
-//         animate.last = PLAYER_FACING_LEFT_STAND_STILL.1;
-//     }
-//
-//     // right
-//     if keyboard_input.just_pressed(KeyCode::KeyL) {
-//         *timer = AnimationTimer(Timer::from_seconds(
-//             ALIEN_ANIMATION_TIMER,
-//             TimerMode::Repeating,
-//         ));
-//         atlas.index = PLAYER_FACING_RIGHT_WALKING.0;
-//         animate.first = PLAYER_FACING_RIGHT_WALKING.0;
-//         animate.last = PLAYER_FACING_RIGHT_WALKING.1;
-//     }
-//     if keyboard_input.pressed(KeyCode::KeyL) {
-//         direction_x += 1.0;
-//     }
-//     if keyboard_input.just_released(KeyCode::KeyL) {
-//         *timer = AnimationTimer(Timer::from_seconds(
-//             PLAYER_ANIMATION_STAND_STILL_TIMER,
-//             TimerMode::Repeating,
-//         ));
-//         atlas.index = PLAYER_FACING_RIGHT_STAND_STILL.0;
-//         animate.first = PLAYER_FACING_RIGHT_STAND_STILL.0;
-//         animate.last = PLAYER_FACING_RIGHT_STAND_STILL.1;
-//     }
-//
-//     let old_pos_x = char_transform.translation.x;
-//     let old_pos_y = char_transform.translation.y;
-//
-//     let char_new_pos_x = old_pos_x + direction_x * ALIEN_SPEED * time.delta_seconds();
-//     let char_new_pos_y = old_pos_y + direction_y * ALIEN_SPEED * time.delta_seconds();
-//
-//     char_transform.translation.x = char_new_pos_x;
-//     char_transform.translation.y = char_new_pos_y;
-// }
+fn move_char(
+    mut commands: Commands,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<&mut Transform, With<Alien>>,
+    time: Res<Time>,
+    mut animate_query: Query<
+        (
+            &mut AnimationIndices,
+            &mut TextureAtlas,
+            &mut AnimationTimer,
+        ),
+        With<Alien>,
+    >,
+) {
+    let mut direction_x = 0.;
+    let mut direction_y = 0.;
+
+    let mut char_transform = query.single_mut();
+
+    let (mut animate, mut atlas, mut timer) = animate_query.single_mut();
+
+    // left move
+    if keyboard_input.pressed(KeyCode::KeyH) {
+        direction_x -= 1.0;
+    }
+
+    // // left animation
+    // if keyboard_input.just_pressed(KeyCode::KeyH) {
+    //     *timer = AnimationTimer(Timer::from_seconds(
+    //         ALIEN_ANIMATION_TIMER,
+    //         TimerMode::Repeating,
+    //     ));
+    //     atlas.index = PLAYER_FACING_LEFT_WALKING.0;
+    //     animate.first = PLAYER_FACING_LEFT_WALKING.0;
+    //     animate.last = PLAYER_FACING_LEFT_WALKING.1;
+    // }
+    // if keyboard_input.just_released(KeyCode::KeyH) {
+    //     *timer = AnimationTimer(Timer::from_seconds(
+    //         PLAYER_ANIMATION_STAND_STILL_TIMER,
+    //         TimerMode::Repeating,
+    //     ));
+    //     atlas.index = PLAYER_FACING_LEFT_STAND_STILL.0;
+    //     animate.first = PLAYER_FACING_LEFT_STAND_STILL.0;
+    //     animate.last = PLAYER_FACING_LEFT_STAND_STILL.1;
+    // }
+
+    // right move
+    if keyboard_input.pressed(KeyCode::KeyL) {
+        direction_x += 1.0;
+    }
+
+    // // right animation
+    // if keyboard_input.just_pressed(KeyCode::KeyL) {
+    //     *timer = AnimationTimer(Timer::from_seconds(
+    //         ALIEN_ANIMATION_TIMER,
+    //         TimerMode::Repeating,
+    //     ));
+    //     atlas.index = PLAYER_FACING_RIGHT_WALKING.0;
+    //     animate.first = PLAYER_FACING_RIGHT_WALKING.0;
+    //     animate.last = PLAYER_FACING_RIGHT_WALKING.1;
+    // }
+    // if keyboard_input.just_released(KeyCode::KeyL) {
+    //     *timer = AnimationTimer(Timer::from_seconds(
+    //         PLAYER_ANIMATION_STAND_STILL_TIMER,
+    //         TimerMode::Repeating,
+    //     ));
+    //     atlas.index = PLAYER_FACING_RIGHT_STAND_STILL.0;
+    //     animate.first = PLAYER_FACING_RIGHT_STAND_STILL.0;
+    //     animate.last = PLAYER_FACING_RIGHT_STAND_STILL.1;
+    // }
+
+    let old_pos_x = char_transform.translation.x;
+    let old_pos_y = char_transform.translation.y;
+
+    let char_new_pos_x = old_pos_x + direction_x * ALIEN_MOVE_SPEED * time.delta_seconds();
+    let char_new_pos_y = old_pos_y + direction_y * ALIEN_MOVE_SPEED * time.delta_seconds();
+
+    char_transform.translation.x = char_new_pos_x;
+    char_transform.translation.y = char_new_pos_y;
+}
