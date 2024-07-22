@@ -4,8 +4,6 @@ const GAME_LAYER: RenderLayers = RenderLayers::layer(0);
 const TILE_Z_INDEX: f32 = 0.;
 const CHAR_Z_INDEX: f32 = 1.;
 
-const ALIEN_PIXEL_SIZE: u32 = 32;
-
 struct CustomWindowResolution {
     x_px: f32,
     y_px: f32,
@@ -39,7 +37,7 @@ fn main() {
         .run();
 }
 
-#[derive(Clone, Copy)]
+#[derive(Component, Clone)]
 struct RectangularDimensions {
     width: u32,
     height: u32,
@@ -48,14 +46,13 @@ struct RectangularDimensions {
 #[derive(Component, Clone)]
 struct SpriteInfo {
     dimensions: RectangularDimensions,
-    offset_x: u32,
-    offset_y: u32,
     source: Handle<Image>,
+    animation: Option<AnimationInfo>,
+    layout: TextureAtlasLayout,
 }
 
 #[derive(Resource)]
 struct Sprites {
-    black_tile: SpriteInfo,
     alien_tile: SpriteInfo,
     alien_char_walking: SpriteInfo,
     alien_char_idle: SpriteInfo,
@@ -70,53 +67,88 @@ struct Alien;
 #[derive(Component)]
 struct TileBackground;
 
-#[derive(Component, Deref, DerefMut)]
+#[derive(Component, Deref, DerefMut, Clone)]
 struct AnimationTimer(Timer);
 
-#[derive(Component, Debug)]
+#[derive(Component, Clone)]
 struct AnimationIndices {
     first: usize,
     last: usize,
 }
 
+#[derive(Component, Clone)]
+struct AnimationInfo {
+    indices: AnimationIndices,
+    timer: AnimationTimer,
+}
+
 fn setup_resources(mut commands: Commands, asset_server: Res<AssetServer>) {
+    const ALIEN_PIXEL_SIZE: u32 = 32;
+    const ALIEN_ANIMATION_TIMER: f32 = 0.1;
+    // Alien tile
+    const ALIEN_TILE_WIDTH: u32 = 95u32;
+    const ALIEN_TILE_HEIGHT: u32 = 95u32;
+    const ALIEN_TILE_OFFSET_X: u32 = 500u32;
+    const ALIEN_TILE_OFFSET_Y: u32 = 623u32;
+
     // Sprites
     commands.insert_resource(Sprites {
-        black_tile: SpriteInfo {
-            dimensions: RectangularDimensions {
-                width: 97u32,
-                height: 63u32,
-            },
-            offset_y: 129u32,
-            offset_x: 96u32,
-            source: asset_server.load("textures/Tiles/RunnerTileSet.png"),
-        },
         alien_tile: SpriteInfo {
             dimensions: RectangularDimensions {
-                width: 95u32,
-                height: 95u32,
+                width: ALIEN_TILE_WIDTH,
+                height: ALIEN_TILE_HEIGHT,
             },
-            offset_y: 623u32,
-            offset_x: 500u32,
             source: asset_server.load("textures/Tiles/alien.png"),
+            animation: None,
+            layout: TextureAtlasLayout::from_grid(
+                UVec2::new(ALIEN_TILE_WIDTH, ALIEN_TILE_HEIGHT),
+                1,
+                1,
+                None,
+                Some(UVec2::new(ALIEN_TILE_OFFSET_X, ALIEN_TILE_OFFSET_Y)),
+            ),
         },
         alien_char_idle: SpriteInfo {
             dimensions: RectangularDimensions {
-                width: 32u32,
-                height: 32u32,
+                width: ALIEN_PIXEL_SIZE,
+                height: ALIEN_PIXEL_SIZE,
             },
-            offset_y: 0u32,
-            offset_x: 0u32,
             source: asset_server.load("textures/Alien/Alien_idle.png"),
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 3 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    ALIEN_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(
+                UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
+                4,
+                1,
+                None,
+                None,
+            ),
         },
         alien_char_walking: SpriteInfo {
             dimensions: RectangularDimensions {
-                width: 32u32,
-                height: 32u32,
+                width: ALIEN_PIXEL_SIZE,
+                height: ALIEN_PIXEL_SIZE,
             },
-            offset_y: 0u32,
-            offset_x: 0u32,
             source: asset_server.load("textures/Alien/Alien_run.png"),
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 5 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    ALIEN_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(
+                UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
+                6,
+                1,
+                None,
+                None,
+            ),
         },
     });
 }
@@ -130,8 +162,7 @@ fn setup_sprite(
     sprites: Res<Sprites>,
 ) {
     render_tiles_to_bottom(&mut commands, &mut texture_atlas_layouts, &sprites);
-    setup_alien_sprite(&mut commands, &mut texture_atlas_layouts, 4, 1, &sprites);
-    // setup_alien_run_sprite(&mut commands, &mut texture_atlas_layouts, 6, 1, &sprites);
+    setup_alien_sprite(&mut commands, &mut texture_atlas_layouts, &sprites);
 }
 
 #[derive(Bundle)]
@@ -139,30 +170,19 @@ struct AlienBundle {
     marker: Alien,
     sprite: SpriteBundle,
     atlas: TextureAtlas,
-    // animation_idx: ads,
-    // animation_timer: ads,
+    animation_indices: AnimationIndices,
+    animation_timer: AnimationTimer,
     layer: RenderLayers,
 }
 
 fn setup_alien_sprite(
     commands: &mut Commands,
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
-    columns: u32,
-    rows: u32,
     sprites: &Res<Sprites>,
 ) {
-    // Grid starts at top-left
-    let layout = TextureAtlasLayout::from_grid(
-        UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
-        columns,
-        rows,
-        None,
-        None,
-    );
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    let last = columns - 1u32;
-    let last: usize = last.try_into().unwrap();
-    let animation_indices = AnimationIndices { first: 0, last };
+    let alien_sprite = sprites.alien_char_idle.clone();
+    let alien_animation = alien_sprite.animation.unwrap();
+    let texture_atlas_layout = texture_atlas_layouts.add(alien_sprite.layout);
 
     commands.spawn(AlienBundle {
         marker: Alien,
@@ -177,10 +197,10 @@ fn setup_alien_sprite(
         },
         atlas: TextureAtlas {
             layout: texture_atlas_layout,
-            index: animation_indices.first,
+            index: alien_animation.indices.first,
         },
-        // animation_indices,
-        // AnimationTimer(Timer::from_seconds(ANIMATION_TIMER, TimerMode::Repeating)),
+        animation_indices: alien_animation.indices,
+        animation_timer: alien_animation.timer,
         layer: GAME_LAYER,
     });
 }
@@ -190,8 +210,6 @@ struct TileBundle {
     marker: TileBackground,
     sprite: SpriteBundle,
     atlas: TextureAtlas,
-    // animation_idx: ads,
-    // animation_timer: ads,
     layer: RenderLayers,
 }
 
@@ -200,21 +218,14 @@ fn setup_tile_sprite(
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
     x_offset: f32,
     y_offset: f32,
-    tile: SpriteInfo,
+    tile_sprite: SpriteInfo,
 ) {
-    let layout = TextureAtlasLayout::from_grid(
-        UVec2::new(tile.dimensions.width, tile.dimensions.height),
-        1,
-        1,
-        None,
-        Some(UVec2::new(tile.offset_x, tile.offset_y)),
-    );
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+    let texture_atlas_layout = texture_atlas_layouts.add(tile_sprite.layout);
 
     commands.spawn(TileBundle {
         marker: TileBackground,
         sprite: SpriteBundle {
-            texture: tile.source,
+            texture: tile_sprite.source,
             transform: Transform {
                 rotation: Quat::default(),
                 translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
@@ -307,6 +318,7 @@ fn render_tiles_on_whole_screen(
 
 fn animate_sprite(
     time: Res<Time>,
+    // This will get only entities that have all of these components
     mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas)>,
 ) {
     for (indices, mut timer, mut atlas) in &mut query {
