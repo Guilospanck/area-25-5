@@ -34,18 +34,17 @@ fn main() {
         )
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite))
-        .add_systems(FixedUpdate, animate_sprite)
-        .add_systems(Update, move_char)
+        .add_systems(FixedUpdate, (animate_sprite, move_char))
         .run();
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct RectangularDimensions {
     width: u32,
     height: u32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct SpriteInfo {
     dimensions: RectangularDimensions,
     source: Handle<Image>,
@@ -53,9 +52,10 @@ struct SpriteInfo {
     layout: TextureAtlasLayout,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 struct Sprites {
     alien_tile: SpriteInfo,
+    gamestudio_tileset: SpriteInfo,
     alien_char_walking: SpriteInfo,
     alien_char_idle: SpriteInfo,
 }
@@ -63,27 +63,22 @@ struct Sprites {
 #[derive(Component)]
 struct InGameCamera;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Alien;
-
-enum AlienState {
-    Idle,
-    Walk,
-}
 
 #[derive(Component)]
 struct TileBackground;
 
-#[derive(Component, Deref, DerefMut, Clone)]
+#[derive(Component, Deref, DerefMut, Clone, Debug)]
 struct AnimationTimer(Timer);
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 struct AnimationIndices {
     first: usize,
     last: usize,
 }
 
-#[derive(Component, Clone)]
+#[derive(Component, Clone, Debug)]
 struct AnimationInfo {
     indices: AnimationIndices,
     timer: AnimationTimer,
@@ -95,7 +90,7 @@ fn setup_camera(mut commands: Commands) {
 
 fn setup_sprite(
     mut commands: Commands,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
 ) {
     fn _setup_common(asset_server: Res<AssetServer>) -> Sprites {
@@ -123,6 +118,15 @@ fn setup_sprite(
                     None,
                     Some(UVec2::new(ALIEN_TILE_OFFSET_X, ALIEN_TILE_OFFSET_Y)),
                 ),
+            },
+            gamestudio_tileset: SpriteInfo {
+                dimensions: RectangularDimensions {
+                    width: 1361,
+                    height: 763,
+                },
+                source: asset_server.load("textures/Tiles/tileset.png"),
+                animation: None,
+                layout: TextureAtlasLayout::from_grid(UVec2::new(1361, 763), 1, 1, None, None),
             },
             alien_char_idle: SpriteInfo {
                 dimensions: RectangularDimensions {
@@ -170,9 +174,10 @@ fn setup_sprite(
     }
 
     let sprites = _setup_common(asset_server);
+    commands.spawn(sprites.clone());
 
-    render_tiles_to_bottom(&mut commands, &mut texture_atlas_layouts, &sprites);
-    setup_alien_sprite(&mut commands, &mut texture_atlas_layouts, &sprites);
+    render_tiles_on_whole_screen(&mut commands, &mut texture_atlas_layout, &sprites);
+    setup_alien_sprite(&mut commands, &mut texture_atlas_layout, &sprites);
 }
 
 #[derive(Bundle)]
@@ -187,25 +192,26 @@ struct AlienBundle {
 
 impl AlienBundle {
     fn idle(
-        texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         sprites: &Sprites,
     ) -> Self {
-        Self::_util(texture_atlas_layouts, sprites.alien_char_idle.clone())
+        Self::_util(texture_atlas_layout, sprites.alien_char_idle.clone())
     }
 
     fn walking(
-        texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         sprites: &Sprites,
     ) -> Self {
-        Self::_util(texture_atlas_layouts, sprites.alien_char_walking.clone())
+        Self::_util(texture_atlas_layout, sprites.alien_char_walking.clone())
     }
 
     fn _util(
-        texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+
         alien_sprite: SpriteInfo,
     ) -> Self {
         let alien_animation = alien_sprite.animation.unwrap();
-        let texture_atlas_layout = texture_atlas_layouts.add(alien_sprite.layout);
+        let texture_atlas_layout = texture_atlas_layout.add(alien_sprite.layout);
 
         AlienBundle {
             marker: Alien,
@@ -213,8 +219,12 @@ impl AlienBundle {
                 texture: alien_sprite.source.clone(),
                 transform: Transform {
                     rotation: Quat::default(),
-                    translation: Vec3::new(199., 0., CHAR_Z_INDEX),
-                    scale: Vec3::new(4., 4., 1.),
+                    translation: Vec3::new(
+                        -WINDOW_RESOLUTION.x_px / 2. + 50.,
+                        WINDOW_RESOLUTION.y_px / 2. - 80.,
+                        CHAR_Z_INDEX,
+                    ),
+                    scale: Vec3::new(2., 2., 1.),
                 },
                 ..default()
             },
@@ -231,10 +241,10 @@ impl AlienBundle {
 
 fn setup_alien_sprite(
     commands: &mut Commands,
-    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites,
 ) {
-    commands.spawn(AlienBundle::idle(texture_atlas_layouts, sprites));
+    commands.spawn(AlienBundle::idle(texture_atlas_layout, sprites));
 }
 
 #[derive(Bundle)]
@@ -247,12 +257,12 @@ struct TileBundle {
 
 fn setup_tile_sprite(
     commands: &mut Commands,
-    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     x_offset: f32,
     y_offset: f32,
     tile_sprite: SpriteInfo,
 ) {
-    let texture_atlas_layout = texture_atlas_layouts.add(tile_sprite.layout);
+    let texture_atlas_layout = texture_atlas_layout.add(tile_sprite.layout);
 
     commands.spawn(TileBundle {
         marker: TileBackground,
@@ -260,8 +270,8 @@ fn setup_tile_sprite(
             texture: tile_sprite.source,
             transform: Transform {
                 rotation: Quat::default(),
-                translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
-                scale: Vec3::new(1., 1., 1.),
+                translation: Vec3::new(0., 0., TILE_Z_INDEX),
+                scale: Vec3::new(1.4, 1.4, 1.),
             },
             ..default()
         },
@@ -275,7 +285,7 @@ fn setup_tile_sprite(
 
 fn render_tiles_to_bottom(
     commands: &mut Commands,
-    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites,
 ) {
     let tile = sprites.alien_tile.clone();
@@ -300,7 +310,7 @@ fn render_tiles_to_bottom(
 
         setup_tile_sprite(
             commands,
-            texture_atlas_layouts,
+            texture_atlas_layout,
             x_offset,
             y_offset,
             tile.clone(),
@@ -310,10 +320,10 @@ fn render_tiles_to_bottom(
 
 fn render_tiles_on_whole_screen(
     commands: &mut Commands,
-    texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites,
 ) {
-    let tile = sprites.alien_tile.clone();
+    let tile = sprites.gamestudio_tileset.clone();
     let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
 
     // number of tiles in a row
@@ -339,7 +349,7 @@ fn render_tiles_on_whole_screen(
 
             setup_tile_sprite(
                 commands,
-                texture_atlas_layouts,
+                texture_atlas_layout,
                 x_offset,
                 y_offset,
                 tile.clone(),
@@ -366,15 +376,16 @@ fn animate_sprite(
 }
 
 fn move_char(
-    mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<&mut Transform, With<Alien>>,
+    mut transform: Query<&mut Transform, With<Alien>>,
     time: Res<Time>,
-    mut animate_query: Query<
+    sprites_query: Query<&Sprites>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    mut query: Query<
         (
             &mut AnimationIndices,
-            &mut TextureAtlas,
             &mut AnimationTimer,
+            &mut TextureAtlas,
         ),
         With<Alien>,
     >,
@@ -382,33 +393,30 @@ fn move_char(
     let mut direction_x = 0.;
     let mut direction_y = 0.;
 
-    let mut char_transform = query.single_mut();
+    let mut char_transform = transform.single_mut();
+    let sprites = sprites_query.single();
 
-    let (mut animate, mut atlas, mut timer) = animate_query.single_mut();
+    let (mut animation_indices, mut animation_timer, mut atlas) = query.single_mut();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {
         direction_x -= 1.0;
     }
 
-    // // left animation
+    // left animation
     // if keyboard_input.just_pressed(KeyCode::KeyH) {
-    //     *timer = AnimationTimer(Timer::from_seconds(
-    //         ALIEN_ANIMATION_TIMER,
-    //         TimerMode::Repeating,
-    //     ));
-    //     atlas.index = PLAYER_FACING_LEFT_WALKING.0;
-    //     animate.first = PLAYER_FACING_LEFT_WALKING.0;
-    //     animate.last = PLAYER_FACING_LEFT_WALKING.1;
+    //     let animation = sprites.clone().alien_char_walking.animation.unwrap();
+    //     *animation_indices = animation.indices;
+    //     *animation_timer = animation.timer;
+    //     let atlas_layout = texture_atlas_layout.add(sprites.clone().alien_char_walking.layout);
+    //     *atlas = atlas_layout.into();
     // }
     // if keyboard_input.just_released(KeyCode::KeyH) {
-    //     *timer = AnimationTimer(Timer::from_seconds(
-    //         PLAYER_ANIMATION_STAND_STILL_TIMER,
-    //         TimerMode::Repeating,
-    //     ));
-    //     atlas.index = PLAYER_FACING_LEFT_STAND_STILL.0;
-    //     animate.first = PLAYER_FACING_LEFT_STAND_STILL.0;
-    //     animate.last = PLAYER_FACING_LEFT_STAND_STILL.1;
+    //     let animation = sprites.clone().alien_char_idle.animation.unwrap();
+    //     *animation_indices = animation.indices;
+    //     *animation_timer = animation.timer;
+    //     let atlas_layout = texture_atlas_layout.add(sprites.clone().alien_char_idle.layout);
+    //     *atlas = atlas_layout.into();
     // }
 
     // right move
@@ -435,6 +443,16 @@ fn move_char(
     //     animate.first = PLAYER_FACING_RIGHT_STAND_STILL.0;
     //     animate.last = PLAYER_FACING_RIGHT_STAND_STILL.1;
     // }
+
+    // top move
+    if keyboard_input.pressed(KeyCode::KeyK) {
+        direction_y += 1.0;
+    }
+
+    // bottom move
+    if keyboard_input.pressed(KeyCode::KeyJ) {
+        direction_y -= 1.0;
+    }
 
     let old_pos_x = char_transform.translation.x;
     let old_pos_y = char_transform.translation.y;
