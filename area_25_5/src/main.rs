@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::view::RenderLayers, window::WindowResolution};
 
-const GAME_LAYER: RenderLayers = RenderLayers::layer(0);
+const GAME_LAYER: RenderLayers = RenderLayers::layer(1);
 const TILE_Z_INDEX: f32 = 0.;
 const CHAR_Z_INDEX: f32 = 1.;
 const ALIEN_MOVE_SPEED: f32 = 100.0;
@@ -176,7 +176,7 @@ fn setup_sprite(
     let sprites = _setup_common(asset_server);
     commands.spawn(sprites.clone());
 
-    render_tiles_on_whole_screen(&mut commands, &mut texture_atlas_layout, &sprites);
+    render_background_texture(&mut commands, &mut texture_atlas_layout, &sprites);
     setup_alien_sprite(&mut commands, &mut texture_atlas_layout, &sprites);
 }
 
@@ -270,7 +270,7 @@ fn setup_tile_sprite(
             texture: tile_sprite.source,
             transform: Transform {
                 rotation: Quat::default(),
-                translation: Vec3::new(0., 0., TILE_Z_INDEX),
+                translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
                 scale: Vec3::new(1.4, 1.4, 1.),
             },
             ..default()
@@ -323,7 +323,7 @@ fn render_tiles_on_whole_screen(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites,
 ) {
-    let tile = sprites.gamestudio_tileset.clone();
+    let tile = sprites.alien_tile.clone();
     let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
 
     // number of tiles in a row
@@ -358,6 +358,27 @@ fn render_tiles_on_whole_screen(
     }
 }
 
+fn render_background_texture(
+    commands: &mut Commands,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+    sprites: &Sprites,
+) {
+    let tile = sprites.gamestudio_tileset.clone();
+
+    // number of tiles in a row
+    let x_items = WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;
+    let x_items: u32 = x_items.ceil() as u32;
+
+    // number of tiles in a column
+    let y_items = WINDOW_RESOLUTION.y_px / tile.dimensions.height as f32;
+    let y_items: u32 = y_items.ceil() as u32;
+
+    for _ in 0..y_items {
+        for _ in 0..x_items {
+            setup_tile_sprite(commands, texture_atlas_layout, 0., 0., tile.clone());
+        }
+    }
+}
 fn animate_sprite(
     time: Res<Time>,
     // This will get only entities that have all of these components
@@ -379,71 +400,21 @@ fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut transform: Query<&mut Transform, With<Alien>>,
     time: Res<Time>,
-    sprites_query: Query<&Sprites>,
-    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    mut query: Query<
-        (
-            &mut AnimationIndices,
-            &mut AnimationTimer,
-            &mut TextureAtlas,
-        ),
-        With<Alien>,
-    >,
 ) {
     let mut direction_x = 0.;
     let mut direction_y = 0.;
 
     let mut char_transform = transform.single_mut();
-    let sprites = sprites_query.single();
-
-    let (mut animation_indices, mut animation_timer, mut atlas) = query.single_mut();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {
         direction_x -= 1.0;
     }
 
-    // left animation
-    // if keyboard_input.just_pressed(KeyCode::KeyH) {
-    //     let animation = sprites.clone().alien_char_walking.animation.unwrap();
-    //     *animation_indices = animation.indices;
-    //     *animation_timer = animation.timer;
-    //     let atlas_layout = texture_atlas_layout.add(sprites.clone().alien_char_walking.layout);
-    //     *atlas = atlas_layout.into();
-    // }
-    // if keyboard_input.just_released(KeyCode::KeyH) {
-    //     let animation = sprites.clone().alien_char_idle.animation.unwrap();
-    //     *animation_indices = animation.indices;
-    //     *animation_timer = animation.timer;
-    //     let atlas_layout = texture_atlas_layout.add(sprites.clone().alien_char_idle.layout);
-    //     *atlas = atlas_layout.into();
-    // }
-
     // right move
     if keyboard_input.pressed(KeyCode::KeyL) {
         direction_x += 1.0;
     }
-
-    // // right animation
-    // if keyboard_input.just_pressed(KeyCode::KeyL) {
-    //     *timer = AnimationTimer(Timer::from_seconds(
-    //         ALIEN_ANIMATION_TIMER,
-    //         TimerMode::Repeating,
-    //     ));
-    //     atlas.index = PLAYER_FACING_RIGHT_WALKING.0;
-    //     animate.first = PLAYER_FACING_RIGHT_WALKING.0;
-    //     animate.last = PLAYER_FACING_RIGHT_WALKING.1;
-    // }
-    // if keyboard_input.just_released(KeyCode::KeyL) {
-    //     *timer = AnimationTimer(Timer::from_seconds(
-    //         PLAYER_ANIMATION_STAND_STILL_TIMER,
-    //         TimerMode::Repeating,
-    //     ));
-    //     atlas.index = PLAYER_FACING_RIGHT_STAND_STILL.0;
-    //     animate.first = PLAYER_FACING_RIGHT_STAND_STILL.0;
-    //     animate.last = PLAYER_FACING_RIGHT_STAND_STILL.1;
-    // }
-
     // top move
     if keyboard_input.pressed(KeyCode::KeyK) {
         direction_y += 1.0;
