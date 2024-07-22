@@ -32,18 +32,18 @@ fn main() {
                 }),
         )
         .insert_resource(Msaa::Off)
-        .add_systems(Startup, (setup_resources, setup_camera, setup_sprite))
+        .add_systems(Startup, (setup_camera, setup_sprite))
         .add_systems(FixedUpdate, animate_sprite)
         .run();
 }
 
-#[derive(Component, Clone)]
+#[derive(Clone)]
 struct RectangularDimensions {
     width: u32,
     height: u32,
 }
 
-#[derive(Component, Clone)]
+#[derive(Clone)]
 struct SpriteInfo {
     dimensions: RectangularDimensions,
     source: Handle<Image>,
@@ -51,7 +51,7 @@ struct SpriteInfo {
     layout: TextureAtlasLayout,
 }
 
-#[derive(Resource)]
+#[derive(Component)]
 struct Sprites {
     alien_tile: SpriteInfo,
     alien_char_walking: SpriteInfo,
@@ -63,6 +63,11 @@ struct InGameCamera;
 
 #[derive(Component)]
 struct Alien;
+
+enum AlienState {
+    Idle,
+    Walk,
+}
 
 #[derive(Component)]
 struct TileBackground;
@@ -82,76 +87,6 @@ struct AnimationInfo {
     timer: AnimationTimer,
 }
 
-fn setup_resources(mut commands: Commands, asset_server: Res<AssetServer>) {
-    const ALIEN_PIXEL_SIZE: u32 = 32;
-    const ALIEN_ANIMATION_TIMER: f32 = 0.1;
-    // Alien tile
-    const ALIEN_TILE_WIDTH: u32 = 95u32;
-    const ALIEN_TILE_HEIGHT: u32 = 95u32;
-    const ALIEN_TILE_OFFSET_X: u32 = 500u32;
-    const ALIEN_TILE_OFFSET_Y: u32 = 623u32;
-
-    // Sprites
-    commands.insert_resource(Sprites {
-        alien_tile: SpriteInfo {
-            dimensions: RectangularDimensions {
-                width: ALIEN_TILE_WIDTH,
-                height: ALIEN_TILE_HEIGHT,
-            },
-            source: asset_server.load("textures/Tiles/alien.png"),
-            animation: None,
-            layout: TextureAtlasLayout::from_grid(
-                UVec2::new(ALIEN_TILE_WIDTH, ALIEN_TILE_HEIGHT),
-                1,
-                1,
-                None,
-                Some(UVec2::new(ALIEN_TILE_OFFSET_X, ALIEN_TILE_OFFSET_Y)),
-            ),
-        },
-        alien_char_idle: SpriteInfo {
-            dimensions: RectangularDimensions {
-                width: ALIEN_PIXEL_SIZE,
-                height: ALIEN_PIXEL_SIZE,
-            },
-            source: asset_server.load("textures/Alien/Alien_idle.png"),
-            animation: Some(AnimationInfo {
-                indices: AnimationIndices { first: 0, last: 3 },
-                timer: AnimationTimer(Timer::from_seconds(
-                    ALIEN_ANIMATION_TIMER,
-                    TimerMode::Repeating,
-                )),
-            }),
-            layout: TextureAtlasLayout::from_grid(
-                UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
-                4,
-                1,
-                None,
-                None,
-            ),
-        },
-        alien_char_walking: SpriteInfo {
-            dimensions: RectangularDimensions {
-                width: ALIEN_PIXEL_SIZE,
-                height: ALIEN_PIXEL_SIZE,
-            },
-            source: asset_server.load("textures/Alien/Alien_run.png"),
-            animation: Some(AnimationInfo {
-                indices: AnimationIndices { first: 0, last: 5 },
-                timer: AnimationTimer(Timer::from_seconds(
-                    ALIEN_ANIMATION_TIMER,
-                    TimerMode::Repeating,
-                )),
-            }),
-            layout: TextureAtlasLayout::from_grid(
-                UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
-                6,
-                1,
-                None,
-                None,
-            ),
-        },
-    });
-}
 fn setup_camera(mut commands: Commands) {
     commands.spawn((Camera2dBundle::default(), InGameCamera, GAME_LAYER));
 }
@@ -159,8 +94,81 @@ fn setup_camera(mut commands: Commands) {
 fn setup_sprite(
     mut commands: Commands,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    sprites: Res<Sprites>,
+    asset_server: Res<AssetServer>,
 ) {
+    fn _setup_common(asset_server: Res<AssetServer>) -> Sprites {
+        const ALIEN_PIXEL_SIZE: u32 = 32;
+        const ALIEN_ANIMATION_TIMER: f32 = 0.1;
+        // Alien tile
+        const ALIEN_TILE_WIDTH: u32 = 95u32;
+        const ALIEN_TILE_HEIGHT: u32 = 95u32;
+        const ALIEN_TILE_OFFSET_X: u32 = 500u32;
+        const ALIEN_TILE_OFFSET_Y: u32 = 623u32;
+
+        // Sprites
+        Sprites {
+            alien_tile: SpriteInfo {
+                dimensions: RectangularDimensions {
+                    width: ALIEN_TILE_WIDTH,
+                    height: ALIEN_TILE_HEIGHT,
+                },
+                source: asset_server.load("textures/Tiles/alien.png"),
+                animation: None,
+                layout: TextureAtlasLayout::from_grid(
+                    UVec2::new(ALIEN_TILE_WIDTH, ALIEN_TILE_HEIGHT),
+                    1,
+                    1,
+                    None,
+                    Some(UVec2::new(ALIEN_TILE_OFFSET_X, ALIEN_TILE_OFFSET_Y)),
+                ),
+            },
+            alien_char_idle: SpriteInfo {
+                dimensions: RectangularDimensions {
+                    width: ALIEN_PIXEL_SIZE,
+                    height: ALIEN_PIXEL_SIZE,
+                },
+                source: asset_server.load("textures/Alien/Alien_idle.png"),
+                animation: Some(AnimationInfo {
+                    indices: AnimationIndices { first: 0, last: 3 },
+                    timer: AnimationTimer(Timer::from_seconds(
+                        ALIEN_ANIMATION_TIMER,
+                        TimerMode::Repeating,
+                    )),
+                }),
+                layout: TextureAtlasLayout::from_grid(
+                    UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
+                    4,
+                    1,
+                    None,
+                    None,
+                ),
+            },
+            alien_char_walking: SpriteInfo {
+                dimensions: RectangularDimensions {
+                    width: ALIEN_PIXEL_SIZE,
+                    height: ALIEN_PIXEL_SIZE,
+                },
+                source: asset_server.load("textures/Alien/Alien_run.png"),
+                animation: Some(AnimationInfo {
+                    indices: AnimationIndices { first: 0, last: 5 },
+                    timer: AnimationTimer(Timer::from_seconds(
+                        ALIEN_ANIMATION_TIMER,
+                        TimerMode::Repeating,
+                    )),
+                }),
+                layout: TextureAtlasLayout::from_grid(
+                    UVec2::new(ALIEN_PIXEL_SIZE, ALIEN_PIXEL_SIZE),
+                    6,
+                    1,
+                    None,
+                    None,
+                ),
+            },
+        }
+    }
+
+    let sprites = _setup_common(asset_server);
+
     render_tiles_to_bottom(&mut commands, &mut texture_atlas_layouts, &sprites);
     setup_alien_sprite(&mut commands, &mut texture_atlas_layouts, &sprites);
 }
@@ -175,34 +183,56 @@ struct AlienBundle {
     layer: RenderLayers,
 }
 
+impl AlienBundle {
+    fn idle(
+        texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+        sprites: &Sprites,
+    ) -> Self {
+        Self::_util(texture_atlas_layouts, sprites.alien_char_idle.clone())
+    }
+
+    fn walking(
+        texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+        sprites: &Sprites,
+    ) -> Self {
+        Self::_util(texture_atlas_layouts, sprites.alien_char_walking.clone())
+    }
+
+    fn _util(
+        texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
+        alien_sprite: SpriteInfo,
+    ) -> Self {
+        let alien_animation = alien_sprite.animation.unwrap();
+        let texture_atlas_layout = texture_atlas_layouts.add(alien_sprite.layout);
+
+        AlienBundle {
+            marker: Alien,
+            sprite: SpriteBundle {
+                texture: alien_sprite.source.clone(),
+                transform: Transform {
+                    rotation: Quat::default(),
+                    translation: Vec3::new(199., 0., CHAR_Z_INDEX),
+                    scale: Vec3::new(4., 4., 1.),
+                },
+                ..default()
+            },
+            atlas: TextureAtlas {
+                layout: texture_atlas_layout,
+                index: alien_animation.indices.first,
+            },
+            animation_indices: alien_animation.indices,
+            animation_timer: alien_animation.timer,
+            layer: GAME_LAYER,
+        }
+    }
+}
+
 fn setup_alien_sprite(
     commands: &mut Commands,
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Res<Sprites>,
+    sprites: &Sprites,
 ) {
-    let alien_sprite = sprites.alien_char_idle.clone();
-    let alien_animation = alien_sprite.animation.unwrap();
-    let texture_atlas_layout = texture_atlas_layouts.add(alien_sprite.layout);
-
-    commands.spawn(AlienBundle {
-        marker: Alien,
-        sprite: SpriteBundle {
-            texture: sprites.alien_char_idle.source.clone(),
-            transform: Transform {
-                rotation: Quat::default(),
-                translation: Vec3::new(199., 0., CHAR_Z_INDEX),
-                scale: Vec3::new(4., 4., 1.),
-            },
-            ..default()
-        },
-        atlas: TextureAtlas {
-            layout: texture_atlas_layout,
-            index: alien_animation.indices.first,
-        },
-        animation_indices: alien_animation.indices,
-        animation_timer: alien_animation.timer,
-        layer: GAME_LAYER,
-    });
+    commands.spawn(AlienBundle::idle(texture_atlas_layouts, sprites));
 }
 
 #[derive(Bundle)]
@@ -244,7 +274,7 @@ fn setup_tile_sprite(
 fn render_tiles_to_bottom(
     commands: &mut Commands,
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Res<Sprites>,
+    sprites: &Sprites,
 ) {
     let tile = sprites.alien_tile.clone();
     let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
@@ -279,7 +309,7 @@ fn render_tiles_to_bottom(
 fn render_tiles_on_whole_screen(
     commands: &mut Commands,
     texture_atlas_layouts: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: Res<Sprites>,
+    sprites: &Sprites,
 ) {
     let tile = sprites.alien_tile.clone();
     let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
