@@ -1,4 +1,9 @@
-use bevy::{prelude::*, render::view::RenderLayers, window::WindowResolution};
+use bevy::{
+    prelude::*,
+    render::view::RenderLayers,
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Wireframe2dPlugin},
+    window::WindowResolution,
+};
 
 const GAME_LAYER: RenderLayers = RenderLayers::layer(1);
 const TILE_Z_INDEX: f32 = 0.;
@@ -17,7 +22,7 @@ const WINDOW_RESOLUTION: CustomWindowResolution = CustomWindowResolution {
 
 fn main() {
     App::new()
-        .add_plugins(
+        .add_plugins((
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
@@ -31,11 +36,27 @@ fn main() {
                     }),
                     ..default()
                 }),
-        )
+            Wireframe2dPlugin,
+        ))
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite))
-        .add_systems(FixedUpdate, (animate_sprite, move_char))
+        .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
+        // Observers are systems that run when an event is "triggered". This observer runs whenever
+        // `ShootBullets` is triggered.
+        .observe(on_bullets_shot)
         .run();
+}
+
+fn on_bullets_shot(
+    trigger: Trigger<ShootBullets>,
+    commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
+) {
+    let event = trigger.event();
+    let Vec2 { x, y } = event.pos;
+
+    spawn_bullet(commands, meshes, materials, x, y);
 }
 
 #[derive(Clone, Debug)]
@@ -65,6 +86,9 @@ struct InGameCamera;
 
 #[derive(Component, Debug)]
 struct Alien;
+
+#[derive(Component, Debug)]
+struct Bullet;
 
 #[derive(Component)]
 struct TileBackground;
@@ -180,6 +204,52 @@ fn setup_sprite(
     setup_alien_sprite(&mut commands, &mut texture_atlas_layout, &sprites);
 }
 
+fn spawn_bullet(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    x: f32,
+    y: f32,
+) {
+    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(4., 8.0)));
+
+    let color = Color::BLACK;
+
+    commands.spawn((
+        MaterialMesh2dBundle {
+            mesh: shape,
+            material: materials.add(color),
+            transform: Transform::from_xyz(x, y, 2.0),
+            ..default()
+        },
+        GAME_LAYER,
+    ));
+}
+
+#[derive(Event)]
+struct ShootBullets {
+    pos: Vec2,
+}
+
+fn handle_click(
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
+    camera: Query<(&Camera, &GlobalTransform)>,
+    windows: Query<&Window>,
+    mut commands: Commands,
+) {
+    let (camera, camera_transform) = camera.single();
+    if let Some(pos) = windows
+        .single()
+        .cursor_position()
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+        .map(|ray| ray.origin.truncate())
+    {
+        if mouse_button_input.just_pressed(MouseButton::Left) {
+            commands.trigger(ShootBullets { pos });
+        }
+    }
+}
+
 #[derive(Bundle)]
 struct AlienBundle {
     marker: Alien,
@@ -281,81 +351,6 @@ fn setup_tile_sprite(
         },
         layer: GAME_LAYER,
     });
-}
-
-fn render_tiles_to_bottom(
-    commands: &mut Commands,
-    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Sprites,
-) {
-    let tile = sprites.alien_tile.clone();
-    let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
-
-    // number of tiles in a row
-    let x_items = WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;
-    let x_items: u32 = x_items.ceil() as u32;
-
-    // number of tiles in a column
-    let y_items = WINDOW_RESOLUTION.y_px / tile.dimensions.height as f32;
-    let y_items: u32 = y_items.ceil() as u32;
-
-    let y_offset: f32 =
-        origin.y - (y_items * tile.dimensions.height - (tile.dimensions.height)) as f32;
-    let mut x_offset: f32 = origin.x + (tile.dimensions.width / 2) as f32;
-
-    for j in 0..x_items {
-        if j != 0 {
-            x_offset += tile.dimensions.width as f32;
-        }
-
-        setup_tile_sprite(
-            commands,
-            texture_atlas_layout,
-            x_offset,
-            y_offset,
-            tile.clone(),
-        );
-    }
-}
-
-fn render_tiles_on_whole_screen(
-    commands: &mut Commands,
-    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Sprites,
-) {
-    let tile = sprites.alien_tile.clone();
-    let origin = Vec2::new(-WINDOW_RESOLUTION.x_px / 2., WINDOW_RESOLUTION.y_px / 2.);
-
-    // number of tiles in a row
-    let x_items = WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;
-    let x_items: u32 = x_items.ceil() as u32;
-
-    // number of tiles in a column
-    let y_items = WINDOW_RESOLUTION.y_px / tile.dimensions.height as f32;
-    let y_items: u32 = y_items.ceil() as u32;
-
-    let mut y_offset: f32 = origin.y - (tile.dimensions.height / 2) as f32;
-
-    for i in 0..y_items {
-        let mut x_offset: f32 = origin.x + (tile.dimensions.width / 2) as f32;
-        if i != 0 {
-            y_offset -= tile.dimensions.height as f32;
-        }
-
-        for j in 0..x_items {
-            if j != 0 {
-                x_offset += tile.dimensions.width as f32;
-            }
-
-            setup_tile_sprite(
-                commands,
-                texture_atlas_layout,
-                x_offset,
-                y_offset,
-                tile.clone(),
-            );
-        }
-    }
 }
 
 fn render_background_texture(
