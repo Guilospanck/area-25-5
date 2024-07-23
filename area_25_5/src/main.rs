@@ -1,6 +1,9 @@
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha8Rng;
 use std::f32::consts::PI;
 
 use bevy::{
+    math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
     render::view::RenderLayers,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle, Wireframe2dPlugin},
@@ -41,9 +44,9 @@ fn main() {
             Wireframe2dPlugin,
         ))
         .insert_resource(Msaa::Off)
-        .add_systems(Startup, (setup_camera, setup_sprite))
+        .add_systems(Startup, (setup_camera, setup_sprite, spawn_enemy))
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
-        .add_systems(Update, move_bullets)
+        .add_systems(Update, (move_bullets, check_for_collisions))
         .observe(on_bullets_shot)
         .run();
 }
@@ -102,7 +105,6 @@ struct Alien;
 #[derive(Component, Debug)]
 struct Bullet {
     direction: Vec2,
-    angle: f32,
 }
 
 #[derive(Component)]
@@ -219,6 +221,53 @@ fn setup_sprite(
     setup_alien_sprite(&mut commands, &mut texture_atlas_layout, &sprites);
 }
 
+#[derive(Component)]
+struct Enemy {
+    pos: Vec2,
+}
+
+impl Enemy {
+    fn random(rand: &mut ChaCha8Rng) -> Self {
+        Enemy {
+            pos: Vec2::new(
+                (rand.gen::<f32>() - 0.5) * 1200.0,
+                (rand.gen::<f32>() - 0.5) * 600.0,
+            ),
+        }
+    }
+}
+
+const CAPSULE_LENGTH: f32 = 8.;
+const CAPSULE_RADIUS: f32 = 4.;
+
+fn spawn_enemy(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
+    let color = Color::srgb(255., 0., 0.);
+    let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
+
+    for _ in 1..=50 {
+        let enemy = Enemy::random(&mut rng);
+        commands.spawn((
+            MaterialMesh2dBundle {
+                mesh: shape.clone(),
+                material: materials.add(color),
+                transform: Transform {
+                    translation: Vec3::new(enemy.pos.x, enemy.pos.y, 1.),
+                    scale: Vec3::new(1., 1., 1.),
+                    rotation: Quat::default(),
+                },
+                ..default()
+            },
+            enemy,
+            GAME_LAYER,
+        ));
+    }
+}
+
 fn spawn_bullet(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -227,7 +276,7 @@ fn spawn_bullet(
     y: f32,
     alien: Query<(&Transform, &Alien)>,
 ) {
-    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(4., 8.)));
+    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
     let color = Color::BLACK;
 
     let alien_position = alien.get_single().unwrap();
@@ -245,7 +294,6 @@ fn spawn_bullet(
 
     let bullet = Bullet {
         direction: unit_direction,
-        angle,
     };
 
     let rotation = Quat::from_rotation_z(angle + PI / 2.);
@@ -480,4 +528,25 @@ fn move_char(
 
     char_transform.translation.x = char_new_pos_x;
     char_transform.translation.y = char_new_pos_y;
+}
+
+fn check_for_collisions(
+    mut commands: Commands,
+    bullets: Query<(Entity, &Transform), With<Bullet>>,
+    enemies: Query<(Entity, &Transform), With<Enemy>>,
+) {
+    let capsule_collider = Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);
+
+    for (enemy_entity, enemy_transform) in enemies.iter() {
+        let enemy_collider = Aabb2d::new(enemy_transform.translation.truncate(), capsule_collider);
+        for (bullet_entity, bullet_transform) in bullets.iter() {
+            let bullet_collider =
+                Aabb2d::new(bullet_transform.translation.truncate(), capsule_collider);
+
+            if bullet_collider.intersects(&enemy_collider) {
+                commands.entity(bullet_entity).despawn();
+                commands.entity(enemy_entity).despawn();
+            }
+        }
+    }
 }
