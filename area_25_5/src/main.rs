@@ -64,6 +64,8 @@ fn move_bullets(mut bullets: Query<(&mut Transform, &mut Bullet)>, timer: Res<Ti
         // move along some direction vector
         transform.translation.x += bullet.direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
         transform.translation.y -= bullet.direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
+
+        // transform.rotate_z(bullet.angle);
     }
 }
 
@@ -98,6 +100,7 @@ struct Alien;
 #[derive(Component, Debug)]
 struct Bullet {
     direction: Vec2,
+    angle: f32,
 }
 
 #[derive(Component)]
@@ -223,7 +226,6 @@ fn spawn_bullet(
     alien: Query<(&Transform, &Alien)>,
 ) {
     let shape = Mesh2dHandle(meshes.add(Capsule2d::new(4., 8.0)));
-
     let color = Color::BLACK;
 
     let alien_position = alien.get_single().unwrap();
@@ -232,30 +234,45 @@ fn spawn_bullet(
         alien_position.0.translation.y,
     );
 
-    let direction_x = (x - position.x);
+    let direction_x = x - position.x;
     let direction_y = -(y - position.y);
+    let direction = Vec2::new(direction_x, direction_y);
+    let unit_direction = _get_unit_vector(direction);
 
-    let modulo_x: f32 = direction_x.powi(2);
-    let modulo_y: f32 = direction_y.powi(2);
-    let modulo: f32 = modulo_x + modulo_y;
-    let modulo: f32 = modulo.sqrt();
+    let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
 
-    let normalized_direction_x = direction_x / modulo;
-    let normalized_direction_y = direction_y / modulo;
-
-    let direction: Vec2 = Vec2::new(normalized_direction_x, normalized_direction_y);
-    let bullet = Bullet { direction };
+    let bullet = Bullet {
+        direction: unit_direction,
+        angle,
+    };
+    let rotation = Quat::from_rotation_z(angle);
 
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: shape,
             material: materials.add(color),
-            transform: Transform::from_xyz(x, y, 2.0),
+            transform: Transform {
+                translation: Vec3::new(x, y, 1.),
+                scale: Vec3::new(1., 1., 1.),
+                rotation,
+            },
             ..default()
         },
         bullet,
         GAME_LAYER,
     ));
+}
+
+fn _get_unit_vector(vec: Vec2) -> Vec2 {
+    let modulo_x: f32 = vec.x.powi(2);
+    let modulo_y: f32 = vec.y.powi(2);
+    let modulo: f32 = modulo_x + modulo_y;
+    let modulo: f32 = modulo.sqrt();
+
+    let normalized_direction_x = vec.x / modulo;
+    let normalized_direction_y = vec.y / modulo;
+
+    Vec2::new(normalized_direction_x, normalized_direction_y)
 }
 
 #[derive(Event)]
