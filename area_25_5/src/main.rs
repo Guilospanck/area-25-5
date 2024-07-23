@@ -41,8 +41,7 @@ fn main() {
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite))
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
-        // Observers are systems that run when an event is "triggered". This observer runs whenever
-        // `ShootBullets` is triggered.
+        .add_systems(Update, move_bullets)
         .observe(on_bullets_shot)
         .run();
 }
@@ -52,11 +51,20 @@ fn on_bullets_shot(
     commands: Commands,
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
+    alien: Query<(&Transform, &Alien)>,
 ) {
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
 
-    spawn_bullet(commands, meshes, materials, x, y);
+    spawn_bullet(commands, meshes, materials, x, y, alien);
+}
+
+fn move_bullets(mut bullets: Query<(&mut Transform, &mut Bullet)>, timer: Res<Time>) {
+    for (mut transform, bullet) in &mut bullets {
+        // move along some direction vector
+        transform.translation.x += bullet.direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
+        transform.translation.y -= bullet.direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -88,7 +96,9 @@ struct InGameCamera;
 struct Alien;
 
 #[derive(Component, Debug)]
-struct Bullet;
+struct Bullet {
+    direction: Vec2,
+}
 
 #[derive(Component)]
 struct TileBackground;
@@ -210,10 +220,31 @@ fn spawn_bullet(
     mut materials: ResMut<Assets<ColorMaterial>>,
     x: f32,
     y: f32,
+    alien: Query<(&Transform, &Alien)>,
 ) {
     let shape = Mesh2dHandle(meshes.add(Capsule2d::new(4., 8.0)));
 
     let color = Color::BLACK;
+
+    let alien_position = alien.get_single().unwrap();
+    let position = Vec2::new(
+        alien_position.0.translation.x,
+        alien_position.0.translation.y,
+    );
+
+    let direction_x = (x - position.x);
+    let direction_y = -(y - position.y);
+
+    let modulo_x: f32 = direction_x.powi(2);
+    let modulo_y: f32 = direction_y.powi(2);
+    let modulo: f32 = modulo_x + modulo_y;
+    let modulo: f32 = modulo.sqrt();
+
+    let normalized_direction_x = direction_x / modulo;
+    let normalized_direction_y = direction_y / modulo;
+
+    let direction: Vec2 = Vec2::new(normalized_direction_x, normalized_direction_y);
+    let bullet = Bullet { direction };
 
     commands.spawn((
         MaterialMesh2dBundle {
@@ -222,6 +253,7 @@ fn spawn_bullet(
             transform: Transform::from_xyz(x, y, 2.0),
             ..default()
         },
+        bullet,
         GAME_LAYER,
     ));
 }
