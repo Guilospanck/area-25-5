@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::{
     prelude::*,
     render::view::RenderLayers,
@@ -225,7 +227,7 @@ fn spawn_bullet(
     y: f32,
     alien: Query<(&Transform, &Alien)>,
 ) {
-    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(4., 8.0)));
+    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(4., 8.)));
     let color = Color::BLACK;
 
     let alien_position = alien.get_single().unwrap();
@@ -245,7 +247,8 @@ fn spawn_bullet(
         direction: unit_direction,
         angle,
     };
-    let rotation = Quat::from_rotation_z(angle);
+
+    let rotation = Quat::from_rotation_z(angle + PI / 2.);
 
     commands.spawn((
         MaterialMesh2dBundle {
