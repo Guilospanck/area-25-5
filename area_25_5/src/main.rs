@@ -49,13 +49,10 @@ fn main() {
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite, spawn_enemy))
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
+        .add_systems(Update, (move_ammo, move_enemies_towards_alien))
         .add_systems(
             Update,
-            (
-                move_ammo,
-                check_for_ammo_colliding_with_enemy,
-                move_enemies_towards_alien,
-            ),
+            (check_for_ammo_collisions, check_for_alien_collisions),
         )
         .observe(on_mouse_click)
         .run();
@@ -324,7 +321,7 @@ fn spawn_enemy(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
-    let color = Color::srgb(0., 0., 255.);
+    let color = Color::srgb(255., 255., 255.);
     let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
 
     for _ in 1..=50 {
@@ -483,7 +480,7 @@ impl AlienBundle {
 
         AlienBundle {
             marker: Alien {
-                health: 100.,
+                health: 100000000.,
                 weapon: Weapon { ammo },
             },
             sprite: SpriteBundle {
@@ -602,7 +599,10 @@ fn move_char(
     let mut direction_x = 0.;
     let mut direction_y = 0.;
 
-    let mut char_transform = transform.single_mut();
+    if transform.get_single_mut().is_err() {
+        return;
+    }
+    let mut char_transform = transform.get_single_mut().unwrap();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {
@@ -633,7 +633,7 @@ fn move_char(
     char_transform.translation.y = char_new_pos_y;
 }
 
-fn check_for_ammo_colliding_with_enemy(
+fn check_for_ammo_collisions(
     mut commands: Commands,
     ammos: Query<(Entity, &Transform, &Ammo), (With<Ammo>, Without<Alien>)>,
     mut enemies: Query<(Entity, &Transform, &mut Enemy), With<Enemy>>,
@@ -642,6 +642,7 @@ fn check_for_ammo_colliding_with_enemy(
 
     for (enemy_entity, enemy_transform, mut enemy) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(enemy_transform.translation.truncate(), capsule_collider);
+
         for (ammo_entity, ammo_transform, ammo) in ammos.iter() {
             let ammo_collider =
                 Aabb2d::new(ammo_transform.translation.truncate(), capsule_collider);
@@ -655,6 +656,28 @@ fn check_for_ammo_colliding_with_enemy(
                     ammo.damage,
                 );
                 continue;
+            }
+        }
+    }
+}
+
+fn check_for_alien_collisions(
+    mut commands: Commands,
+    mut enemies: Query<(&Transform, &mut Enemy), With<Enemy>>,
+    mut alien: Query<(Entity, &Transform, &mut Alien)>,
+) {
+    let capsule_collider = Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);
+
+    for (enemy_transform, enemy) in enemies.iter_mut() {
+        let enemy_collider = Aabb2d::new(enemy_transform.translation.truncate(), capsule_collider);
+
+        if let Ok(result) = alien.get_single_mut() {
+            let (alien_entity, alien_transform, mut alien) = result;
+            let alien_collider =
+                Aabb2d::new(alien_transform.translation.truncate(), capsule_collider);
+
+            if alien_collider.intersects(&enemy_collider) {
+                damage_alien(&mut commands, alien_entity, &mut alien, enemy.damage);
             }
         }
     }
@@ -674,5 +697,14 @@ fn damage_enemy(
 
     if enemy.health <= 0. {
         commands.entity(enemy_entity).despawn();
+    }
+}
+
+fn damage_alien(commands: &mut Commands, alien_entity: Entity, alien: &mut Alien, damage: f32) {
+    alien.health -= damage;
+
+    if alien.health <= 0. {
+        // YOU DIED!!!
+        commands.entity(alien_entity).despawn();
     }
 }

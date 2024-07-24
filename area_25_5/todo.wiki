@@ -1,10 +1,16 @@
 Todo:
 
 - [x] Despawn bullets when offscreen
+- [x] Add damage and health to enemies
+- [x] Add damage to ammo
+- [ ] Diminish its health when some enemy hits or attacks him
+- [ ] Create HP bars for the player
+ 
+
+- [ ] Check why despawn of enemy/ammo is getting WARNING
+
 - Limit spawn of bullets to not be too close
 - Limit movement of player off-screen
-- Create HP bars for the player and for some boss at some point
-- Diminish its health when some enemy hits or attacks him
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
 - Create different stats for the alien (speed, armor, mana whatever)
@@ -12,6 +18,7 @@ Todo:
 - Spawn different enemies
 - Spawn potions that will change some characteristic of the player, like HP, armor, size, speed, power
 - Spawn weapons 
+- HP bar for some boss at some point
 
 Latest:
 - Write game design document
