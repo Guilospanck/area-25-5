@@ -644,6 +644,17 @@ fn move_char(
     let char_new_pos_x = old_pos_x + direction_x * ALIEN_MOVE_SPEED * time.delta_seconds();
     let char_new_pos_y = old_pos_y + direction_y * ALIEN_MOVE_SPEED * time.delta_seconds();
 
+    let off_screen_x = !((-WINDOW_RESOLUTION.x_px + 20.) / 2.0
+        ..=(WINDOW_RESOLUTION.x_px - 20.) / 2.0)
+        .contains(&char_new_pos_x);
+    let off_screen_y = !((-WINDOW_RESOLUTION.y_px + 80.) / 2.0
+        ..=(WINDOW_RESOLUTION.y_px - 80.) / 2.0)
+        .contains(&char_new_pos_y);
+
+    if off_screen_x || off_screen_y {
+        return;
+    }
+
     char_transform.translation.x = char_new_pos_x;
     char_transform.translation.y = char_new_pos_y;
 }
