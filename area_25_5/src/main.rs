@@ -126,6 +126,7 @@ struct Sprites {
     gamestudio_tileset: SpriteInfo,
     alien_char_walking: SpriteInfo,
     alien_char_idle: SpriteInfo,
+    alien_custom_bg: SpriteInfo,
 }
 
 #[derive(Component)]
@@ -200,6 +201,15 @@ fn setup_sprite(
                 source: asset_server.load("textures/Tiles/tileset.png"),
                 animation: None,
                 layout: TextureAtlasLayout::from_grid(UVec2::new(1361, 763), 1, 1, None, None),
+            },
+            alien_custom_bg: SpriteInfo {
+                dimensions: RectangularDimensions {
+                    width: 1920,
+                    height: 1080,
+                },
+                source: asset_server.load("textures/Background/Alien1.png"),
+                animation: None,
+                layout: TextureAtlasLayout::from_grid(UVec2::new(1920, 1080), 1, 1, None, None),
             },
             alien_char_idle: SpriteInfo {
                 dimensions: RectangularDimensions {
@@ -278,7 +288,7 @@ fn spawn_enemy(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
-    let color = Color::srgb(255., 0., 0.);
+    let color = Color::srgb(0., 0., 255.);
     let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
 
     for _ in 1..=50 {
@@ -477,7 +487,7 @@ fn setup_tile_sprite(
             transform: Transform {
                 rotation: Quat::default(),
                 translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
-                scale: Vec3::new(1.4, 1.4, 1.),
+                scale: Vec3::splat(1.),
             },
             ..default()
         },
@@ -494,7 +504,7 @@ fn render_background_texture(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites,
 ) {
-    let tile = sprites.gamestudio_tileset.clone();
+    let tile = sprites.alien_custom_bg.clone();
 
     // number of tiles in a row
     let x_items = WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;
