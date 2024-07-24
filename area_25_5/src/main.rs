@@ -46,7 +46,14 @@ fn main() {
         .insert_resource(Msaa::Off)
         .add_systems(Startup, (setup_camera, setup_sprite, spawn_enemy))
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
-        .add_systems(Update, (move_bullets, check_for_collisions))
+        .add_systems(
+            Update,
+            (
+                move_bullets,
+                check_for_collisions,
+                move_enemies_towards_alien,
+            ),
+        )
         .observe(on_bullets_shot)
         .run();
 }
@@ -66,11 +73,36 @@ fn on_bullets_shot(
 
 fn move_bullets(mut bullets: Query<(&mut Transform, &mut Bullet)>, timer: Res<Time>) {
     for (mut transform, bullet) in &mut bullets {
-        // move along some direction vector
         transform.translation.x += bullet.direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
         transform.translation.y -= bullet.direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
-
         // transform.rotate_z(bullet.angle);
+    }
+}
+
+fn move_enemies_towards_alien(
+    // The reason the `Without` is needed here, even though it wouldn't be
+    // as we are only querying for the Alien on the second group,
+    // is that rust mutability does not allow a variable to be mutable and
+    // immutable at the same time. See https://bevyengine.org/learn/errors/#b0001
+    // for more.
+    mut enemies: Query<&mut Transform, (With<Enemy>, Without<Alien>)>,
+    timer: Res<Time>,
+    alien: Query<(&Transform, &Alien)>,
+) {
+    for mut transform in enemies.iter_mut() {
+        let position = match alien.get_single() {
+            Ok(alien_position) => Vec2::new(
+                alien_position.0.translation.x,
+                alien_position.0.translation.y,
+            ),
+            Err(_) => Vec2::splat(0.),
+        };
+
+        let unit_direction = get_unit_direction_vector(position, transform.translation.truncate());
+        // See that these `-=` and `+=` are the opposite of what we use when spawning bullets
+        // As now we need to make the enemies go *towards* the alien, not *outwards*
+        transform.translation.x -= unit_direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
+        transform.translation.y += unit_direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
     }
 }
 
@@ -99,7 +131,7 @@ struct Sprites {
 #[derive(Component)]
 struct InGameCamera;
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 struct Alien;
 
 #[derive(Component, Debug)]
@@ -284,11 +316,7 @@ fn spawn_bullet(
         alien_position.0.translation.x,
         alien_position.0.translation.y,
     );
-
-    let direction_x = x - position.x;
-    let direction_y = -(y - position.y);
-    let direction = Vec2::new(direction_x, direction_y);
-    let unit_direction = _get_unit_vector(direction);
+    let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 
     let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
 
@@ -312,6 +340,13 @@ fn spawn_bullet(
         bullet,
         GAME_LAYER,
     ));
+}
+
+fn get_unit_direction_vector(origin: Vec2, end: Vec2) -> Vec2 {
+    let direction_x = end.x - origin.x;
+    let direction_y = -(end.y - origin.y);
+    let direction = Vec2::new(direction_x, direction_y);
+    _get_unit_vector(direction)
 }
 
 fn _get_unit_vector(vec: Vec2) -> Vec2 {
@@ -350,7 +385,7 @@ fn handle_click(
     }
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Clone)]
 struct AlienBundle {
     marker: Alien,
     sprite: SpriteBundle,
@@ -414,7 +449,8 @@ fn setup_alien_sprite(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites,
 ) {
-    commands.spawn(AlienBundle::idle(texture_atlas_layout, sprites));
+    let alien = AlienBundle::idle(texture_atlas_layout, sprites);
+    commands.spawn(alien);
 }
 
 #[derive(Bundle)]
@@ -546,6 +582,7 @@ fn check_for_collisions(
             if bullet_collider.intersects(&enemy_collider) {
                 commands.entity(bullet_entity).despawn();
                 commands.entity(enemy_entity).despawn();
+                continue;
             }
         }
     }
