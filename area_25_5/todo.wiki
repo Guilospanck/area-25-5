@@ -1,6 +1,6 @@
 Todo:
 
-- Despawn bullets when offscreen
+- [x] Despawn bullets when offscreen
 - Limit spawn of bullets to not be too close
 - Limit movement of player off-screen
 - Create HP bars for the player and for some boss at some point

@@ -13,7 +13,9 @@ use bevy::{
 const GAME_LAYER: RenderLayers = RenderLayers::layer(1);
 const TILE_Z_INDEX: f32 = 0.;
 const CHAR_Z_INDEX: f32 = 1.;
-const ALIEN_MOVE_SPEED: f32 = 100.0;
+const ALIEN_MOVE_SPEED: f32 = 150.0;
+const BULLET_MOVE_SPEED: f32 = 100.0;
+const ENEMY_MOVE_SPEED: f32 = 100.0;
 
 struct CustomWindowResolution {
     x_px: f32,
@@ -77,10 +79,10 @@ fn move_bullets(
     timer: Res<Time>,
 ) {
     for (entity, mut transform, bullet) in &mut bullets {
-        let new_translation_x =
-            transform.translation.x + bullet.direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
-        let new_translation_y =
-            transform.translation.y - bullet.direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
+        let new_translation_x = transform.translation.x
+            + bullet.direction.x * BULLET_MOVE_SPEED * timer.delta_seconds();
+        let new_translation_y = transform.translation.y
+            - bullet.direction.y * BULLET_MOVE_SPEED * timer.delta_seconds();
 
         let off_screen_x = !(-WINDOW_RESOLUTION.x_px / 2.0..=WINDOW_RESOLUTION.x_px / 2.0)
             .contains(&new_translation_x);
@@ -119,8 +121,8 @@ fn move_enemies_towards_alien(
         let unit_direction = get_unit_direction_vector(position, transform.translation.truncate());
         // See that these `-=` and `+=` are the opposite of what we use when spawning bullets
         // As now we need to make the enemies go *towards* the alien, not *outwards*
-        transform.translation.x -= unit_direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
-        transform.translation.y += unit_direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
+        transform.translation.x -= unit_direction.x * ENEMY_MOVE_SPEED * timer.delta_seconds();
+        transform.translation.y += unit_direction.y * ENEMY_MOVE_SPEED * timer.delta_seconds();
     }
 }
 
