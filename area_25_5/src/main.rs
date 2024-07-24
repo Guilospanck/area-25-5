@@ -303,7 +303,7 @@ fn spawn_bullet(
             mesh: shape,
             material: materials.add(color),
             transform: Transform {
-                translation: Vec3::new(x, y, 1.),
+                translation: Vec3::new(position.x + 10., position.y, 1.),
                 scale: Vec3::new(1., 1., 1.),
                 rotation,
             },
