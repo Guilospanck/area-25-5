@@ -3,8 +3,8 @@ Todo:
 - [x] Despawn bullets when offscreen
 - [x] Add damage and health to enemies
 - [x] Add damage to ammo
-- [ ] Diminish its health when some enemy hits or attacks him
-- [ ] Create HP bars for the player
+- [x] Diminish its health when some enemy hits or attacks him
+- [x] Show in the UI some indicator of the health of Alien
  
 
 - [ ] Check why despawn of enemy/ammo is getting WARNING
@@ -19,6 +19,7 @@ Todo:
 - Spawn potions that will change some characteristic of the player, like HP, armor, size, speed, power
 - Spawn weapons 
 - HP bar for some boss at some point
+- [ ] Create HP bars for the player
 
 Latest:
 - Write game design document

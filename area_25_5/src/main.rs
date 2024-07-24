@@ -3,10 +3,11 @@ use rand_chacha::ChaCha8Rng;
 use std::f32::consts::PI;
 
 use bevy::{
+    color::palettes::css::YELLOW,
     math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
     render::view::RenderLayers,
-    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Wireframe2dPlugin},
+    sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle, Wireframe2dPlugin},
     window::WindowResolution,
 };
 
@@ -55,6 +56,7 @@ fn main() {
             (check_for_ammo_collisions, check_for_alien_collisions),
         )
         .observe(on_mouse_click)
+        .observe(on_alien_health_changed)
         .run();
 }
 
@@ -68,6 +70,18 @@ fn on_mouse_click(
     let Vec2 { x, y } = event.pos;
 
     shoot(commands, materials, x, y, alien);
+}
+
+fn on_alien_health_changed(
+    trigger: Trigger<AlienHealthChanged>,
+    mut alien_health_bar: Query<&mut Text, With<AlienHealthBar>>,
+) {
+    let event = trigger.event();
+    let health = event.health;
+
+    if let Ok(mut text) = alien_health_bar.get_single_mut() {
+        text.sections.first_mut().unwrap().value = health.to_string();
+    }
 }
 
 fn move_ammo(
@@ -196,7 +210,7 @@ fn setup_sprite(
     asset_server: Res<AssetServer>,
     meshes: ResMut<Assets<Mesh>>,
 ) {
-    fn _setup_common(asset_server: Res<AssetServer>) -> Sprites {
+    fn _setup_common(asset_server: &Res<AssetServer>) -> Sprites {
         const ALIEN_PIXEL_SIZE: u32 = 32;
         const ALIEN_ANIMATION_TIMER: f32 = 0.1;
         // Alien tile
@@ -285,11 +299,12 @@ fn setup_sprite(
         }
     }
 
-    let sprites = _setup_common(asset_server);
+    let sprites = _setup_common(&asset_server);
     commands.spawn(sprites.clone());
 
     render_background_texture(&mut commands, &mut texture_atlas_layout, &sprites);
     setup_alien_sprite(&mut commands, &mut texture_atlas_layout, &sprites, meshes);
+    health_points_bar(&mut commands, asset_server);
 }
 
 #[derive(Component)]
@@ -700,11 +715,56 @@ fn damage_enemy(
     }
 }
 
+#[derive(Event)]
+struct AlienHealthChanged {
+    health: f32,
+}
+
 fn damage_alien(commands: &mut Commands, alien_entity: Entity, alien: &mut Alien, damage: f32) {
     alien.health -= damage;
+
+    commands.trigger(AlienHealthChanged {
+        health: alien.health,
+    });
 
     if alien.health <= 0. {
         // YOU DIED!!!
         commands.entity(alien_entity).despawn();
     }
+}
+
+#[derive(Component)]
+struct AlienHealthBar;
+
+fn health_points_bar(commands: &mut Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 60.0,
+        ..default()
+    };
+
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![TextSection::new(
+                    "100000000",
+                    TextStyle {
+                        color: Color::Srgba(YELLOW),
+                        ..text_style.clone()
+                    },
+                )],
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(
+                0.0,
+                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                10.0,
+            )),
+            text_anchor: Anchor::TopCenter,
+            ..default()
+        },
+        AlienHealthBar,
+        GAME_LAYER,
+    ));
 }
