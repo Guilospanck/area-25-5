@@ -14,8 +14,9 @@ const GAME_LAYER: RenderLayers = RenderLayers::layer(1);
 const TILE_Z_INDEX: f32 = 0.;
 const CHAR_Z_INDEX: f32 = 1.;
 const ALIEN_MOVE_SPEED: f32 = 150.0;
-const BULLET_MOVE_SPEED: f32 = 100.0;
+const AMMO_MOVE_SPEED: f32 = 100.0;
 const ENEMY_MOVE_SPEED: f32 = 100.0;
+const AMMO_DAMAGE: f32 = 50.0;
 
 struct CustomWindowResolution {
     x_px: f32,
@@ -51,38 +52,37 @@ fn main() {
         .add_systems(
             Update,
             (
-                move_bullets,
-                check_for_collisions,
+                move_ammo,
+                check_for_ammo_colliding_with_enemy,
                 move_enemies_towards_alien,
             ),
         )
-        .observe(on_bullets_shot)
+        .observe(on_mouse_click)
         .run();
 }
 
-fn on_bullets_shot(
+fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
     commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
     alien: Query<(&Transform, &Alien)>,
 ) {
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
 
-    spawn_bullet(commands, meshes, materials, x, y, alien);
+    shoot(commands, materials, x, y, alien);
 }
 
-fn move_bullets(
+fn move_ammo(
     mut commands: Commands,
-    mut bullets: Query<(Entity, &mut Transform, &mut Bullet)>,
+    mut ammos: Query<(Entity, &mut Transform, &mut Ammo), Without<Alien>>,
     timer: Res<Time>,
 ) {
-    for (entity, mut transform, bullet) in &mut bullets {
-        let new_translation_x = transform.translation.x
-            + bullet.direction.x * BULLET_MOVE_SPEED * timer.delta_seconds();
-        let new_translation_y = transform.translation.y
-            - bullet.direction.y * BULLET_MOVE_SPEED * timer.delta_seconds();
+    for (entity, mut transform, ammo) in &mut ammos {
+        let new_translation_x =
+            transform.translation.x + ammo.direction.x * AMMO_MOVE_SPEED * timer.delta_seconds();
+        let new_translation_y =
+            transform.translation.y - ammo.direction.y * AMMO_MOVE_SPEED * timer.delta_seconds();
 
         let off_screen_x = !(-WINDOW_RESOLUTION.x_px / 2.0..=WINDOW_RESOLUTION.x_px / 2.0)
             .contains(&new_translation_x);
@@ -153,11 +153,22 @@ struct Sprites {
 struct InGameCamera;
 
 #[derive(Component, Debug, Clone)]
-struct Alien;
-
-#[derive(Component, Debug)]
-struct Bullet {
+struct Ammo {
     direction: Vec2,
+    mesh: Mesh2dHandle,
+    color: Color,
+    damage: f32,
+}
+
+#[derive(Component, Debug, Clone)]
+struct Weapon {
+    ammo: Ammo,
+}
+
+#[derive(Component, Debug, Clone)]
+struct Alien {
+    weapon: Weapon,
+    health: f32,
 }
 
 #[derive(Component)]
@@ -186,6 +197,7 @@ fn setup_sprite(
     mut commands: Commands,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
+    meshes: ResMut<Assets<Mesh>>,
 ) {
     fn _setup_common(asset_server: Res<AssetServer>) -> Sprites {
         const ALIEN_PIXEL_SIZE: u32 = 32;
@@ -280,17 +292,21 @@ fn setup_sprite(
     commands.spawn(sprites.clone());
 
     render_background_texture(&mut commands, &mut texture_atlas_layout, &sprites);
-    setup_alien_sprite(&mut commands, &mut texture_atlas_layout, &sprites);
+    setup_alien_sprite(&mut commands, &mut texture_atlas_layout, &sprites, meshes);
 }
 
 #[derive(Component)]
 struct Enemy {
+    health: f32,
+    damage: f32,
     pos: Vec2,
 }
 
 impl Enemy {
     fn random(rand: &mut ChaCha8Rng) -> Self {
         Enemy {
+            health: 100.,
+            damage: 20.,
             pos: Vec2::new(
                 (rand.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.x_px,
                 (rand.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.y_px,
@@ -330,36 +346,34 @@ fn spawn_enemy(
     }
 }
 
-fn spawn_bullet(
+fn shoot(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     x: f32,
     y: f32,
     alien: Query<(&Transform, &Alien)>,
 ) {
-    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
-    let color = Color::BLACK;
-
-    let alien_position = alien.get_single().unwrap();
-    let position = Vec2::new(
-        alien_position.0.translation.x,
-        alien_position.0.translation.y,
-    );
+    let alien_query = alien.get_single().unwrap();
+    let position = Vec2::new(alien_query.0.translation.x, alien_query.0.translation.y);
+    let alien = alien_query.1;
     let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 
     let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
 
-    let bullet = Bullet {
-        direction: unit_direction,
-    };
-
     let rotation = Quat::from_rotation_z(angle + PI / 2.);
+
+    let alien_ammo = alien.weapon.ammo.clone();
+    let ammo = Ammo {
+        color: alien_ammo.color,
+        mesh: alien_ammo.mesh,
+        direction: unit_direction,
+        damage: AMMO_DAMAGE,
+    };
 
     commands.spawn((
         MaterialMesh2dBundle {
-            mesh: shape,
-            material: materials.add(color),
+            mesh: ammo.mesh.clone(),
+            material: materials.add(ammo.color.clone()),
             transform: Transform {
                 translation: Vec3::new(position.x + 10., position.y, 1.),
                 scale: Vec3::new(1., 1., 1.),
@@ -367,7 +381,7 @@ fn spawn_bullet(
             },
             ..default()
         },
-        bullet,
+        ammo,
         GAME_LAYER,
     ));
 }
@@ -428,28 +442,50 @@ struct AlienBundle {
 impl AlienBundle {
     fn idle(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+        meshes: ResMut<Assets<Mesh>>,
         sprites: &Sprites,
     ) -> Self {
-        Self::_util(texture_atlas_layout, sprites.alien_char_idle.clone())
+        Self::_util(
+            texture_atlas_layout,
+            meshes,
+            sprites.alien_char_idle.clone(),
+        )
     }
 
     fn walking(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+        meshes: ResMut<Assets<Mesh>>,
         sprites: &Sprites,
     ) -> Self {
-        Self::_util(texture_atlas_layout, sprites.alien_char_walking.clone())
+        Self::_util(
+            texture_atlas_layout,
+            meshes,
+            sprites.alien_char_walking.clone(),
+        )
     }
 
     fn _util(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-
+        mut meshes: ResMut<Assets<Mesh>>,
         alien_sprite: SpriteInfo,
     ) -> Self {
         let alien_animation = alien_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(alien_sprite.layout);
 
+        let mesh = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
+        let color = Color::BLACK;
+        let ammo = Ammo {
+            mesh,
+            color,
+            direction: Vec2::splat(0.0),
+            damage: AMMO_DAMAGE,
+        };
+
         AlienBundle {
-            marker: Alien,
+            marker: Alien {
+                health: 100.,
+                weapon: Weapon { ammo },
+            },
             sprite: SpriteBundle {
                 texture: alien_sprite.source.clone(),
                 transform: Transform {
@@ -478,8 +514,9 @@ fn setup_alien_sprite(
     commands: &mut Commands,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites,
+    meshes: ResMut<Assets<Mesh>>,
 ) {
-    let alien = AlienBundle::idle(texture_atlas_layout, sprites);
+    let alien = AlienBundle::idle(texture_atlas_layout, meshes, sprites);
     commands.spawn(alien);
 }
 
@@ -596,24 +633,46 @@ fn move_char(
     char_transform.translation.y = char_new_pos_y;
 }
 
-fn check_for_collisions(
+fn check_for_ammo_colliding_with_enemy(
     mut commands: Commands,
-    bullets: Query<(Entity, &Transform), With<Bullet>>,
-    enemies: Query<(Entity, &Transform), With<Enemy>>,
+    ammos: Query<(Entity, &Transform, &Ammo), (With<Ammo>, Without<Alien>)>,
+    mut enemies: Query<(Entity, &Transform, &mut Enemy), With<Enemy>>,
 ) {
     let capsule_collider = Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);
 
-    for (enemy_entity, enemy_transform) in enemies.iter() {
+    for (enemy_entity, enemy_transform, mut enemy) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(enemy_transform.translation.truncate(), capsule_collider);
-        for (bullet_entity, bullet_transform) in bullets.iter() {
-            let bullet_collider =
-                Aabb2d::new(bullet_transform.translation.truncate(), capsule_collider);
+        for (ammo_entity, ammo_transform, ammo) in ammos.iter() {
+            let ammo_collider =
+                Aabb2d::new(ammo_transform.translation.truncate(), capsule_collider);
 
-            if bullet_collider.intersects(&enemy_collider) {
-                commands.entity(bullet_entity).despawn();
-                commands.entity(enemy_entity).despawn();
+            if ammo_collider.intersects(&enemy_collider) {
+                damage_enemy(
+                    &mut commands,
+                    ammo_entity,
+                    enemy_entity,
+                    &mut enemy,
+                    ammo.damage,
+                );
                 continue;
             }
         }
+    }
+}
+
+fn damage_enemy(
+    commands: &mut Commands,
+    ammo_entity: Entity,
+    enemy_entity: Entity,
+    enemy: &mut Enemy,
+    damage: f32,
+) {
+    enemy.health -= damage;
+
+    // Always despawns ammo
+    commands.entity(ammo_entity).despawn();
+
+    if enemy.health <= 0. {
+        commands.entity(enemy_entity).despawn();
     }
 }
