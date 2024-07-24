@@ -71,11 +71,29 @@ fn on_bullets_shot(
     spawn_bullet(commands, meshes, materials, x, y, alien);
 }
 
-fn move_bullets(mut bullets: Query<(&mut Transform, &mut Bullet)>, timer: Res<Time>) {
-    for (mut transform, bullet) in &mut bullets {
-        transform.translation.x += bullet.direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
-        transform.translation.y -= bullet.direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
-        // transform.rotate_z(bullet.angle);
+fn move_bullets(
+    mut commands: Commands,
+    mut bullets: Query<(Entity, &mut Transform, &mut Bullet)>,
+    timer: Res<Time>,
+) {
+    for (entity, mut transform, bullet) in &mut bullets {
+        let new_translation_x =
+            transform.translation.x + bullet.direction.x * ALIEN_MOVE_SPEED * timer.delta_seconds();
+        let new_translation_y =
+            transform.translation.y - bullet.direction.y * ALIEN_MOVE_SPEED * timer.delta_seconds();
+
+        let off_screen_x = !(-WINDOW_RESOLUTION.x_px / 2.0..=WINDOW_RESOLUTION.x_px / 2.0)
+            .contains(&new_translation_x);
+        let off_screen_y = !(-WINDOW_RESOLUTION.y_px / 2.0..=WINDOW_RESOLUTION.y_px / 2.0)
+            .contains(&new_translation_y);
+
+        if off_screen_x || off_screen_y {
+            commands.entity(entity).despawn();
+            return;
+        }
+
+        transform.translation.x = new_translation_x;
+        transform.translation.y = new_translation_y;
     }
 }
 
@@ -272,8 +290,8 @@ impl Enemy {
     fn random(rand: &mut ChaCha8Rng) -> Self {
         Enemy {
             pos: Vec2::new(
-                (rand.gen::<f32>() - 0.5) * 1200.0,
-                (rand.gen::<f32>() - 0.5) * 600.0,
+                (rand.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.x_px,
+                (rand.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.y_px,
             ),
         }
     }

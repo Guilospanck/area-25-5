@@ -1,6 +1,8 @@
 Todo:
 
 - Despawn bullets when offscreen
+- Limit spawn of bullets to not be too close
+- Limit movement of player off-screen
 - Create HP bars for the player and for some boss at some point
 - Diminish its health when some enemy hits or attacks him
 - Create the concept of enemies throwing magic or bullets as well
