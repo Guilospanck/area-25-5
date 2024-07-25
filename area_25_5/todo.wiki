@@ -6,8 +6,8 @@ Todo:
 - [x] Diminish its health when some enemy hits or attacks him
 - [x] Show in the UI some indicator of the health of Alien
 - [x] Limit movement of player off-screen
-- [ ] Create different stats for the alien (speed, armor, mana whatever)
-- [ ] Spawn potions that will change some characteristic of the player, like HP, armor, size, speed, power
+- [x] Create different stats for the alien (speed, armor, mana whatever)
+- [x] Spawn potions that will change some characteristic of the player, like HP, armor, size, speed, power
 
 - Limit spawn of bullets to not be too close
 - Create the concept of enemies throwing magic or bullets as well

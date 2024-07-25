@@ -93,16 +93,16 @@ pub fn handle_click(
 
 pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut transform: Query<&mut Transform, With<Alien>>,
+    mut alien_query: Query<(&mut Transform, &Alien), With<Alien>>,
     time: Res<Time>,
 ) {
     let mut direction_x = 0.;
     let mut direction_y = 0.;
 
-    if transform.get_single_mut().is_err() {
+    if alien_query.get_single_mut().is_err() {
         return;
     }
-    let mut char_transform = transform.get_single_mut().unwrap();
+    let (mut char_transform, alien) = alien_query.get_single_mut().unwrap();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {
@@ -126,8 +126,8 @@ pub fn move_char(
     let old_pos_x = char_transform.translation.x;
     let old_pos_y = char_transform.translation.y;
 
-    let char_new_pos_x = old_pos_x + direction_x * ALIEN_MOVE_SPEED * time.delta_seconds();
-    let char_new_pos_y = old_pos_y + direction_y * ALIEN_MOVE_SPEED * time.delta_seconds();
+    let char_new_pos_x = old_pos_x + direction_x * alien.speed * time.delta_seconds();
+    let char_new_pos_y = old_pos_y + direction_y * alien.speed * time.delta_seconds();
 
     let off_screen_x = !((-WINDOW_RESOLUTION.x_px + 20.) / 2.0
         ..=(WINDOW_RESOLUTION.x_px - 20.) / 2.0)

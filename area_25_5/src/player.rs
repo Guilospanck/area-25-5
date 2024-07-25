@@ -1,5 +1,6 @@
 use crate::{
     animation::*,
+    config,
     prelude::*,
     sprites::{SpriteInfo, Sprites},
     weapon::{Ammo, Weapon},
@@ -10,6 +11,8 @@ use bevy::sprite::Mesh2dHandle;
 pub struct Alien {
     pub weapon: Weapon,
     pub health: f32,
+    pub speed: f32,
+    pub armor: f32,
 }
 
 #[derive(Bundle, Clone)]
@@ -66,8 +69,10 @@ impl AlienBundle {
 
         AlienBundle {
             marker: Alien {
-                health: 100000000.,
+                health: ALIEN_HEALTH,
                 weapon: Weapon { ammo },
+                speed: ALIEN_MOVE_SPEED,
+                armor: ALIEN_ARMOR,
             },
             sprite: SpriteBundle {
                 texture: alien_sprite.source.clone(),

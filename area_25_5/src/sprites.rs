@@ -2,6 +2,7 @@ use crate::{
     animation::{AnimationIndices, AnimationInfo, AnimationTimer},
     player::AlienBundle,
     prelude::*,
+    AlienSpawned,
 };
 
 #[derive(Clone, Debug)]
@@ -59,6 +60,7 @@ fn setup_alien_sprite(
 ) {
     let alien = AlienBundle::idle(texture_atlas_layout, meshes, sprites);
     commands.spawn(alien);
+    commands.trigger(AlienSpawned);
 }
 
 fn setup_tile_sprite(

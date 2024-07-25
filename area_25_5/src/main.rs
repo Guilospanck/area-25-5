@@ -21,14 +21,21 @@ fn main() {
             Wireframe2dPlugin,
         ))
         .insert_resource(Msaa::Off)
-        .add_systems(Startup, (setup_camera, setup_sprite, spawn_enemy))
+        .add_systems(Startup, (setup_camera, setup_sprite, setup_ui))
+        .add_systems(Startup, spawn_enemy)
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
         .add_systems(Update, (move_ammo, move_enemies_towards_alien))
         .add_systems(
             Update,
-            (check_for_ammo_collisions, check_for_alien_collisions),
+            (
+                check_for_ammo_collisions,
+                check_for_alien_collisions_to_enemy,
+                check_for_item_collisions,
+            ),
         )
         .observe(on_mouse_click)
         .observe(on_alien_health_changed)
+        .observe(on_alien_speed_changed)
+        .observe(on_alien_spawned)
         .run();
 }
