@@ -10,7 +10,7 @@ pub(crate) const ALIEN_ARMOR: f32 = 100.0;
 pub(crate) const ALIEN_HEALTH: f32 = 10000.;
 
 pub(crate) const ENEMY_MOVE_SPEED: f32 = 100.0;
-pub(crate) const ENEMY_DAMAGE: f32 = 20.0;
+pub(crate) const ENEMY_DAMAGE: f32 = 10.0;
 pub(crate) const ENEMY_HEALTH: f32 = 100.0;
 
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
@@ -33,3 +33,6 @@ pub const WINDOW_RESOLUTION: CustomWindowResolution = CustomWindowResolution {
 
 pub const CAPSULE_COLLIDER: Vec2 =
     Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);
+
+pub const NUMBER_OF_WAVES: usize = 5;
+pub const WAVES: [u32; NUMBER_OF_WAVES] = [5, 10, 15, 20, 25];

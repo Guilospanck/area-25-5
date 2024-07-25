@@ -8,11 +8,12 @@ Todo:
 - [x] Limit movement of player off-screen
 - [x] Create different stats for the alien (speed, armor, mana whatever)
 - [x] Spawn potions that will change some characteristic of the player, like HP, armor, size, speed, power
+- [x] Create waves
+- [ ] Show current wave
 
 - Limit spawn of bullets to not be too close
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
-- Create waves
 - Spawn different enemies
 - Spawn weapons 
 - HP bar for some boss at some point

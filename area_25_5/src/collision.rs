@@ -5,6 +5,7 @@ use crate::{
     player::Alien,
     prelude::*,
     weapon::Ammo,
+    AllEnemiesDied,
 };
 
 pub fn check_for_ammo_collisions(
@@ -12,6 +13,12 @@ pub fn check_for_ammo_collisions(
     ammos: Query<(Entity, &Transform, &Ammo), (With<Ammo>, Without<Alien>)>,
     mut enemies: Query<(Entity, &Transform, &mut Enemy), With<Enemy>>,
 ) {
+    let number_of_enemies = enemies.iter().len();
+    if number_of_enemies == 0 {
+        commands.trigger(AllEnemiesDied);
+        return;
+    }
+
     for (enemy_entity, enemy_transform, mut enemy) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(enemy_transform.translation.truncate(), CAPSULE_COLLIDER);
 

@@ -24,15 +24,16 @@ impl Enemy {
 }
 
 pub fn spawn_enemy(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    enemies_number: u32,
 ) {
     let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
     let color = Color::srgb(255., 255., 255.);
     let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
 
-    for _ in 1..=50 {
+    for _ in 1..=enemies_number {
         let enemy = Enemy::random(&mut rng);
         commands.spawn((
             MaterialMesh2dBundle {

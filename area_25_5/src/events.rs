@@ -1,5 +1,6 @@
 use crate::{
-    game_actions::shoot, player::Alien, prelude::*, spawn_item, ui::AlienHealthBar, AlienSpeedBar,
+    game_actions::shoot, player::Alien, prelude::*, spawn_enemy, spawn_item, ui::AlienHealthBar,
+    AlienSpeedBar, CurrentWave, Waves,
 };
 
 #[derive(Event)]
@@ -19,6 +20,9 @@ pub struct AlienSpeedChanged {
 
 #[derive(Event)]
 pub struct AlienSpawned;
+
+#[derive(Event)]
+pub struct AllEnemiesDied;
 
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
@@ -58,15 +62,39 @@ pub fn on_alien_speed_changed(
 
 pub fn on_alien_spawned(
     _trigger: Trigger<AlienSpawned>,
-    commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    spawn_enemy(&mut commands, &mut meshes, &mut materials, 10);
     spawn_item(
         commands,
         meshes,
         materials,
         crate::ItemStatsType::Speed,
         ITEM_SPEED_VALUE,
+    );
+}
+
+pub fn on_all_enemies_died(
+    _trigger: Trigger<AllEnemiesDied>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut current_wave: ResMut<CurrentWave>,
+    waves: Res<Waves>,
+) {
+    let new_wave = current_wave.0 + 1;
+    if new_wave as usize >= NUMBER_OF_WAVES {
+        return;
+    }
+
+    current_wave.0 += 1;
+    let number_of_enemies_to_be_spawned: u32 = waves.info[current_wave.0 as usize];
+    spawn_enemy(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        number_of_enemies_to_be_spawned,
     );
 }
