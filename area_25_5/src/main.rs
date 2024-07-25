@@ -23,7 +23,7 @@ fn main() {
         .insert_resource(Msaa::Off)
         .add_systems(
             Startup,
-            (setup_camera, setup_sprite, setup_ui, setup_resources),
+            (setup_resources, setup_camera, setup_sprite, setup_ui).chain(),
         )
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
         .add_systems(Update, (move_ammo, move_enemies_towards_alien))

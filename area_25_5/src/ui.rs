@@ -8,6 +8,9 @@ pub struct AlienHealthBar;
 #[derive(Component)]
 pub struct AlienSpeedBar;
 
+#[derive(Component)]
+pub struct CurrentWaveUI;
+
 fn health_points_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
@@ -73,7 +76,42 @@ fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         GAME_LAYER,
     ));
 }
+
+fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 30.0,
+        ..default()
+    };
+
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![TextSection::new(
+                    "Current wave: 1",
+                    TextStyle {
+                        color: Color::Srgba(YELLOW),
+                        ..text_style.clone()
+                    },
+                )],
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(
+                -WINDOW_RESOLUTION.x_px / 2. + 100.,
+                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                10.0,
+            )),
+            text_anchor: Anchor::TopCenter,
+            ..default()
+        },
+        CurrentWaveUI,
+        GAME_LAYER,
+    ));
+}
+
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     health_points_bar(&mut commands, &asset_server);
     speed_bar(&mut commands, &asset_server);
+    current_wave(&mut commands, &asset_server);
 }

@@ -1,6 +1,8 @@
+use bevy::log::tracing_subscriber::fmt::format;
+
 use crate::{
     game_actions::shoot, player::Alien, prelude::*, spawn_enemy, spawn_item, ui::AlienHealthBar,
-    AlienSpeedBar, CurrentWave, Waves,
+    AlienSpeedBar, CurrentWave, CurrentWaveUI, Waves,
 };
 
 #[derive(Event)]
@@ -65,8 +67,16 @@ pub fn on_alien_spawned(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    current_wave: Res<CurrentWave>,
+    waves: Res<Waves>,
 ) {
-    spawn_enemy(&mut commands, &mut meshes, &mut materials, 10);
+    let number_of_enemies_to_be_spawned: u32 = waves.info[current_wave.0 as usize - 1];
+    spawn_enemy(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        number_of_enemies_to_be_spawned,
+    );
     spawn_item(
         commands,
         meshes,
@@ -83,18 +93,24 @@ pub fn on_all_enemies_died(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut current_wave: ResMut<CurrentWave>,
     waves: Res<Waves>,
+    mut current_wave_ui: Query<&mut Text, With<CurrentWaveUI>>,
 ) {
     let new_wave = current_wave.0 + 1;
-    if new_wave as usize >= NUMBER_OF_WAVES {
+    if new_wave as usize > NUMBER_OF_WAVES {
         return;
     }
 
-    current_wave.0 += 1;
-    let number_of_enemies_to_be_spawned: u32 = waves.info[current_wave.0 as usize];
+    current_wave.0 = new_wave;
+    let number_of_enemies_to_be_spawned: u32 = waves.info[current_wave.0 as usize - 1];
     spawn_enemy(
         &mut commands,
         &mut meshes,
         &mut materials,
         number_of_enemies_to_be_spawned,
     );
+
+    // Update UI
+    if let Ok(mut text) = current_wave_ui.get_single_mut() {
+        text.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
+    }
 }
