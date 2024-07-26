@@ -16,6 +16,8 @@ pub(crate) const ALIEN_HEALTH: f32 = 10000.;
 pub(crate) const ENEMY_MOVE_SPEED: f32 = 100.0;
 pub(crate) const ENEMY_DAMAGE: f32 = 10.0;
 pub(crate) const ENEMY_HEALTH: f32 = 100.0;
+pub(crate) const ENEMY_COLLISION_BOX_WIDTH: f32 = 19.;
+pub(crate) const ENEMY_COLLISION_BOX_HEIGHT: f32 = 32.;
 
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
 pub(crate) const AMMO_DAMAGE: f32 = 50.0;

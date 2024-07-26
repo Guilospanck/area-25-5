@@ -57,7 +57,7 @@ impl EnemyBundle {
         EnemyBundle {
             marker: enemy.clone(),
             sprite: SpriteBundle {
-                texture: asset_server.load(enemy_sprite.source.clone()),
+                texture: asset_server.load(enemy_sprite.source),
                 transform: Transform {
                     rotation: Quat::default(),
                     translation: Vec3::new(enemy.pos.x, enemy.pos.y, 1.0),

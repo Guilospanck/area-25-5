@@ -20,7 +20,13 @@ pub fn check_for_ammo_collisions(
     }
 
     for (enemy_entity, enemy_transform, mut enemy) in enemies.iter_mut() {
-        let enemy_collider = Aabb2d::new(enemy_transform.translation.truncate(), CAPSULE_COLLIDER);
+        let enemy_collider = Aabb2d::new(
+            enemy_transform.translation.truncate(),
+            Vec2::new(
+                ENEMY_COLLISION_BOX_WIDTH / 2.,
+                ENEMY_COLLISION_BOX_HEIGHT / 2.,
+            ),
+        );
 
         for (ammo_entity, ammo_transform, ammo) in ammos.iter() {
             let ammo_collider =
@@ -46,7 +52,13 @@ pub fn check_for_alien_collisions_to_enemy(
     mut alien: Query<(Entity, &Transform, &mut Alien)>,
 ) {
     for (enemy_transform, enemy) in enemies.iter_mut() {
-        let enemy_collider = Aabb2d::new(enemy_transform.translation.truncate(), CAPSULE_COLLIDER);
+        let enemy_collider = Aabb2d::new(
+            enemy_transform.translation.truncate(),
+            Vec2::new(
+                ENEMY_COLLISION_BOX_WIDTH / 2.,
+                ENEMY_COLLISION_BOX_HEIGHT / 2.,
+            ),
+        );
 
         if let Ok(result) = alien.get_single_mut() {
             let (alien_entity, alien_transform, mut alien) = result;
