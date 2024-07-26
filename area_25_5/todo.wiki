@@ -12,7 +12,6 @@ Todo:
 - [x] Show current wave
 - [x] Spawn weapons 
 
-- Limit spawn of bullets to not be too close
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
 - Spawn different enemies
@@ -25,3 +24,4 @@ Latest:
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
+- Limit spawn of bullets to not be too close

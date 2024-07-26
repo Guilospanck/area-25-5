@@ -28,31 +28,36 @@ impl AlienBundle {
     pub(crate) fn idle(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         meshes: ResMut<Assets<Mesh>>,
-        sprites: &Sprites,
+        sprites: &Sprites<'static>,
+        asset_server: &Res<AssetServer>,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
             meshes,
             sprites.alien_char_idle.clone(),
+            asset_server,
         )
     }
 
     pub(crate) fn walking(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         meshes: ResMut<Assets<Mesh>>,
-        sprites: &Sprites,
+        sprites: &Sprites<'static>,
+        asset_server: &Res<AssetServer>,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
             meshes,
             sprites.alien_char_walking.clone(),
+            asset_server,
         )
     }
 
     fn _util(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         mut meshes: ResMut<Assets<Mesh>>,
-        alien_sprite: SpriteInfo,
+        alien_sprite: SpriteInfo<'static>,
+        asset_server: &Res<AssetServer>,
     ) -> Self {
         let alien_animation = alien_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(alien_sprite.layout);
@@ -79,7 +84,7 @@ impl AlienBundle {
                 armor: ALIEN_ARMOR,
             },
             sprite: SpriteBundle {
-                texture: alien_sprite.source.clone(),
+                texture: asset_server.load(alien_sprite.source.clone()),
                 transform: Transform {
                     rotation: Quat::default(),
                     translation: pos,

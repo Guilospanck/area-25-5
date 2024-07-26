@@ -1,6 +1,7 @@
 use crate::{
     game_actions::shoot, player::Alien, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
-    ui::AlienHealthBar, AlienSpeedBar, CurrentWave, CurrentWaveUI, EnemyWaves, WeaponWaves,
+    ui::AlienHealthBar, AlienSpeedBar, CurrentWave, CurrentWaveUI, EnemyWaves, SpritesResources,
+    WeaponWaves,
 };
 
 #[derive(Event)]
@@ -68,6 +69,9 @@ pub fn on_alien_spawned(
     current_wave: Res<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    asset_server: Res<AssetServer>,
 ) {
     let current_wave_enemy = enemy_waves
         .0
@@ -78,7 +82,13 @@ pub fn on_alien_spawned(
         return;
     }
     let enemy_by_level = current_wave_enemy.unwrap();
-    spawn_enemy(&mut commands, &mut meshes, &mut materials, enemy_by_level);
+    spawn_enemy(
+        &mut commands,
+        &asset_server,
+        &sprites,
+        &mut texture_atlas_layout,
+        enemy_by_level,
+    );
 
     let current_wave_weapon = weapon_waves
         .0
@@ -109,6 +119,9 @@ pub fn on_all_enemies_died(
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
     mut current_wave_ui: Query<&mut Text, With<CurrentWaveUI>>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    asset_server: Res<AssetServer>,
 ) {
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
@@ -127,7 +140,13 @@ pub fn on_all_enemies_died(
         return;
     }
     let enemy_by_level = current_wave_enemy.unwrap();
-    spawn_enemy(&mut commands, &mut meshes, &mut materials, enemy_by_level);
+    spawn_enemy(
+        &mut commands,
+        &asset_server,
+        &sprites,
+        &mut texture_atlas_layout,
+        enemy_by_level,
+    );
 
     // Spawn more different weapons
     let current_wave_weapon = weapon_waves

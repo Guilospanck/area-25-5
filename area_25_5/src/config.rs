@@ -14,7 +14,7 @@ pub(crate) const ALIEN_ARMOR: f32 = 100.0;
 pub(crate) const ALIEN_HEALTH: f32 = 10000.;
 
 pub(crate) const ENEMY_MOVE_SPEED: f32 = 100.0;
-// pub(crate) const ENEMY_DAMAGE: f32 = 10.0;
+pub(crate) const ENEMY_DAMAGE: f32 = 10.0;
 pub(crate) const ENEMY_HEALTH: f32 = 100.0;
 
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
@@ -40,30 +40,40 @@ pub const CAPSULE_COLLIDER: Vec2 =
 
 pub const NUMBER_OF_WAVES: usize = 5;
 
+pub enum EnemyClassEnum {
+    Orc,
+}
+
 pub struct EnemyType {
     pub damage: f32,
     pub scale: Vec3,
+    pub class: EnemyClassEnum,
 }
 
 const ENEMY_LVL_1: EnemyType = EnemyType {
     damage: 5.0,
     scale: Vec3::splat(1.0),
+    class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_2: EnemyType = EnemyType {
     damage: 10.0,
     scale: Vec3::new(1.2, 1.2, 1.0),
+    class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_3: EnemyType = EnemyType {
     damage: 15.0,
     scale: Vec3::new(1.4, 1.4, 1.0),
+    class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_4: EnemyType = EnemyType {
     damage: 20.0,
     scale: Vec3::new(1.6, 1.6, 1.0),
+    class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_5: EnemyType = EnemyType {
     damage: 25.0,
     scale: Vec3::new(1.8, 1.8, 1.0),
+    class: EnemyClassEnum::Orc,
 };
 
 pub struct EnemyByLevel {
