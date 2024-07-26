@@ -1,15 +1,16 @@
-use crate::player::Alien;
 use crate::prelude::*;
-use bevy::sprite::MaterialMesh2dBundle;
-use bevy::sprite::Mesh2dHandle;
+use crate::AnimationIndices;
+use crate::AnimationTimer;
+use crate::SpriteInfo;
+use crate::Sprites;
+use crate::SpritesResources;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
 #[derive(Component, Debug, Clone)]
 pub struct Ammo {
     pub direction: Vec2,
-    pub mesh: Mesh2dHandle,
-    pub color: Color,
+    pub source: String,
     pub damage: f32,
 }
 
@@ -17,10 +18,11 @@ pub struct Ammo {
 pub struct Weapon {
     pub ammo: Ammo,
     pub pos: Vec3,
+    pub source: String,
 }
 
 impl Weapon {
-    fn random(rand: &mut ChaCha8Rng, ammo: Ammo) -> Self {
+    fn random(rand: &mut ChaCha8Rng, ammo: Ammo, source: String) -> Self {
         Weapon {
             pos: Vec3::new(
                 (rand.gen::<f32>() - 0.5) * (WINDOW_RESOLUTION.x_px - 100.0),
@@ -28,49 +30,110 @@ impl Weapon {
                 CHAR_Z_INDEX,
             ),
             ammo,
+            source,
+        }
+    }
+}
+
+#[derive(Bundle, Clone)]
+pub(crate) struct WeaponBundle {
+    pub(crate) marker: Weapon,
+    pub(crate) weapon_sprite: SpriteBundle,
+    // pub(crate) ammo_sprite: SpriteBundle,
+    pub(crate) atlas: TextureAtlas,
+    pub(crate) animation_indices: AnimationIndices,
+    pub(crate) animation_timer: AnimationTimer,
+    pub(crate) layer: RenderLayers,
+}
+
+impl WeaponBundle {
+    pub(crate) fn new(
+        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+        sprites: &Sprites<'static>,
+        asset_server: &Res<AssetServer>,
+        weapon: Weapon,
+    ) -> Self {
+        Self::_util(
+            texture_atlas_layout,
+            sprites.bow.clone(),
+            sprites.arrow.clone(),
+            asset_server,
+            weapon,
+        )
+    }
+
+    fn _util(
+        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+        weapon_sprite: SpriteInfo<'static>,
+        ammo_sprite: SpriteInfo<'static>,
+        asset_server: &Res<AssetServer>,
+        weapon: Weapon,
+    ) -> Self {
+        let weapon_animation = weapon_sprite.animation.unwrap();
+        let texture_atlas_layout = texture_atlas_layout.add(weapon_sprite.layout);
+
+        WeaponBundle {
+            marker: weapon.clone(),
+            weapon_sprite: SpriteBundle {
+                texture: asset_server.load(weapon_sprite.source),
+                transform: Transform {
+                    rotation: Quat::default(),
+                    translation: weapon.pos,
+                    scale: Vec3::new(1., 1., 1.),
+                },
+                ..default()
+            },
+            // ammo_sprite: SpriteBundle {
+            //     texture: asset_server.load(ammo_sprite.source),
+            //     transform: Transform {
+            //         rotation: Quat::default(),
+            //         translation: weapon.pos,
+            //         scale: Vec3::new(1., 1., 1.),
+            //     },
+            //     ..default()
+            // },
+            atlas: TextureAtlas {
+                layout: texture_atlas_layout,
+                index: weapon_animation.indices.first,
+            },
+            animation_indices: weapon_animation.indices,
+            animation_timer: weapon_animation.timer,
+            layer: GAME_LAYER,
         }
     }
 }
 
 pub fn spawn_weapon(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
     weapon_by_level: &WeaponByLevel,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    sprites: Res<SpritesResources>,
+    asset_server: Res<AssetServer>,
 ) {
-    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
     let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
-    let color = weapon_by_level.weapon.color;
+
+    let weapon_source = weapon_by_level.weapon.source;
+    let ammo_source = weapon_by_level.weapon.ammo_source;
+    let ammo_damage = weapon_by_level.weapon.damage;
 
     let ammo = Ammo {
-        color,
-        mesh: shape.clone(),
-        damage: weapon_by_level.weapon.damage,
-        direction: Vec2::splat(0.),
+        source: ammo_source.to_string(),
+        direction: Vec2::splat(0.0),
+        damage: ammo_damage,
     };
 
     for _ in 1..=weapon_by_level.quantity {
-        let weapon = Weapon::random(&mut rng, ammo.clone());
-        commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: shape.clone(),
-                material: materials.add(color),
-                transform: Transform {
-                    translation: Vec3::new(weapon.pos.x, weapon.pos.y, 1.),
-                    scale: Vec3::new(1., 1., 1.),
-                    rotation: Quat::default(),
-                },
-                ..default()
-            },
-            weapon,
-            GAME_LAYER,
-        ));
+        let weapon = Weapon::random(&mut rng, ammo.clone(), weapon_source.to_string());
+        let bundle =
+            WeaponBundle::new(&mut texture_atlas_layout, &sprites.0, &asset_server, weapon);
+
+        commands.spawn(bundle);
     }
 }
 
 pub fn move_ammo(
     mut commands: Commands,
-    mut ammos: Query<(Entity, &mut Transform, &mut Ammo), Without<Alien>>,
+    mut ammos: Query<(Entity, &mut Transform, &mut Ammo), Without<Weapon>>,
     timer: Res<Time>,
 ) {
     for (entity, mut transform, ammo) in &mut ammos {

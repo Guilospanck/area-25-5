@@ -4,7 +4,6 @@ use crate::{
     sprites::{SpriteInfo, Sprites},
     weapon::{Ammo, Weapon},
 };
-use bevy::sprite::Mesh2dHandle;
 
 #[derive(Component, Debug, Clone)]
 pub struct Alien {
@@ -27,46 +26,44 @@ pub(crate) struct AlienBundle {
 impl AlienBundle {
     pub(crate) fn idle(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-        meshes: ResMut<Assets<Mesh>>,
         sprites: &Sprites<'static>,
         asset_server: &Res<AssetServer>,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
-            meshes,
             sprites.alien_char_idle.clone(),
+            sprites.bow.clone(),
+            sprites.arrow.clone(),
             asset_server,
         )
     }
 
     pub(crate) fn walking(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-        meshes: ResMut<Assets<Mesh>>,
         sprites: &Sprites<'static>,
         asset_server: &Res<AssetServer>,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
-            meshes,
             sprites.alien_char_walking.clone(),
+            sprites.bow.clone(),
+            sprites.arrow.clone(),
             asset_server,
         )
     }
 
     fn _util(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-        mut meshes: ResMut<Assets<Mesh>>,
         alien_sprite: SpriteInfo<'static>,
+        weapon_sprite: SpriteInfo<'static>,
+        ammo_sprite: SpriteInfo<'static>,
         asset_server: &Res<AssetServer>,
     ) -> Self {
         let alien_animation = alien_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(alien_sprite.layout);
 
-        let mesh = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
-        let color = Color::BLACK;
         let ammo = Ammo {
-            mesh,
-            color,
+            source: ammo_sprite.source.to_string(),
             direction: Vec2::splat(0.0),
             damage: AMMO_DAMAGE,
         };
@@ -79,12 +76,16 @@ impl AlienBundle {
         AlienBundle {
             marker: Alien {
                 health: ALIEN_HEALTH,
-                weapon: Weapon { ammo, pos },
+                weapon: Weapon {
+                    ammo,
+                    pos,
+                    source: weapon_sprite.source.to_string(),
+                },
                 speed: ALIEN_MOVE_SPEED,
                 armor: ALIEN_ARMOR,
             },
             sprite: SpriteBundle {
-                texture: asset_server.load(alien_sprite.source.clone()),
+                texture: asset_server.load(alien_sprite.source),
                 transform: Transform {
                     rotation: Quat::default(),
                     translation: pos,

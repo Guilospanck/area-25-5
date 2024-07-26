@@ -1,30 +1,32 @@
 use crate::{
-    animation::AnimationInfo, player::AlienBundle, prelude::*, AlienSpawned, Enemy, EnemyBundle,
-    SpritesResources,
+    animation::AnimationInfo, get_sprites, player::AlienBundle, prelude::*, AlienSpawned,
+    AnimationIndices, AnimationTimer, Enemy, EnemyBundle, SpritesResources,
 };
 
 #[derive(Clone, Debug)]
-pub(crate) struct RectangularDimensions {
-    pub(crate) width: u32,
-    pub(crate) height: u32,
+pub struct RectangularDimensions {
+    pub width: u32,
+    pub height: u32,
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct SpriteInfo<'a> {
-    pub(crate) dimensions: RectangularDimensions,
-    pub(crate) source: &'a str,
-    pub(crate) animation: Option<AnimationInfo>,
-    pub(crate) layout: TextureAtlasLayout,
+pub struct SpriteInfo<'a> {
+    pub dimensions: RectangularDimensions,
+    pub source: &'a str,
+    pub animation: Option<AnimationInfo>,
+    pub layout: TextureAtlasLayout,
 }
 
 #[derive(Component, Debug, Clone)]
-pub(crate) struct Sprites<'a> {
-    pub(crate) alien_tile: SpriteInfo<'a>,
-    pub(crate) gamestudio_tileset: SpriteInfo<'a>,
-    pub(crate) alien_char_walking: SpriteInfo<'a>,
-    pub(crate) alien_char_idle: SpriteInfo<'a>,
-    pub(crate) alien_custom_bg: SpriteInfo<'a>,
-    pub(crate) enemy_char_idle: SpriteInfo<'a>,
+pub struct Sprites<'a> {
+    pub alien_tile: SpriteInfo<'a>,
+    pub gamestudio_tileset: SpriteInfo<'a>,
+    pub alien_char_walking: SpriteInfo<'a>,
+    pub alien_char_idle: SpriteInfo<'a>,
+    pub alien_custom_bg: SpriteInfo<'a>,
+    pub enemy_char_idle: SpriteInfo<'a>,
+    pub bow: SpriteInfo<'a>,
+    pub arrow: SpriteInfo<'a>,
 }
 
 #[derive(Component)]
@@ -41,12 +43,9 @@ struct TileBundle {
 pub fn setup_sprite(
     mut commands: Commands,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    meshes: ResMut<Assets<Mesh>>,
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn(sprites.0.clone());
-
     render_background_texture(
         &mut commands,
         &mut texture_atlas_layout,
@@ -56,14 +55,7 @@ pub fn setup_sprite(
     setup_alien_sprite(
         &mut commands,
         &mut texture_atlas_layout,
-        &sprites,
-        meshes,
-        &asset_server,
-    );
-    setup_enemy_sprite(
-        &mut commands,
-        &mut texture_atlas_layout,
-        &sprites,
+        &sprites.0,
         &asset_server,
     );
 }
@@ -71,11 +63,10 @@ pub fn setup_sprite(
 fn setup_alien_sprite(
     commands: &mut Commands,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Res<SpritesResources>,
-    meshes: ResMut<Assets<Mesh>>,
+    sprites: &Sprites<'static>,
     asset_server: &Res<AssetServer>,
 ) {
-    let alien = AlienBundle::idle(texture_atlas_layout, meshes, &sprites.0, asset_server);
+    let alien = AlienBundle::idle(texture_atlas_layout, sprites, asset_server);
     commands.spawn(alien);
     commands.trigger(AlienSpawned);
 }
@@ -93,7 +84,7 @@ fn setup_tile_sprite(
     commands.spawn(TileBundle {
         marker: TileBackground,
         sprite: SpriteBundle {
-            texture: asset_server.load(tile_sprite.source.clone()),
+            texture: asset_server.load(tile_sprite.source),
             transform: Transform {
                 rotation: Quat::default(),
                 translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
@@ -137,19 +128,4 @@ fn render_background_texture(
             );
         }
     }
-}
-
-fn setup_enemy_sprite(
-    commands: &mut Commands,
-    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Res<SpritesResources>,
-    asset_server: &Res<AssetServer>,
-) {
-    let enemy = Enemy {
-        pos: Vec3::splat(1.),
-        health: ENEMY_HEALTH,
-        damage: ENEMY_DAMAGE,
-    };
-    let enemy = EnemyBundle::idle(texture_atlas_layout, &sprites.0, asset_server, enemy);
-    commands.spawn(enemy);
 }

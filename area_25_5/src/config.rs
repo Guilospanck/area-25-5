@@ -111,39 +111,45 @@ pub const ENEMIES_PER_WAVE: [EnemyByLevel; NUMBER_OF_WAVES] = [
     },
 ];
 
-pub struct WeaponType {
+pub struct WeaponType<'a> {
     pub damage: f32,
-    pub color: Color,
+    pub source: &'a str,
+    pub ammo_source: &'a str,
 }
 
 const WEAPON_LVL_1: WeaponType = WeaponType {
     damage: 10.0,
-    color: Color::Srgba(GREEN),
+    source: "textures/Weapon/Bow.png",
+    ammo_source: "textures/Weapon/Arrow.png",
 };
 
 const WEAPON_LVL_2: WeaponType = WeaponType {
     damage: 20.0,
-    color: Color::Srgba(YELLOW),
+    source: "textures/Weapon/Bow.png",
+    ammo_source: "textures/Weapon/Arrow.png",
 };
 
 const WEAPON_LVL_3: WeaponType = WeaponType {
     damage: 30.0,
-    color: Color::Srgba(ORANGE),
+    source: "textures/Weapon/Bow.png",
+    ammo_source: "textures/Weapon/Arrow.png",
 };
 
 const WEAPON_LVL_4: WeaponType = WeaponType {
     damage: 40.0,
-    color: Color::Srgba(VIOLET),
+    source: "textures/Weapon/Bow.png",
+    ammo_source: "textures/Weapon/Arrow.png",
 };
 
 const WEAPON_LVL_5: WeaponType = WeaponType {
     damage: 50.0,
-    color: Color::Srgba(BLUE),
+    source: "textures/Weapon/Bow.png",
+    ammo_source: "textures/Weapon/Arrow.png",
 };
 
-pub struct WeaponByLevel {
+pub struct WeaponByLevel<'a> {
     pub level: usize,
-    pub weapon: WeaponType,
+    pub weapon: WeaponType<'a>,
     pub quantity: u32,
 }
 

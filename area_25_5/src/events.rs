@@ -30,11 +30,12 @@ pub fn on_mouse_click(
     commands: Commands,
     materials: ResMut<Assets<ColorMaterial>>,
     alien: Query<(&Transform, &Alien)>,
+    asset_server: Res<AssetServer>,
 ) {
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
 
-    shoot(commands, materials, x, y, alien);
+    shoot(commands, materials, x, y, alien, asset_server);
 }
 
 pub fn on_alien_health_changed(
@@ -64,8 +65,8 @@ pub fn on_alien_speed_changed(
 pub fn on_alien_spawned(
     _trigger: Trigger<AlienSpawned>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
     current_wave: Res<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
@@ -81,6 +82,7 @@ pub fn on_alien_spawned(
         println!("NO ENEMY MATCHING WAVE FOUND!!!");
         return;
     }
+
     let enemy_by_level = current_wave_enemy.unwrap();
     spawn_enemy(
         &mut commands,
@@ -99,7 +101,13 @@ pub fn on_alien_spawned(
         return;
     }
     let weapon_by_level = current_wave_weapon.unwrap();
-    spawn_weapon(&mut commands, &mut meshes, &mut materials, weapon_by_level);
+    spawn_weapon(
+        &mut commands,
+        weapon_by_level,
+        texture_atlas_layout,
+        sprites,
+        asset_server,
+    );
 
     spawn_item(
         commands,
@@ -158,7 +166,13 @@ pub fn on_all_enemies_died(
         return;
     }
     let weapon_by_level = current_wave_weapon.unwrap();
-    spawn_weapon(&mut commands, &mut meshes, &mut materials, weapon_by_level);
+    spawn_weapon(
+        &mut commands,
+        weapon_by_level,
+        texture_atlas_layout,
+        sprites,
+        asset_server,
+    );
 
     // Update UI
     if let Ok(mut text) = current_wave_ui.get_single_mut() {

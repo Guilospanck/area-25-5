@@ -10,7 +10,7 @@ pub struct CurrentWave(pub u32);
 pub struct EnemyWaves(pub [EnemyByLevel; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
-pub struct WeaponWaves(pub [WeaponByLevel; NUMBER_OF_WAVES]);
+pub struct WeaponWaves(pub [WeaponByLevel<'static>; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
 pub struct SpritesResources(pub Sprites<'static>);
@@ -127,6 +127,36 @@ pub fn get_sprites() -> Sprites<'static> {
                 None,
                 None,
             ),
+        },
+        bow: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Weapon/Bow.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    ALIEN_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
+        },
+        arrow: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Weapon/Arrow.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    ALIEN_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
         },
     }
 }

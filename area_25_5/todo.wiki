@@ -11,6 +11,9 @@ Todo:
 - [x] Create waves
 - [x] Show current wave
 - [x] Spawn weapons 
+- [x] Apply texture to enemy
+- [ ] Apply texture to bullet
+- [ ] Apply texture to weapon
 
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells

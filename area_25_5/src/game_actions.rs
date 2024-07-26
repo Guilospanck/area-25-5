@@ -38,6 +38,7 @@ pub fn shoot(
     x: f32,
     y: f32,
     alien: Query<(&Transform, &Alien)>,
+    asset_server: Res<AssetServer>,
 ) {
     let alien_query = alien.get_single().unwrap();
     let position = Vec2::new(alien_query.0.translation.x, alien_query.0.translation.y);
@@ -50,20 +51,18 @@ pub fn shoot(
 
     let alien_ammo = alien.weapon.ammo.clone();
     let ammo = Ammo {
-        color: alien_ammo.color,
-        mesh: alien_ammo.mesh,
+        source: alien_ammo.source,
         direction: unit_direction,
         damage: AMMO_DAMAGE,
     };
 
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: ammo.mesh.clone(),
-            material: materials.add(ammo.color),
+        SpriteBundle {
+            texture: asset_server.load(alien.weapon.ammo.source.clone()),
             transform: Transform {
-                translation: Vec3::new(position.x + 10., position.y, 1.),
-                scale: Vec3::new(1., 1., 1.),
                 rotation,
+                translation: alien.weapon.pos,
+                scale: Vec3::new(1., 1., 1.),
             },
             ..default()
         },

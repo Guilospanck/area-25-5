@@ -10,9 +10,9 @@ pub struct AnimationIndices {
 }
 
 #[derive(Component, Clone, Debug)]
-pub(crate) struct AnimationInfo {
-    pub(crate) indices: AnimationIndices,
-    pub(crate) timer: AnimationTimer,
+pub struct AnimationInfo {
+    pub indices: AnimationIndices,
+    pub timer: AnimationTimer,
 }
 
 pub fn animate_sprite(
