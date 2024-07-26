@@ -1,6 +1,5 @@
 use crate::{
     animation::*,
-    config,
     prelude::*,
     sprites::{SpriteInfo, Sprites},
     weapon::{Ammo, Weapon},
@@ -66,11 +65,16 @@ impl AlienBundle {
             direction: Vec2::splat(0.0),
             damage: AMMO_DAMAGE,
         };
+        let pos: Vec3 = Vec3::new(
+            -WINDOW_RESOLUTION.x_px / 2. + 50.,
+            WINDOW_RESOLUTION.y_px / 2. - 80.,
+            CHAR_Z_INDEX,
+        );
 
         AlienBundle {
             marker: Alien {
                 health: ALIEN_HEALTH,
-                weapon: Weapon { ammo },
+                weapon: Weapon { ammo, pos },
                 speed: ALIEN_MOVE_SPEED,
                 armor: ALIEN_ARMOR,
             },
@@ -78,11 +82,7 @@ impl AlienBundle {
                 texture: alien_sprite.source.clone(),
                 transform: Transform {
                     rotation: Quat::default(),
-                    translation: Vec3::new(
-                        -WINDOW_RESOLUTION.x_px / 2. + 50.,
-                        WINDOW_RESOLUTION.y_px / 2. - 80.,
-                        CHAR_Z_INDEX,
-                    ),
+                    translation: pos,
                     scale: Vec3::new(2., 2., 1.),
                 },
                 ..default()

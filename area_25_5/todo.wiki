@@ -10,12 +10,12 @@ Todo:
 - [x] Spawn potions that will change some characteristic of the player, like HP, armor, size, speed, power
 - [x] Create waves
 - [x] Show current wave
+- [x] Spawn weapons 
 
 - Limit spawn of bullets to not be too close
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
 - Spawn different enemies
-- Spawn weapons 
 - HP bar for some boss at some point
 - [ ] Create HP bars for the player
 - Add time limit

@@ -33,6 +33,7 @@ fn main() {
                 check_for_ammo_collisions,
                 check_for_alien_collisions_to_enemy,
                 check_for_item_collisions,
+                check_for_weapon_collisions,
             ),
         )
         .observe(on_alien_spawned)

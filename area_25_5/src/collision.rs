@@ -5,7 +5,7 @@ use crate::{
     player::Alien,
     prelude::*,
     weapon::Ammo,
-    AllEnemiesDied,
+    AllEnemiesDied, Weapon,
 };
 
 pub fn check_for_ammo_collisions(
@@ -83,6 +83,30 @@ pub fn check_for_item_collisions(
                     ItemStatsType::Armor => todo!(),
                 }
                 commands.entity(item_entity).despawn();
+            }
+        }
+    }
+}
+
+pub fn check_for_weapon_collisions(
+    mut commands: Commands,
+    mut alien: Query<(&Transform, &mut Alien)>,
+    weapons: Query<(Entity, &Transform, &Weapon)>,
+) {
+    for (weapon_entity, weapon_transform, weapon) in weapons.iter() {
+        let weapon_collider = Aabb2d::new(
+            weapon_transform.translation.truncate(),
+            CAPSULE_COLLIDER + 5.,
+        );
+
+        if let Ok(result) = alien.get_single_mut() {
+            let (alien_transform, mut alien) = result;
+            let alien_collider =
+                Aabb2d::new(alien_transform.translation.truncate(), CAPSULE_COLLIDER);
+
+            if alien_collider.intersects(&weapon_collider) {
+                alien.weapon = weapon.clone();
+                commands.entity(weapon_entity).despawn();
             }
         }
     }

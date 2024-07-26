@@ -1,8 +1,6 @@
-use bevy::log::tracing_subscriber::fmt::format;
-
 use crate::{
-    game_actions::shoot, player::Alien, prelude::*, spawn_enemy, spawn_item, ui::AlienHealthBar,
-    AlienSpeedBar, CurrentWave, CurrentWaveUI, Waves,
+    game_actions::shoot, player::Alien, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
+    ui::AlienHealthBar, AlienSpeedBar, CurrentWave, CurrentWaveUI, EnemyWaves, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -68,15 +66,31 @@ pub fn on_alien_spawned(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     current_wave: Res<CurrentWave>,
-    waves: Res<Waves>,
+    enemy_waves: Res<EnemyWaves>,
+    weapon_waves: Res<WeaponWaves>,
 ) {
-    let number_of_enemies_to_be_spawned: u32 = waves.info[current_wave.0 as usize - 1];
-    spawn_enemy(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        number_of_enemies_to_be_spawned,
-    );
+    let current_wave_enemy = enemy_waves
+        .0
+        .iter()
+        .find(|enemy| enemy.level == current_wave.0 as usize);
+    if current_wave_enemy.is_none() {
+        println!("NO ENEMY MATCHING WAVE FOUND!!!");
+        return;
+    }
+    let enemy_by_level = current_wave_enemy.unwrap();
+    spawn_enemy(&mut commands, &mut meshes, &mut materials, enemy_by_level);
+
+    let current_wave_weapon = weapon_waves
+        .0
+        .iter()
+        .find(|weapon| weapon.level == current_wave.0 as usize);
+    if current_wave_weapon.is_none() {
+        println!("NO WEAPON MATCHING WAVE FOUND!!!");
+        return;
+    }
+    let weapon_by_level = current_wave_weapon.unwrap();
+    spawn_weapon(&mut commands, &mut meshes, &mut materials, weapon_by_level);
+
     spawn_item(
         commands,
         meshes,
@@ -92,22 +106,40 @@ pub fn on_all_enemies_died(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut current_wave: ResMut<CurrentWave>,
-    waves: Res<Waves>,
+    enemy_waves: Res<EnemyWaves>,
+    weapon_waves: Res<WeaponWaves>,
     mut current_wave_ui: Query<&mut Text, With<CurrentWaveUI>>,
 ) {
+    // Update and cap current wave
     let new_wave = current_wave.0 + 1;
     if new_wave as usize > NUMBER_OF_WAVES {
         return;
     }
-
     current_wave.0 = new_wave;
-    let number_of_enemies_to_be_spawned: u32 = waves.info[current_wave.0 as usize - 1];
-    spawn_enemy(
-        &mut commands,
-        &mut meshes,
-        &mut materials,
-        number_of_enemies_to_be_spawned,
-    );
+
+    // Spawn more different enemies
+    let current_wave_enemy = enemy_waves
+        .0
+        .iter()
+        .find(|enemy| enemy.level == current_wave.0 as usize);
+    if current_wave_enemy.is_none() {
+        println!("NO ENEMY MATCHING WAVE FOUND!!!");
+        return;
+    }
+    let enemy_by_level = current_wave_enemy.unwrap();
+    spawn_enemy(&mut commands, &mut meshes, &mut materials, enemy_by_level);
+
+    // Spawn more different weapons
+    let current_wave_weapon = weapon_waves
+        .0
+        .iter()
+        .find(|weapon| weapon.level == current_wave.0 as usize);
+    if current_wave_weapon.is_none() {
+        println!("NO WEAPON MATCHING WAVE FOUND!!!");
+        return;
+    }
+    let weapon_by_level = current_wave_weapon.unwrap();
+    spawn_weapon(&mut commands, &mut meshes, &mut materials, weapon_by_level);
 
     // Update UI
     if let Ok(mut text) = current_wave_ui.get_single_mut() {

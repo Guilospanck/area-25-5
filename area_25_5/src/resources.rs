@@ -4,11 +4,13 @@ use crate::prelude::*;
 pub struct CurrentWave(pub u32);
 
 #[derive(Resource)]
-pub struct Waves {
-    pub info: [u32; NUMBER_OF_WAVES],
-}
+pub struct EnemyWaves(pub [EnemyByLevel; NUMBER_OF_WAVES]);
+
+#[derive(Resource)]
+pub struct WeaponWaves(pub [WeaponByLevel; NUMBER_OF_WAVES]);
 
 pub fn setup_resources(mut commands: Commands) {
     commands.insert_resource(CurrentWave(1));
-    commands.insert_resource(Waves { info: WAVES });
+    commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
+    commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
 }
