@@ -110,7 +110,7 @@ pub fn check_for_item_collisions(
 
 pub fn check_for_weapon_collisions(
     mut commands: Commands,
-    mut player: Query<(&Transform, &mut Weapon), With<Player>>,
+    mut player_query: Query<(Entity, &Transform, &mut Weapon), With<Player>>,
     weapons: Query<(Entity, &Transform, &Weapon), Without<Player>>,
 ) {
     for (weapon_entity, weapon_transform, weapon) in weapons.iter() {
@@ -119,8 +119,14 @@ pub fn check_for_weapon_collisions(
             CAPSULE_COLLIDER + 5.,
         );
 
-        if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player_weapon) = result;
+        if let Ok(result) = player_query.get_single_mut() {
+            let (player_entity, player_transform, mut player_weapon) = result;
+            // if weapon already belongs to player, there's no need to check
+            // for collision
+            if weapons.get(player_entity).is_ok() {
+                continue;
+            }
+
             let player_collider =
                 Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
