@@ -39,7 +39,7 @@ impl EnemyBundle {
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
-            sprites.alien_char_walking.clone(),
+            sprites.player_char_walking.clone(),
             asset_server,
             enemy,
         )

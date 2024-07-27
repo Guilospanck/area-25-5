@@ -6,7 +6,8 @@ use crate::{
 };
 
 #[derive(Component, Debug, Clone)]
-pub struct Alien {
+// pub struct Player;
+pub struct Player {
     pub weapon: Weapon,
     pub health: f32,
     pub speed: f32,
@@ -14,8 +15,8 @@ pub struct Alien {
 }
 
 #[derive(Bundle, Clone)]
-pub(crate) struct AlienBundle {
-    pub(crate) marker: Alien,
+pub(crate) struct PlayerBundle {
+    pub(crate) marker: Player,
     pub(crate) sprite: SpriteBundle,
     pub(crate) atlas: TextureAtlas,
     pub(crate) animation_indices: AnimationIndices,
@@ -23,7 +24,7 @@ pub(crate) struct AlienBundle {
     pub(crate) layer: RenderLayers,
 }
 
-impl AlienBundle {
+impl PlayerBundle {
     pub(crate) fn idle(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         sprites: &Sprites<'static>,
@@ -31,7 +32,7 @@ impl AlienBundle {
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
-            sprites.alien_char_idle.clone(),
+            sprites.player_char_idle.clone(),
             sprites.bow.clone(),
             sprites.arrow.clone(),
             asset_server,
@@ -45,7 +46,7 @@ impl AlienBundle {
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
-            sprites.alien_char_walking.clone(),
+            sprites.player_char_walking.clone(),
             sprites.bow.clone(),
             sprites.arrow.clone(),
             asset_server,
@@ -54,13 +55,13 @@ impl AlienBundle {
 
     fn _util(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-        alien_sprite: SpriteInfo<'static>,
+        player_sprite: SpriteInfo<'static>,
         weapon_sprite: SpriteInfo<'static>,
         ammo_sprite: SpriteInfo<'static>,
         asset_server: &Res<AssetServer>,
     ) -> Self {
-        let alien_animation = alien_sprite.animation.unwrap();
-        let texture_atlas_layout = texture_atlas_layout.add(alien_sprite.layout);
+        let player_animation = player_sprite.animation.unwrap();
+        let texture_atlas_layout = texture_atlas_layout.add(player_sprite.layout);
 
         let ammo = Ammo {
             source: ammo_sprite.source.to_string(),
@@ -73,19 +74,19 @@ impl AlienBundle {
             CHAR_Z_INDEX,
         );
 
-        AlienBundle {
-            marker: Alien {
-                health: ALIEN_HEALTH,
+        PlayerBundle {
+            marker: Player {
+                health: PLAYER_HEALTH,
                 weapon: Weapon {
                     ammo,
                     pos,
                     source: weapon_sprite.source.to_string(),
                 },
-                speed: ALIEN_MOVE_SPEED,
-                armor: ALIEN_ARMOR,
+                speed: PLAYER_MOVE_SPEED,
+                armor: PLAYER_ARMOR,
             },
             sprite: SpriteBundle {
-                texture: asset_server.load(alien_sprite.source),
+                texture: asset_server.load(player_sprite.source),
                 transform: Transform {
                     rotation: Quat::default(),
                     translation: pos,
@@ -95,10 +96,10 @@ impl AlienBundle {
             },
             atlas: TextureAtlas {
                 layout: texture_atlas_layout,
-                index: alien_animation.indices.first,
+                index: player_animation.indices.first,
             },
-            animation_indices: alien_animation.indices,
-            animation_timer: alien_animation.timer,
+            animation_indices: player_animation.indices,
+            animation_timer: player_animation.timer,
             layer: GAME_LAYER,
         }
     }

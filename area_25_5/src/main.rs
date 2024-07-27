@@ -26,20 +26,20 @@ fn main() {
             (setup_resources, setup_camera, setup_sprite, setup_ui).chain(),
         )
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
-        .add_systems(Update, (move_ammo, move_enemies_towards_alien))
+        .add_systems(Update, (move_ammo, move_enemies_towards_player))
         .add_systems(
             Update,
             (
                 check_for_ammo_collisions,
-                check_for_alien_collisions_to_enemy,
+                check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
                 check_for_weapon_collisions,
             ),
         )
-        .observe(on_alien_spawned)
+        .observe(on_player_spawned)
         .observe(on_mouse_click)
-        .observe(on_alien_health_changed)
-        .observe(on_alien_speed_changed)
+        .observe(on_player_health_changed)
+        .observe(on_player_speed_changed)
         .observe(on_all_enemies_died)
         .run();
 }

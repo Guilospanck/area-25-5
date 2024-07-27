@@ -1,6 +1,6 @@
 use crate::{
-    animation::AnimationInfo, get_sprites, player::AlienBundle, prelude::*, AlienSpawned,
-    AnimationIndices, AnimationTimer, Enemy, EnemyBundle, SpritesResources,
+    animation::AnimationInfo, get_sprites, player::PlayerBundle, prelude::*, AnimationIndices,
+    AnimationTimer, Enemy, EnemyBundle, PlayerSpawned, SpritesResources,
 };
 
 #[derive(Clone, Debug)]
@@ -19,11 +19,11 @@ pub struct SpriteInfo<'a> {
 
 #[derive(Component, Debug, Clone)]
 pub struct Sprites<'a> {
-    pub alien_tile: SpriteInfo<'a>,
+    pub player_tile: SpriteInfo<'a>,
     pub gamestudio_tileset: SpriteInfo<'a>,
-    pub alien_char_walking: SpriteInfo<'a>,
-    pub alien_char_idle: SpriteInfo<'a>,
-    pub alien_custom_bg: SpriteInfo<'a>,
+    pub player_char_walking: SpriteInfo<'a>,
+    pub player_char_idle: SpriteInfo<'a>,
+    pub player_custom_bg: SpriteInfo<'a>,
     pub enemy_char_idle: SpriteInfo<'a>,
     pub bow: SpriteInfo<'a>,
     pub arrow: SpriteInfo<'a>,
@@ -52,7 +52,7 @@ pub fn setup_sprite(
         &sprites.0,
         &asset_server,
     );
-    setup_alien_sprite(
+    setup_player_sprite(
         &mut commands,
         &mut texture_atlas_layout,
         &sprites.0,
@@ -60,15 +60,15 @@ pub fn setup_sprite(
     );
 }
 
-fn setup_alien_sprite(
+fn setup_player_sprite(
     commands: &mut Commands,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites<'static>,
     asset_server: &Res<AssetServer>,
 ) {
-    let alien = AlienBundle::idle(texture_atlas_layout, sprites, asset_server);
-    commands.spawn(alien);
-    commands.trigger(AlienSpawned);
+    let player = PlayerBundle::idle(texture_atlas_layout, sprites, asset_server);
+    commands.spawn(player);
+    commands.trigger(PlayerSpawned);
 }
 
 fn setup_tile_sprite(
@@ -106,7 +106,7 @@ fn render_background_texture(
     sprites: &Sprites<'static>,
     asset_server: &Res<AssetServer>,
 ) {
-    let tile = sprites.alien_custom_bg.clone();
+    let tile = sprites.player_custom_bg.clone();
 
     // number of tiles in a row
     let x_items = WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;

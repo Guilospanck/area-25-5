@@ -1,8 +1,8 @@
 use crate::{
     enemy::Enemy,
-    events::{AlienHealthChanged, AlienSpeedChanged},
+    events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::{Item, ItemStatsType},
-    player::Alien,
+    player::Player,
     prelude::*,
     weapon::Ammo,
     AllEnemiesDied, Weapon,
@@ -10,7 +10,7 @@ use crate::{
 
 pub fn check_for_ammo_collisions(
     mut commands: Commands,
-    ammos: Query<(Entity, &Transform, &Ammo), (With<Ammo>, Without<Alien>)>,
+    ammos: Query<(Entity, &Transform, &Ammo), (With<Ammo>, Without<Player>)>,
     mut enemies: Query<(Entity, &Transform, &mut Enemy), With<Enemy>>,
 ) {
     let number_of_enemies = enemies.iter().len();
@@ -46,10 +46,10 @@ pub fn check_for_ammo_collisions(
     }
 }
 
-pub fn check_for_alien_collisions_to_enemy(
+pub fn check_for_player_collisions_to_enemy(
     mut commands: Commands,
     mut enemies: Query<(&Transform, &mut Enemy), With<Enemy>>,
-    mut alien: Query<(Entity, &Transform, &mut Alien)>,
+    mut player: Query<(Entity, &Transform, &mut Player)>,
 ) {
     for (enemy_transform, enemy) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
@@ -60,13 +60,13 @@ pub fn check_for_alien_collisions_to_enemy(
             ),
         );
 
-        if let Ok(result) = alien.get_single_mut() {
-            let (alien_entity, alien_transform, mut alien) = result;
-            let alien_collider =
-                Aabb2d::new(alien_transform.translation.truncate(), CAPSULE_COLLIDER);
+        if let Ok(result) = player.get_single_mut() {
+            let (player_entity, player_transform, mut player) = result;
+            let player_collider =
+                Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
-            if alien_collider.intersects(&enemy_collider) {
-                damage_alien(&mut commands, alien_entity, &mut alien, enemy.damage);
+            if player_collider.intersects(&enemy_collider) {
+                damage_player(&mut commands, player_entity, &mut player, enemy.damage);
             }
         }
     }
@@ -74,23 +74,25 @@ pub fn check_for_alien_collisions_to_enemy(
 
 pub fn check_for_item_collisions(
     mut commands: Commands,
-    mut alien: Query<(&Transform, &mut Alien)>,
+    mut player: Query<(&Transform, &mut Player)>,
     items: Query<(Entity, &Transform, &Item)>,
 ) {
     for (item_entity, item_transform, item) in items.iter() {
         let item_collider =
             Aabb2d::new(item_transform.translation.truncate(), CAPSULE_COLLIDER + 5.);
 
-        if let Ok(result) = alien.get_single_mut() {
-            let (alien_transform, mut alien) = result;
-            let alien_collider =
-                Aabb2d::new(alien_transform.translation.truncate(), CAPSULE_COLLIDER);
+        if let Ok(result) = player.get_single_mut() {
+            let (player_transform, mut player) = result;
+            let player_collider =
+                Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
-            if alien_collider.intersects(&item_collider) {
-                alien.speed += item.value;
+            if player_collider.intersects(&item_collider) {
+                player.speed += item.value;
                 match item.stats {
                     ItemStatsType::Speed => {
-                        commands.trigger(AlienSpeedChanged { speed: alien.speed });
+                        commands.trigger(PlayerSpeedChanged {
+                            speed: player.speed,
+                        });
                     }
                     ItemStatsType::Armor => todo!(),
                 }
@@ -102,7 +104,7 @@ pub fn check_for_item_collisions(
 
 pub fn check_for_weapon_collisions(
     mut commands: Commands,
-    mut alien: Query<(&Transform, &mut Alien)>,
+    mut player: Query<(&Transform, &mut Player)>,
     weapons: Query<(Entity, &Transform, &Weapon)>,
 ) {
     for (weapon_entity, weapon_transform, weapon) in weapons.iter() {
@@ -111,13 +113,13 @@ pub fn check_for_weapon_collisions(
             CAPSULE_COLLIDER + 5.,
         );
 
-        if let Ok(result) = alien.get_single_mut() {
-            let (alien_transform, mut alien) = result;
-            let alien_collider =
-                Aabb2d::new(alien_transform.translation.truncate(), CAPSULE_COLLIDER);
+        if let Ok(result) = player.get_single_mut() {
+            let (player_transform, mut player) = result;
+            let player_collider =
+                Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
-            if alien_collider.intersects(&weapon_collider) {
-                alien.weapon = weapon.clone();
+            if player_collider.intersects(&weapon_collider) {
+                player.weapon = weapon.clone();
                 commands.entity(weapon_entity).despawn();
             }
         }
@@ -141,22 +143,22 @@ fn damage_enemy(
     }
 }
 
-fn damage_alien(commands: &mut Commands, alien_entity: Entity, alien: &mut Alien, damage: f32) {
-    let new_damage = damage - alien.armor * 0.02;
-    let mut new_alien_health = alien.health - new_damage;
-    if new_alien_health <= 0. {
-        new_alien_health = 0.;
+fn damage_player(commands: &mut Commands, player_entity: Entity, player: &mut Player, damage: f32) {
+    let new_damage = damage - player.armor * 0.02;
+    let mut new_player_health = player.health - new_damage;
+    if new_player_health <= 0. {
+        new_player_health = 0.;
     }
 
-    alien.health = new_alien_health;
+    player.health = new_player_health;
 
-    commands.trigger(AlienHealthChanged {
-        health: alien.health,
+    commands.trigger(PlayerHealthChanged {
+        health: player.health,
     });
 
-    if alien.health <= 0. {
+    if player.health <= 0. {
         // YOU DIED!!!
         println!("DEAD");
-        commands.entity(alien_entity).despawn();
+        commands.entity(player_entity).despawn();
     }
 }

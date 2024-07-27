@@ -3,10 +3,10 @@ use bevy::{color::palettes::css::YELLOW, sprite::Anchor};
 use crate::prelude::*;
 
 #[derive(Component)]
-pub struct AlienHealthBar;
+pub struct PlayerHealthBar;
 
 #[derive(Component)]
-pub struct AlienSpeedBar;
+pub struct PlayerSpeedBar;
 
 #[derive(Component)]
 pub struct CurrentWaveUI;
@@ -23,7 +23,7 @@ fn health_points_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection::new(
-                    format!("{}", ALIEN_HEALTH),
+                    format!("{}", PLAYER_HEALTH),
                     TextStyle {
                         color: Color::Srgba(YELLOW),
                         ..text_style.clone()
@@ -39,7 +39,7 @@ fn health_points_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             text_anchor: Anchor::TopCenter,
             ..default()
         },
-        AlienHealthBar,
+        PlayerHealthBar,
         GAME_LAYER,
     ));
 }
@@ -56,7 +56,7 @@ fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         Text2dBundle {
             text: Text {
                 sections: vec![TextSection::new(
-                    format!("{}", ALIEN_MOVE_SPEED),
+                    format!("{}", PLAYER_MOVE_SPEED),
                     TextStyle {
                         color: Color::Srgba(YELLOW),
                         ..text_style.clone()
@@ -72,7 +72,7 @@ fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             text_anchor: Anchor::TopCenter,
             ..default()
         },
-        AlienSpeedBar,
+        PlayerSpeedBar,
         GAME_LAYER,
     ));
 }

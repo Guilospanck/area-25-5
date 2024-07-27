@@ -1,17 +1,13 @@
-use bevy::color::palettes::css::{BLUE, VIOLET, YELLOW};
+use bevy::prelude::*;
 pub use bevy::render::view::RenderLayers;
-use bevy::{
-    color::palettes::css::{GREEN, ORANGE},
-    prelude::*,
-};
 
 pub(crate) const GAME_LAYER: RenderLayers = RenderLayers::layer(1);
 pub(crate) const TILE_Z_INDEX: f32 = 0.;
 pub(crate) const CHAR_Z_INDEX: f32 = 1.;
 
-pub(crate) const ALIEN_MOVE_SPEED: f32 = 150.0;
-pub(crate) const ALIEN_ARMOR: f32 = 100.0;
-pub(crate) const ALIEN_HEALTH: f32 = 10000.;
+pub(crate) const PLAYER_MOVE_SPEED: f32 = 150.0;
+pub(crate) const PLAYER_ARMOR: f32 = 100.0;
+pub(crate) const PLAYER_HEALTH: f32 = 10000.;
 
 pub(crate) const ENEMY_MOVE_SPEED: f32 = 100.0;
 pub(crate) const ENEMY_DAMAGE: f32 = 10.0;

@@ -1,6 +1,6 @@
 use crate::{
-    game_actions::shoot, player::Alien, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
-    ui::AlienHealthBar, AlienSpeedBar, CurrentWave, CurrentWaveUI, EnemyWaves, SpritesResources,
+    game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
+    ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar, SpritesResources,
     WeaponWaves,
 };
 
@@ -10,17 +10,17 @@ pub struct ShootBullets {
 }
 
 #[derive(Event)]
-pub struct AlienHealthChanged {
+pub struct PlayerHealthChanged {
     pub health: f32,
 }
 
 #[derive(Event)]
-pub struct AlienSpeedChanged {
+pub struct PlayerSpeedChanged {
     pub speed: f32,
 }
 
 #[derive(Event)]
-pub struct AlienSpawned;
+pub struct PlayerSpawned;
 
 #[derive(Event)]
 pub struct AllEnemiesDied;
@@ -28,41 +28,41 @@ pub struct AllEnemiesDied;
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
     commands: Commands,
-    alien: Query<(&Transform, &Alien)>,
+    player: Query<(&Transform, &Player)>,
     asset_server: Res<AssetServer>,
 ) {
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
 
-    shoot(commands, x, y, alien, asset_server);
+    shoot(commands, x, y, player, asset_server);
 }
 
-pub fn on_alien_health_changed(
-    trigger: Trigger<AlienHealthChanged>,
-    mut alien_health_bar: Query<&mut Text, With<AlienHealthBar>>,
+pub fn on_player_health_changed(
+    trigger: Trigger<PlayerHealthChanged>,
+    mut player_health_bar: Query<&mut Text, With<PlayerHealthBar>>,
 ) {
     let event = trigger.event();
     let health = event.health;
 
-    if let Ok(mut text) = alien_health_bar.get_single_mut() {
+    if let Ok(mut text) = player_health_bar.get_single_mut() {
         text.sections.first_mut().unwrap().value = health.to_string();
     }
 }
 
-pub fn on_alien_speed_changed(
-    trigger: Trigger<AlienSpeedChanged>,
-    mut alien_speed_bar: Query<&mut Text, With<AlienSpeedBar>>,
+pub fn on_player_speed_changed(
+    trigger: Trigger<PlayerSpeedChanged>,
+    mut player_speed_bar: Query<&mut Text, With<PlayerSpeedBar>>,
 ) {
     let event = trigger.event();
     let speed = event.speed;
 
-    if let Ok(mut text) = alien_speed_bar.get_single_mut() {
+    if let Ok(mut text) = player_speed_bar.get_single_mut() {
         text.sections.first_mut().unwrap().value = speed.to_string();
     }
 }
 
-pub fn on_alien_spawned(
-    _trigger: Trigger<AlienSpawned>,
+pub fn on_player_spawned(
+    _trigger: Trigger<PlayerSpawned>,
     mut commands: Commands,
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
