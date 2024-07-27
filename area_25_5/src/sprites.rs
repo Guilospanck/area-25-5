@@ -27,6 +27,8 @@ pub struct Sprites<'a> {
     pub enemy_char_idle: SpriteInfo<'a>,
     pub bow: SpriteInfo<'a>,
     pub arrow: SpriteInfo<'a>,
+    pub wand: SpriteInfo<'a>,
+    pub magic_ball: SpriteInfo<'a>,
 }
 
 #[derive(Component)]

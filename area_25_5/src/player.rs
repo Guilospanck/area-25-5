@@ -1,9 +1,9 @@
 use crate::{
     animation::*,
     prelude::*,
-    sprites::{SpriteInfo, Sprites},
+    sprites::Sprites,
     weapon::{Ammo, Weapon},
-    Armor, Health, Speed, WeaponBundle,
+    Armor, Health, Speed,
 };
 
 #[derive(Component, Debug, Clone)]

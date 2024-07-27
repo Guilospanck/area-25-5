@@ -4,6 +4,7 @@ use crate::AnimationTimer;
 use crate::SpriteInfo;
 use crate::Sprites;
 use crate::SpritesResources;
+use bevy_inspector_egui::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -15,7 +16,6 @@ pub struct Ammo {
     pub damage: f32,
 }
 
-use bevy_inspector_egui::prelude::*;
 #[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]
 #[reflect(Component, InspectorOptions)]
 pub struct Weapon {

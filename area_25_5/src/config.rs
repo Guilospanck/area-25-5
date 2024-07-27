@@ -114,8 +114,8 @@ pub struct WeaponType<'a> {
 
 const WEAPON_LVL_1: WeaponType = WeaponType {
     damage: 10.0,
-    source: "textures/Weapon/Bow.png",
-    ammo_source: "textures/Weapon/Arrow.png",
+    source: "textures/Weapon/Wand.png",
+    ammo_source: "textures/Weapon/MagicBall.png",
 };
 
 const WEAPON_LVL_2: WeaponType = WeaponType {

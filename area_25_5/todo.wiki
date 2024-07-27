@@ -14,19 +14,27 @@ Todo:
 - [x] Apply texture to enemy
 - [x] Apply texture to bullet
 - [x] Apply texture to weapon
+- [ ] Remove health, damage from enemy
 - [ ] (Maybe) Remove pos from Weapon and use the transform from the bundle 
-- [ ] Check when player dies, it is being despawned, but we still have queries
-looking for him, therefore we're gonna have panic
+
+- [ ] Apply texture to speed stats
+- [ ] Spawn different weapons
+- [ ] Spawn different enemies
 
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
-- Spawn different enemies
+- Add time limit
+ 
+Features:
 - HP bar for some boss at some point
 - [ ] Create HP bars for the player
-- Add time limit
 
 Latest:
 - Write game design document
+ 
+Bugs:
+- [ ] Check when player dies, it is being despawned, but we still have queries
+looking for him, therefore we're gonna have panic
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
