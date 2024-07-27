@@ -34,7 +34,6 @@ pub fn move_enemies_towards_alien(
 
 pub fn shoot(
     mut commands: Commands,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     x: f32,
     y: f32,
     alien: Query<(&Transform, &Alien)>,

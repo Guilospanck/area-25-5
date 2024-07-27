@@ -39,7 +39,6 @@ impl Weapon {
 pub(crate) struct WeaponBundle {
     pub(crate) marker: Weapon,
     pub(crate) weapon_sprite: SpriteBundle,
-    // pub(crate) ammo_sprite: SpriteBundle,
     pub(crate) atlas: TextureAtlas,
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
@@ -56,7 +55,6 @@ impl WeaponBundle {
         Self::_util(
             texture_atlas_layout,
             sprites.bow.clone(),
-            sprites.arrow.clone(),
             asset_server,
             weapon,
         )
@@ -65,7 +63,6 @@ impl WeaponBundle {
     fn _util(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         weapon_sprite: SpriteInfo<'static>,
-        ammo_sprite: SpriteInfo<'static>,
         asset_server: &Res<AssetServer>,
         weapon: Weapon,
     ) -> Self {
@@ -83,15 +80,6 @@ impl WeaponBundle {
                 },
                 ..default()
             },
-            // ammo_sprite: SpriteBundle {
-            //     texture: asset_server.load(ammo_sprite.source),
-            //     transform: Transform {
-            //         rotation: Quat::default(),
-            //         translation: weapon.pos,
-            //         scale: Vec3::new(1., 1., 1.),
-            //     },
-            //     ..default()
-            // },
             atlas: TextureAtlas {
                 layout: texture_atlas_layout,
                 index: weapon_animation.indices.first,
@@ -110,7 +98,9 @@ pub fn spawn_weapon(
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
 ) {
-    let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
+    let mut rng = rand::thread_rng();
+    let y: f64 = rng.gen();
+    let mut rng = ChaCha8Rng::seed_from_u64((y * 19838367467713.) as u64);
 
     let weapon_source = weapon_by_level.weapon.source;
     let ammo_source = weapon_by_level.weapon.ammo_source;

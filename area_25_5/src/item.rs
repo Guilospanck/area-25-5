@@ -38,7 +38,7 @@ pub fn spawn_item(
 ) {
     let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
     let color = Color::srgb(0., 255., 0.);
-    let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
+    let mut rng = ChaCha8Rng::seed_from_u64(13878367467713);
 
     for _ in 1..=10 {
         let item = Item::random(&mut rng, stats.clone(), value);

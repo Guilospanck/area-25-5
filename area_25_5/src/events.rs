@@ -28,14 +28,13 @@ pub struct AllEnemiesDied;
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
     commands: Commands,
-    materials: ResMut<Assets<ColorMaterial>>,
     alien: Query<(&Transform, &Alien)>,
     asset_server: Res<AssetServer>,
 ) {
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
 
-    shoot(commands, materials, x, y, alien, asset_server);
+    shoot(commands, x, y, alien, asset_server);
 }
 
 pub fn on_alien_health_changed(
