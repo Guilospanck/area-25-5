@@ -1,6 +1,7 @@
 use area_25_5::*;
 
 use bevy::{prelude::*, sprite::Wireframe2dPlugin, window::WindowResolution};
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 fn main() {
     App::new()
@@ -20,6 +21,8 @@ fn main() {
                 }),
             Wireframe2dPlugin,
         ))
+        .register_type::<Weapon>()
+        .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(Msaa::Off)
         .add_systems(
             Startup,

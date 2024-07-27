@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.14.0", features = ["webp"] }
+bevy-inspector-egui = "0.25.1"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 

@@ -7,17 +7,20 @@ use crate::SpritesResources;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
-#[derive(Component, Debug, Clone)]
+#[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]
+#[reflect(Component, InspectorOptions)]
 pub struct Ammo {
     pub direction: Vec2,
     pub source: String,
     pub damage: f32,
 }
 
-#[derive(Component, Debug, Clone)]
+use bevy_inspector_egui::prelude::*;
+#[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]
+#[reflect(Component, InspectorOptions)]
 pub struct Weapon {
-    pub ammo: Ammo,
     pub pos: Vec3,
+    pub ammo: Ammo,
     pub source: String,
 }
 
@@ -43,6 +46,7 @@ pub(crate) struct WeaponBundle {
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
     pub(crate) layer: RenderLayers,
+    name: Name,
 }
 
 impl WeaponBundle {
