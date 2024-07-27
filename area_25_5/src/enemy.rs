@@ -1,10 +1,16 @@
-use crate::{prelude::*, AnimationIndices, AnimationTimer, SpriteInfo, Sprites, SpritesResources};
-use rand::{Rng, SeedableRng};
-use rand_chacha::ChaCha8Rng;
+use crate::{
+    prelude::*, util::get_random_vec3, AnimationIndices, AnimationTimer, Damage, Health,
+    SpriteInfo, Sprites, SpritesResources,
+};
+
+#[derive(Component, Clone)]
+pub struct Enemy;
 
 #[derive(Bundle, Clone)]
 pub(crate) struct EnemyBundle {
     pub(crate) marker: Enemy,
+    pub(crate) health: Health,
+    pub(crate) damage: Damage,
     pub(crate) sprite: SpriteBundle,
     pub(crate) atlas: TextureAtlas,
     pub(crate) animation_indices: AnimationIndices,
@@ -17,13 +23,17 @@ impl EnemyBundle {
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         sprites: &Sprites<'static>,
         asset_server: &Res<AssetServer>,
-        enemy: Enemy,
+        pos: Vec3,
+        health: f32,
+        damage: f32,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
             sprites.enemy_char_idle.clone(),
             asset_server,
-            enemy,
+            pos,
+            health,
+            damage,
         )
     }
 
@@ -31,19 +41,23 @@ impl EnemyBundle {
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
         enemy_sprite: SpriteInfo<'static>,
         asset_server: &Res<AssetServer>,
-        enemy: Enemy,
+        pos: Vec3,
+        health: f32,
+        damage: f32,
     ) -> Self {
         let enemy_animation = enemy_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(enemy_sprite.layout);
 
         EnemyBundle {
-            marker: enemy.clone(),
+            marker: Enemy,
+            health: Health(health),
+            damage: Damage(damage),
             sprite: SpriteBundle {
                 texture: asset_server.load(enemy_sprite.source),
                 transform: Transform {
                     rotation: Quat::default(),
-                    translation: Vec3::new(enemy.pos.x, enemy.pos.y, 1.0),
-                    scale: Vec3::new(1., 1., 1.),
+                    translation: pos,
+                    scale: Vec3::ONE,
                 },
                 ..default()
             },
@@ -58,27 +72,6 @@ impl EnemyBundle {
     }
 }
 
-#[derive(Component, Clone)]
-pub struct Enemy {
-    pub health: f32,
-    pub damage: f32,
-    pub pos: Vec3,
-}
-
-impl Enemy {
-    fn random(rand: &mut ChaCha8Rng, damage: f32) -> Self {
-        Enemy {
-            health: ENEMY_HEALTH,
-            damage,
-            pos: Vec3::new(
-                (rand.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.x_px,
-                (rand.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.y_px,
-                CHAR_Z_INDEX,
-            ),
-        }
-    }
-}
-
 pub fn spawn_enemy(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
@@ -86,11 +79,20 @@ pub fn spawn_enemy(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     enemy_by_level: &EnemyByLevel,
 ) {
-    let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
+    let health = enemy_by_level.enemy.health;
+    let damage = enemy_by_level.enemy.damage;
 
-    for _ in 1..=enemy_by_level.quantity {
-        let enemy = Enemy::random(&mut rng, enemy_by_level.enemy.damage);
-        let bundle = EnemyBundle::idle(texture_atlas_layout, &sprites.0, asset_server, enemy);
+    for idx in 1..=enemy_by_level.quantity {
+        let random_spawning_pos = get_random_vec3(idx as u64);
+
+        let bundle = EnemyBundle::idle(
+            texture_atlas_layout,
+            &sprites.0,
+            asset_server,
+            random_spawning_pos,
+            health,
+            damage,
+        );
 
         commands.spawn(bundle);
     }

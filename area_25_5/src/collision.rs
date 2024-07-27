@@ -5,13 +5,13 @@ use crate::{
     player::Player,
     prelude::*,
     weapon::Ammo,
-    AllEnemiesDied, Armor, Health, Speed, Weapon,
+    AllEnemiesDied, Armor, Damage, Health, Speed, Weapon,
 };
 
 pub fn check_for_ammo_collisions(
     mut commands: Commands,
     ammos: Query<(Entity, &Transform, &Ammo), (With<Ammo>, Without<Player>)>,
-    mut enemies: Query<(Entity, &Transform, &mut Enemy), With<Enemy>>,
+    mut enemies: Query<(Entity, &Transform, &mut Health), With<Enemy>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -19,7 +19,7 @@ pub fn check_for_ammo_collisions(
         return;
     }
 
-    for (enemy_entity, enemy_transform, mut enemy) in enemies.iter_mut() {
+    for (enemy_entity, enemy_transform, mut enemy_health) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
             Vec2::new(
@@ -37,7 +37,7 @@ pub fn check_for_ammo_collisions(
                     &mut commands,
                     ammo_entity,
                     enemy_entity,
-                    &mut enemy,
+                    &mut enemy_health,
                     ammo.damage,
                 );
                 continue;
@@ -48,10 +48,10 @@ pub fn check_for_ammo_collisions(
 
 pub fn check_for_player_collisions_to_enemy(
     mut commands: Commands,
-    mut enemies: Query<(&Transform, &mut Enemy), With<Enemy>>,
+    mut enemies: Query<(&Transform, &Damage), With<Enemy>>,
     mut player: Query<(Entity, &Transform, &mut Health, &mut Armor), With<Player>>,
 ) {
-    for (enemy_transform, enemy) in enemies.iter_mut() {
+    for (enemy_transform, enemy_damage) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
             Vec2::new(
@@ -71,7 +71,7 @@ pub fn check_for_player_collisions_to_enemy(
                     player_entity,
                     &mut player_health,
                     &mut player_armor,
-                    enemy.damage,
+                    enemy_damage.0,
                 );
             }
         }
@@ -145,15 +145,15 @@ fn damage_enemy(
     commands: &mut Commands,
     ammo_entity: Entity,
     enemy_entity: Entity,
-    enemy: &mut Enemy,
+    enemy_health: &mut Health,
     damage: f32,
 ) {
-    enemy.health -= damage;
+    enemy_health.0 -= damage;
 
     // Always despawns ammo
     commands.entity(ammo_entity).despawn();
 
-    if enemy.health <= 0. {
+    if enemy_health.0 <= 0. {
         commands.entity(enemy_entity).despawn();
     }
 }

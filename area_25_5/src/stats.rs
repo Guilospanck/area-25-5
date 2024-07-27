@@ -8,3 +8,6 @@ pub struct Armor(pub f32);
 
 #[derive(Component, Clone)]
 pub struct Speed(pub f32);
+
+#[derive(Component, Clone)]
+pub struct Damage(pub f32);

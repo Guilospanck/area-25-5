@@ -1,4 +1,6 @@
 use crate::prelude::*;
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha8Rng;
 
 pub(crate) fn get_unit_direction_vector(origin: Vec2, end: Vec2) -> Vec2 {
     let direction_x = end.x - origin.x;
@@ -17,4 +19,13 @@ pub(crate) fn get_unit_vector(vec: Vec2) -> Vec2 {
     let normalized_direction_y = vec.y / modulo;
 
     Vec2::new(normalized_direction_x, normalized_direction_y)
+}
+pub(crate) fn get_random_vec3(increment: u64) -> Vec3 {
+    let mut rng = ChaCha8Rng::seed_from_u64(ENEMY_RANDOM_SEED + increment);
+
+    Vec3::new(
+        (rng.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.x_px,
+        (rng.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.y_px,
+        CHAR_Z_INDEX,
+    )
 }

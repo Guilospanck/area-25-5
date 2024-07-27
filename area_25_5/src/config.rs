@@ -21,6 +21,7 @@ pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
 
 pub(crate) const ITEM_SPEED_VALUE: f32 = 50.;
+pub(crate) const ENEMY_RANDOM_SEED: u64 = 1987836746771;
 
 pub struct CustomWindowResolution {
     pub x_px: f32,
@@ -43,32 +44,38 @@ pub enum EnemyClassEnum {
 
 pub struct EnemyType {
     pub damage: f32,
+    pub health: f32,
     pub scale: Vec3,
     pub class: EnemyClassEnum,
 }
 
 const ENEMY_LVL_1: EnemyType = EnemyType {
     damage: 5.0,
+    health: ENEMY_HEALTH,
     scale: Vec3::splat(1.0),
     class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_2: EnemyType = EnemyType {
     damage: 10.0,
+    health: ENEMY_HEALTH,
     scale: Vec3::new(1.2, 1.2, 1.0),
     class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_3: EnemyType = EnemyType {
     damage: 15.0,
+    health: ENEMY_HEALTH,
     scale: Vec3::new(1.4, 1.4, 1.0),
     class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_4: EnemyType = EnemyType {
     damage: 20.0,
+    health: ENEMY_HEALTH,
     scale: Vec3::new(1.6, 1.6, 1.0),
     class: EnemyClassEnum::Orc,
 };
 const ENEMY_LVL_5: EnemyType = EnemyType {
     damage: 25.0,
+    health: ENEMY_HEALTH,
     scale: Vec3::new(1.8, 1.8, 1.0),
     class: EnemyClassEnum::Orc,
 };
