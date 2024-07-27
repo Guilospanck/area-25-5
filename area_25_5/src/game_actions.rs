@@ -1,6 +1,6 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, weapon::Ammo,
+    util::get_unit_direction_vector, weapon::Ammo, Speed, Weapon,
 };
 use std::f32::consts::PI;
 
@@ -35,19 +35,19 @@ pub fn shoot(
     mut commands: Commands,
     x: f32,
     y: f32,
-    player: Query<(&Transform, &Player)>,
+    player: Query<(&Transform, &Weapon), With<Player>>,
     asset_server: Res<AssetServer>,
 ) {
     let player_query = player.get_single().unwrap();
     let position = Vec2::new(player_query.0.translation.x, player_query.0.translation.y);
-    let player = player_query.1;
     let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 
     let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
 
     let rotation = Quat::from_rotation_z(angle + PI / 2.);
 
-    let player_ammo = player.weapon.ammo.clone();
+    let player_weapon = player_query.1;
+    let player_ammo = player_weapon.ammo.clone();
     let ammo = Ammo {
         source: player_ammo.source,
         direction: unit_direction,
@@ -56,10 +56,10 @@ pub fn shoot(
 
     commands.spawn((
         SpriteBundle {
-            texture: asset_server.load(player.weapon.ammo.source.clone()),
+            texture: asset_server.load(ammo.source.clone()),
             transform: Transform {
                 rotation,
-                translation: player.weapon.pos,
+                translation: player_weapon.pos,
                 scale: Vec3::new(1., 1., 1.),
             },
             ..default()
@@ -90,7 +90,7 @@ pub fn handle_click(
 
 pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &Player), With<Player>>,
+    mut player_query: Query<(&mut Transform, &Speed), With<Player>>,
     time: Res<Time>,
 ) {
     let mut direction_x = 0.;
@@ -99,7 +99,7 @@ pub fn move_char(
     if player_query.get_single_mut().is_err() {
         return;
     }
-    let (mut char_transform, player) = player_query.get_single_mut().unwrap();
+    let (mut player_transform, player_speed) = player_query.get_single_mut().unwrap();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {
@@ -120,11 +120,11 @@ pub fn move_char(
         direction_y -= 1.0;
     }
 
-    let old_pos_x = char_transform.translation.x;
-    let old_pos_y = char_transform.translation.y;
+    let old_pos_x = player_transform.translation.x;
+    let old_pos_y = player_transform.translation.y;
 
-    let char_new_pos_x = old_pos_x + direction_x * player.speed * time.delta_seconds();
-    let char_new_pos_y = old_pos_y + direction_y * player.speed * time.delta_seconds();
+    let char_new_pos_x = old_pos_x + direction_x * player_speed.0 * time.delta_seconds();
+    let char_new_pos_y = old_pos_y + direction_y * player_speed.0 * time.delta_seconds();
 
     let off_screen_x = !((-WINDOW_RESOLUTION.x_px + 20.) / 2.0
         ..=(WINDOW_RESOLUTION.x_px - 20.) / 2.0)
@@ -137,6 +137,6 @@ pub fn move_char(
         return;
     }
 
-    char_transform.translation.x = char_new_pos_x;
-    char_transform.translation.y = char_new_pos_y;
+    player_transform.translation.x = char_new_pos_x;
+    player_transform.translation.y = char_new_pos_y;
 }

@@ -1,7 +1,7 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
     ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar, SpritesResources,
-    WeaponWaves,
+    Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -28,7 +28,7 @@ pub struct AllEnemiesDied;
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
     commands: Commands,
-    player: Query<(&Transform, &Player)>,
+    player: Query<(&Transform, &Weapon), With<Player>>,
     asset_server: Res<AssetServer>,
 ) {
     let event = trigger.event();

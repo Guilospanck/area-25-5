@@ -3,20 +3,21 @@ use crate::{
     prelude::*,
     sprites::{SpriteInfo, Sprites},
     weapon::{Ammo, Weapon},
+    Armor, Health, Speed,
 };
 
 #[derive(Component, Debug, Clone)]
-// pub struct Player;
-pub struct Player {
-    pub weapon: Weapon,
-    pub health: f32,
-    pub speed: f32,
-    pub armor: f32,
-}
+pub struct Player;
 
 #[derive(Bundle, Clone)]
 pub(crate) struct PlayerBundle {
     pub(crate) marker: Player,
+
+    pub(crate) weapon: Weapon,
+    pub(crate) health: Health,
+    pub(crate) armor: Armor,
+    pub(crate) speed: Speed,
+
     pub(crate) sprite: SpriteBundle,
     pub(crate) atlas: TextureAtlas,
     pub(crate) animation_indices: AnimationIndices,
@@ -75,16 +76,15 @@ impl PlayerBundle {
         );
 
         PlayerBundle {
-            marker: Player {
-                health: PLAYER_HEALTH,
-                weapon: Weapon {
-                    ammo,
-                    pos,
-                    source: weapon_sprite.source.to_string(),
-                },
-                speed: PLAYER_MOVE_SPEED,
-                armor: PLAYER_ARMOR,
+            marker: Player,
+            health: Health(PLAYER_HEALTH),
+            weapon: Weapon {
+                ammo,
+                pos,
+                source: weapon_sprite.source.to_string(),
             },
+            speed: Speed(PLAYER_MOVE_SPEED),
+            armor: Armor(PLAYER_ARMOR),
             sprite: SpriteBundle {
                 texture: asset_server.load(player_sprite.source),
                 transform: Transform {

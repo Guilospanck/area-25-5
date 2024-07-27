@@ -5,7 +5,7 @@ use crate::{
     player::Player,
     prelude::*,
     weapon::Ammo,
-    AllEnemiesDied, Weapon,
+    AllEnemiesDied, Armor, Health, Speed, Weapon,
 };
 
 pub fn check_for_ammo_collisions(
@@ -49,7 +49,7 @@ pub fn check_for_ammo_collisions(
 pub fn check_for_player_collisions_to_enemy(
     mut commands: Commands,
     mut enemies: Query<(&Transform, &mut Enemy), With<Enemy>>,
-    mut player: Query<(Entity, &Transform, &mut Player)>,
+    mut player: Query<(Entity, &Transform, &mut Health, &mut Armor), With<Player>>,
 ) {
     for (enemy_transform, enemy) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
@@ -61,12 +61,18 @@ pub fn check_for_player_collisions_to_enemy(
         );
 
         if let Ok(result) = player.get_single_mut() {
-            let (player_entity, player_transform, mut player) = result;
+            let (player_entity, player_transform, mut player_health, mut player_armor) = result;
             let player_collider =
                 Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
             if player_collider.intersects(&enemy_collider) {
-                damage_player(&mut commands, player_entity, &mut player, enemy.damage);
+                damage_player(
+                    &mut commands,
+                    player_entity,
+                    &mut player_health,
+                    &mut player_armor,
+                    enemy.damage,
+                );
             }
         }
     }
@@ -74,7 +80,7 @@ pub fn check_for_player_collisions_to_enemy(
 
 pub fn check_for_item_collisions(
     mut commands: Commands,
-    mut player: Query<(&Transform, &mut Player)>,
+    mut player: Query<(&Transform, &mut Speed), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
 ) {
     for (item_entity, item_transform, item) in items.iter() {
@@ -82,16 +88,16 @@ pub fn check_for_item_collisions(
             Aabb2d::new(item_transform.translation.truncate(), CAPSULE_COLLIDER + 5.);
 
         if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player) = result;
+            let (player_transform, mut player_speed) = result;
             let player_collider =
                 Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
             if player_collider.intersects(&item_collider) {
-                player.speed += item.value;
+                player_speed.0 += item.value;
                 match item.stats {
                     ItemStatsType::Speed => {
                         commands.trigger(PlayerSpeedChanged {
-                            speed: player.speed,
+                            speed: player_speed.0,
                         });
                     }
                     ItemStatsType::Armor => todo!(),
@@ -104,8 +110,8 @@ pub fn check_for_item_collisions(
 
 pub fn check_for_weapon_collisions(
     mut commands: Commands,
-    mut player: Query<(&Transform, &mut Player)>,
-    weapons: Query<(Entity, &Transform, &Weapon)>,
+    mut player: Query<(&Transform, &mut Weapon), With<Player>>,
+    weapons: Query<(Entity, &Transform, &Weapon), Without<Player>>,
 ) {
     for (weapon_entity, weapon_transform, weapon) in weapons.iter() {
         let weapon_collider = Aabb2d::new(
@@ -114,12 +120,15 @@ pub fn check_for_weapon_collisions(
         );
 
         if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player) = result;
+            let (player_transform, mut player_weapon) = result;
             let player_collider =
                 Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
             if player_collider.intersects(&weapon_collider) {
-                player.weapon = weapon.clone();
+                let weapon_cloned = weapon.clone();
+                player_weapon.ammo = weapon_cloned.ammo;
+                player_weapon.pos = weapon_cloned.pos;
+                player_weapon.source = weapon_cloned.source;
                 commands.entity(weapon_entity).despawn();
             }
         }
@@ -143,20 +152,26 @@ fn damage_enemy(
     }
 }
 
-fn damage_player(commands: &mut Commands, player_entity: Entity, player: &mut Player, damage: f32) {
-    let new_damage = damage - player.armor * 0.02;
-    let mut new_player_health = player.health - new_damage;
+fn damage_player(
+    commands: &mut Commands,
+    player_entity: Entity,
+    player_health: &mut Health,
+    player_armor: &mut Armor,
+    damage: f32,
+) {
+    let new_damage = damage - player_armor.0 * 0.02;
+    let mut new_player_health = player_health.0 - new_damage;
     if new_player_health <= 0. {
         new_player_health = 0.;
     }
 
-    player.health = new_player_health;
+    player_health.0 = new_player_health;
 
     commands.trigger(PlayerHealthChanged {
-        health: player.health,
+        health: player_health.0,
     });
 
-    if player.health <= 0. {
+    if player_health.0 <= 0. {
         // YOU DIED!!!
         println!("DEAD");
         commands.entity(player_entity).despawn();
