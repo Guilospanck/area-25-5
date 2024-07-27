@@ -3,7 +3,7 @@ use crate::{
     prelude::*,
     sprites::{SpriteInfo, Sprites},
     weapon::{Ammo, Weapon},
-    Armor, Health, Speed,
+    Armor, Health, Speed, WeaponBundle,
 };
 
 #[derive(Component, Debug, Clone)]
@@ -23,6 +23,7 @@ pub(crate) struct PlayerBundle {
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
     pub(crate) layer: RenderLayers,
+    name: Name,
 }
 
 impl PlayerBundle {
@@ -31,58 +32,42 @@ impl PlayerBundle {
         sprites: &Sprites<'static>,
         asset_server: &Res<AssetServer>,
     ) -> Self {
-        Self::_util(
-            texture_atlas_layout,
-            sprites.player_char_idle.clone(),
-            sprites.bow.clone(),
-            sprites.arrow.clone(),
-            asset_server,
-        )
-    }
-
-    pub(crate) fn walking(
-        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-        sprites: &Sprites<'static>,
-        asset_server: &Res<AssetServer>,
-    ) -> Self {
-        Self::_util(
-            texture_atlas_layout,
-            sprites.player_char_walking.clone(),
-            sprites.bow.clone(),
-            sprites.arrow.clone(),
-            asset_server,
-        )
+        Self::_util(texture_atlas_layout, sprites, asset_server)
     }
 
     fn _util(
         texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-        player_sprite: SpriteInfo<'static>,
-        weapon_sprite: SpriteInfo<'static>,
-        ammo_sprite: SpriteInfo<'static>,
+        sprites: &Sprites<'static>,
         asset_server: &Res<AssetServer>,
     ) -> Self {
-        let player_animation = player_sprite.animation.unwrap();
-        let texture_atlas_layout = texture_atlas_layout.add(player_sprite.layout);
+        let player_sprite = sprites.player_char_idle.clone();
+        let weapon_sprite = sprites.bow.clone();
+        let ammo_sprite = sprites.arrow.clone();
 
-        let ammo = Ammo {
-            source: ammo_sprite.source.to_string(),
-            direction: Vec2::splat(0.0),
-            damage: AMMO_DAMAGE,
-        };
+        let player_animation = player_sprite.animation.unwrap();
+        let handle_texture_atlas_layout = texture_atlas_layout.add(player_sprite.layout);
+
         let pos: Vec3 = Vec3::new(
             -WINDOW_RESOLUTION.x_px / 2. + 50.,
             WINDOW_RESOLUTION.y_px / 2. - 80.,
             CHAR_Z_INDEX,
         );
 
+        let ammo = Ammo {
+            source: ammo_sprite.source.to_string(),
+            direction: Vec2::splat(0.0),
+            damage: AMMO_DAMAGE,
+        };
+        let weapon = Weapon {
+            ammo,
+            pos,
+            source: weapon_sprite.source.to_string(),
+        };
         PlayerBundle {
+            name: Name::new("Player"),
             marker: Player,
+            weapon,
             health: Health(PLAYER_HEALTH),
-            weapon: Weapon {
-                ammo,
-                pos,
-                source: weapon_sprite.source.to_string(),
-            },
             speed: Speed(PLAYER_MOVE_SPEED),
             armor: Armor(PLAYER_ARMOR),
             sprite: SpriteBundle {
@@ -95,7 +80,7 @@ impl PlayerBundle {
                 ..default()
             },
             atlas: TextureAtlas {
-                layout: texture_atlas_layout,
+                layout: handle_texture_atlas_layout,
                 index: player_animation.indices.first,
             },
             animation_indices: player_animation.indices,

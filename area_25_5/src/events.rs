@@ -120,8 +120,6 @@ pub fn on_player_spawned(
 pub fn on_all_enemies_died(
     _trigger: Trigger<AllEnemiesDied>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut current_wave: ResMut<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,

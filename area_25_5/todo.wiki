@@ -12,8 +12,11 @@ Todo:
 - [x] Show current wave
 - [x] Spawn weapons 
 - [x] Apply texture to enemy
-- [ ] Apply texture to bullet
-- [ ] Apply texture to weapon
+- [x] Apply texture to bullet
+- [x] Apply texture to weapon
+- [ ] (Maybe) Remove pos from Weapon and use the transform from the bundle 
+- [ ] Check when player dies, it is being despawned, but we still have queries
+looking for him, therefore we're gonna have panic
 
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
@@ -28,3 +31,8 @@ Latest:
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
 - Limit spawn of bullets to not be too close
+
+
+When you finish, it says: "You're half done"
+So you start with left half, then second campaign right half and then finally third campaign
+you're whole, but you still have to fight the US boss to go home.

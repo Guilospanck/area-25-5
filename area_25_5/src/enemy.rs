@@ -1,8 +1,4 @@
-use crate::{
-    prelude::*, Ammo, AnimationIndices, AnimationTimer, SpriteInfo, Sprites, SpritesResources,
-    Weapon,
-};
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+use crate::{prelude::*, AnimationIndices, AnimationTimer, SpriteInfo, Sprites, SpritesResources};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -26,20 +22,6 @@ impl EnemyBundle {
         Self::_util(
             texture_atlas_layout,
             sprites.enemy_char_idle.clone(),
-            asset_server,
-            enemy,
-        )
-    }
-
-    pub(crate) fn walking(
-        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-        sprites: &Sprites<'static>,
-        asset_server: &Res<AssetServer>,
-        enemy: Enemy,
-    ) -> Self {
-        Self::_util(
-            texture_atlas_layout,
-            sprites.player_char_walking.clone(),
             asset_server,
             enemy,
         )

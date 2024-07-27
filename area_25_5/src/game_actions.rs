@@ -2,7 +2,6 @@ use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
     util::get_unit_direction_vector, weapon::Ammo, Speed, Weapon,
 };
-use std::f32::consts::PI;
 
 pub fn move_enemies_towards_player(
     // The reason the `Without` is needed here, even though it wouldn't be
@@ -44,7 +43,7 @@ pub fn shoot(
 
     let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
 
-    let rotation = Quat::from_rotation_z(angle + PI / 2.);
+    let rotation = Quat::from_rotation_z(angle);
 
     let player_weapon = player_query.1;
     let player_ammo = player_weapon.ammo.clone();
@@ -90,7 +89,7 @@ pub fn handle_click(
 
 pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &Speed), With<Player>>,
+    mut player_query: Query<(&mut Transform, &Speed, &mut Weapon), With<Player>>,
     time: Res<Time>,
 ) {
     let mut direction_x = 0.;
@@ -99,7 +98,8 @@ pub fn move_char(
     if player_query.get_single_mut().is_err() {
         return;
     }
-    let (mut player_transform, player_speed) = player_query.get_single_mut().unwrap();
+    let (mut player_transform, player_speed, mut player_weapon) =
+        player_query.get_single_mut().unwrap();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {
@@ -139,4 +139,6 @@ pub fn move_char(
 
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
+
+    player_weapon.pos = Vec3::new(char_new_pos_x, char_new_pos_y, CHAR_Z_INDEX);
 }

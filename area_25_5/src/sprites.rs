@@ -1,6 +1,6 @@
 use crate::{
-    animation::AnimationInfo, get_sprites, player::PlayerBundle, prelude::*, AnimationIndices,
-    AnimationTimer, Enemy, EnemyBundle, PlayerSpawned, SpritesResources,
+    animation::AnimationInfo, player::PlayerBundle, prelude::*, PlayerSpawned, SpritesResources,
+    WeaponBundle,
 };
 
 #[derive(Clone, Debug)]
@@ -67,7 +67,26 @@ fn setup_player_sprite(
     asset_server: &Res<AssetServer>,
 ) {
     let player = PlayerBundle::idle(texture_atlas_layout, sprites, asset_server);
-    commands.spawn(player);
+
+    let mut weapon = player.weapon.clone();
+    weapon.pos.x = 8.0;
+    weapon.pos.y = 0.0;
+    let weapon_scale = Vec3::new(0.5, 0.5, 1.);
+
+    let weapon_bundle = WeaponBundle::new(
+        texture_atlas_layout,
+        sprites,
+        asset_server,
+        weapon,
+        weapon_scale,
+    );
+    let weapon_entity_id = commands.spawn(weapon_bundle).id();
+
+    let player_entity_id = commands.spawn(player).id();
+    commands
+        .entity(player_entity_id)
+        .push_children(&[weapon_entity_id]);
+
     commands.trigger(PlayerSpawned);
 }
 

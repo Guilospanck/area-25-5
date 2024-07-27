@@ -55,12 +55,14 @@ impl WeaponBundle {
         sprites: &Sprites<'static>,
         asset_server: &Res<AssetServer>,
         weapon: Weapon,
+        scale: Vec3,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
             sprites.bow.clone(),
             asset_server,
             weapon,
+            scale,
         )
     }
 
@@ -69,18 +71,20 @@ impl WeaponBundle {
         weapon_sprite: SpriteInfo<'static>,
         asset_server: &Res<AssetServer>,
         weapon: Weapon,
+        scale: Vec3,
     ) -> Self {
         let weapon_animation = weapon_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(weapon_sprite.layout);
 
         WeaponBundle {
+            name: Name::new("Weapon"),
             marker: weapon.clone(),
             weapon_sprite: SpriteBundle {
                 texture: asset_server.load(weapon_sprite.source),
                 transform: Transform {
                     rotation: Quat::default(),
                     translation: weapon.pos,
-                    scale: Vec3::new(1., 1., 1.),
+                    scale,
                 },
                 ..default()
             },
@@ -118,8 +122,13 @@ pub fn spawn_weapon(
 
     for _ in 1..=weapon_by_level.quantity {
         let weapon = Weapon::random(&mut rng, ammo.clone(), weapon_source.to_string());
-        let bundle =
-            WeaponBundle::new(&mut texture_atlas_layout, &sprites.0, &asset_server, weapon);
+        let bundle = WeaponBundle::new(
+            &mut texture_atlas_layout,
+            &sprites.0,
+            &asset_server,
+            weapon,
+            Vec3::ONE,
+        );
 
         commands.spawn(bundle);
     }
