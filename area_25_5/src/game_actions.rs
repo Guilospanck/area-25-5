@@ -40,8 +40,7 @@ pub fn shoot(
     x: f32,
     y: f32,
     player_query: Query<(&Transform, &Children), With<Player>>,
-    ammo_query: Query<&Ammo>,
-    weapon_query: Query<&Children, With<Weapon>>,
+    weapon_query: Query<&Weapon>,
     asset_server: Res<AssetServer>,
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
@@ -58,11 +57,7 @@ pub fn shoot(
 
     for &child in player.1.iter() {
         if let Ok(weapon_children) = weapon_query.get(child) {
-            for &ammo_child in weapon_children.iter() {
-                if let Ok(res) = ammo_query.get(ammo_child) {
-                    weapon_type = res.0.clone();
-                }
-            }
+            weapon_type = weapon_children.0.clone();
         }
     }
 
@@ -111,7 +106,7 @@ pub fn handle_click(
 
 pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &Speed), (With<Player>, Without<Weapon>)>,
+    mut player_query: Query<(&mut Transform, &Speed, &Player)>,
     time: Res<Time>,
 ) {
     let mut direction_x = 0.;
@@ -120,7 +115,7 @@ pub fn move_char(
     if player_query.get_single_mut().is_err() {
         return;
     }
-    let (mut player_transform, player_speed) = player_query.get_single_mut().unwrap();
+    let (mut player_transform, player_speed, _) = player_query.get_single_mut().unwrap();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {

@@ -9,13 +9,15 @@ use crate::{
     WeaponBundle,
 };
 
-pub fn check_for_ammo_collisions(
+//FIXME:
+pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
     ammos_query: Query<(Entity, &Transform), With<Ammo>>,
     mut enemies: Query<(Entity, &Transform, &mut Health), With<Enemy>>,
 
     player_query: Query<&Children, With<Player>>,
-    player_weapon_query: Query<(&Weapon, &Damage)>,
+    player_weapon_query: Query<(&Children, &Weapon, &Damage)>,
+    player_ammo_query: Query<(Entity, &Ammo)>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -25,14 +27,20 @@ pub fn check_for_ammo_collisions(
 
     let player_children = player_query.get_single().unwrap();
     let mut player_weapon = None;
+    let mut player_ammo = None;
     for &child in player_children {
         if let Ok(pw) = player_weapon_query.get(child) {
             player_weapon = Some(pw);
+            for &child in pw.0 {
+                if let Ok(pa) = player_ammo_query.get(child) {
+                    player_ammo = Some(pa);
+                }
+            }
             break;
         }
     }
     let player_weapon = player_weapon.unwrap();
-    let player_weapon_damage = player_weapon.1;
+    let player_weapon_damage = player_weapon.2;
 
     for (enemy_entity, enemy_transform, mut enemy_health) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
@@ -44,6 +52,15 @@ pub fn check_for_ammo_collisions(
         );
 
         for (ammo_entity, ammo_transform) in ammos_query.iter() {
+            // Do not check for collision with the ammo that the player
+            // carries within himself.
+            if let Some(player_ammo_unwrapped) = player_ammo {
+                if player_ammo_unwrapped.0 == ammo_entity {
+                    continue;
+                }
+            }
+
+            // TODO: turn this half size into config
             let ammo_collider =
                 Aabb2d::new(ammo_transform.translation.truncate(), Vec2::new(16., 16.));
 
@@ -131,7 +148,8 @@ pub fn check_for_weapon_collisions(
     asset_server: Res<AssetServer>,
 
     player_query: Query<(Entity, &Transform, &Children), With<Player>>,
-    player_weapon_query: Query<(Entity, &Weapon)>,
+    player_weapon_query: Query<(&Children, Entity, &Weapon)>,
+    player_ammo_query: Query<(Entity, &Ammo)>,
     weapons_not_from_player_query: Query<(Entity, &Weapon, &Damage, &Transform), Without<Player>>,
 ) {
     // Get an entity that has player
@@ -146,9 +164,16 @@ pub fn check_for_weapon_collisions(
     let player_collider = Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
     let mut player_weapon = None;
+    let mut player_ammo = None;
     for &child in player_children {
         if let Ok(pw) = player_weapon_query.get(child) {
             player_weapon = Some(pw);
+            for &child in pw.0 {
+                if let Ok(pa) = player_ammo_query.get(child) {
+                    player_ammo = Some(pa);
+                }
+            }
+            break;
         }
     }
 
@@ -162,8 +187,10 @@ pub fn check_for_weapon_collisions(
         weapons_not_from_player_query.iter()
     {
         // if the weapon belongs to the player, do not check for collision
-        if weapon_entity == player_weapon.unwrap().0 {
-            continue;
+        if let Some(player_weapon_unwrapped) = player_weapon {
+            if weapon_entity == player_weapon_unwrapped.1 {
+                continue;
+            }
         }
 
         let weapon_collider = Aabb2d::new(
@@ -206,11 +233,15 @@ pub fn check_for_weapon_collisions(
             // (otherwise it will only remove the link
             // to the parent entity and will look like it
             // was spawned on the center of the screen)
-            commands
-                .entity(player_weapon.unwrap().0)
-                .despawn_recursive();
-
             commands.entity(player_entity).clear_children();
+
+            if let Some(player_weapon_unwrapped) = player_weapon {
+                commands.entity(player_weapon_unwrapped.1).clear_children();
+                commands.entity(player_weapon_unwrapped.1).despawn();
+            }
+            if let Some(player_ammo_unwrapped) = player_ammo {
+                commands.entity(player_ammo_unwrapped.0).despawn();
+            }
 
             // Add new weapon and ammo to player's entity
             commands.entity(player_entity).with_children(|parent| {

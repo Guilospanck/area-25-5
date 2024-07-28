@@ -105,16 +105,13 @@ fn setup_player_sprite(
         rotation,
     );
 
-    let ammo_entity_id = commands.spawn(ammo_bundle).id();
-    let weapon_entity_id = commands.spawn(weapon_bundle).id();
     let player_entity_id = commands.spawn(player).id();
 
-    commands
-        .entity(weapon_entity_id)
-        .push_children(&[ammo_entity_id]);
-    commands
-        .entity(player_entity_id)
-        .push_children(&[weapon_entity_id]);
+    commands.entity(player_entity_id).with_children(|parent| {
+        parent.spawn(weapon_bundle).with_children(|parent| {
+            parent.spawn(ammo_bundle);
+        });
+    });
 
     commands.trigger(PlayerSpawned);
 }

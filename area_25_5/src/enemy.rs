@@ -16,6 +16,7 @@ pub(crate) struct EnemyBundle {
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
     pub(crate) layer: RenderLayers,
+    name: Name,
 }
 
 impl EnemyBundle {
@@ -50,6 +51,7 @@ impl EnemyBundle {
 
         EnemyBundle {
             marker: Enemy,
+            name: Name::new("Enemy"),
             health: Health(health),
             damage: Damage(damage),
             sprite: SpriteBundle {

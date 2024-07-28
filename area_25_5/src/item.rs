@@ -1,15 +1,19 @@
 use crate::prelude::*;
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+use bevy_inspector_egui::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
-#[derive(Clone, Debug)]
+#[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]
+#[reflect(Component, InspectorOptions)]
 pub enum ItemStatsType {
+    #[default]
     Speed,
     Armor,
 }
 
-#[derive(Component)]
+#[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]
+#[reflect(Component, InspectorOptions)]
 pub struct Item {
     pub pos: Vec2,
     pub stats: ItemStatsType,
@@ -53,6 +57,7 @@ pub fn spawn_item(
                 },
                 ..default()
             },
+            Name::new("Item"),
             item,
             GAME_LAYER,
         ));

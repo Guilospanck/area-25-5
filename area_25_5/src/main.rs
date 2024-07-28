@@ -24,6 +24,7 @@ fn main() {
         // INFO: uncomment to inspect the world elements
         .register_type::<Weapon>()
         .register_type::<Ammo>()
+        .register_type::<Item>()
         .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(Msaa::Off)
         // systems
@@ -36,12 +37,12 @@ fn main() {
         .add_systems(
             FixedUpdate,
             (
-                check_for_ammo_collisions,
+                check_for_ammo_collisions_with_enemy,
                 check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
+                check_for_weapon_collisions,
             ),
         )
-        .add_systems(FixedUpdate, check_for_weapon_collisions)
         // events
         .observe(on_player_spawned)
         .observe(on_mouse_click)
