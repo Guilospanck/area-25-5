@@ -1,5 +1,5 @@
 use crate::{
-    ammo::{self, Ammo},
+    ammo::Ammo,
     enemy::Enemy,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::{Item, ItemStatsType},
@@ -12,8 +12,10 @@ use crate::{
 pub fn check_for_ammo_collisions(
     mut commands: Commands,
     ammos_query: Query<(Entity, &Transform), With<Ammo>>,
-    weapon_query: Query<&Damage, (With<Weapon>, With<Player>)>,
     mut enemies: Query<(Entity, &Transform, &mut Health), With<Enemy>>,
+
+    player_query: Query<&Children, With<Player>>,
+    player_weapon_query: Query<(&Weapon, &Damage)>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -21,10 +23,16 @@ pub fn check_for_ammo_collisions(
         return;
     }
 
-    if weapon_query.get_single().is_err() {
-        return;
+    let player_children = player_query.get_single().unwrap();
+    let mut player_weapon = None;
+    for &child in player_children {
+        if let Ok(pw) = player_weapon_query.get(child) {
+            player_weapon = Some(pw);
+            break;
+        }
     }
-    let weapon_damage = weapon_query.get_single().unwrap();
+    let player_weapon = player_weapon.unwrap();
+    let player_weapon_damage = player_weapon.1;
 
     for (enemy_entity, enemy_transform, mut enemy_health) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
@@ -37,7 +45,7 @@ pub fn check_for_ammo_collisions(
 
         for (ammo_entity, ammo_transform) in ammos_query.iter() {
             let ammo_collider =
-                Aabb2d::new(ammo_transform.translation.truncate(), CAPSULE_COLLIDER);
+                Aabb2d::new(ammo_transform.translation.truncate(), Vec2::new(16., 16.));
 
             if ammo_collider.intersects(&enemy_collider) {
                 damage_enemy(
@@ -45,7 +53,7 @@ pub fn check_for_ammo_collisions(
                     ammo_entity,
                     enemy_entity,
                     &mut enemy_health,
-                    weapon_damage.0,
+                    player_weapon_damage.0,
                 );
                 continue;
             }
