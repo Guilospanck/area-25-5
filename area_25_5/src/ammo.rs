@@ -5,9 +5,7 @@ use crate::AnimationIndices;
 use crate::AnimationTimer;
 use crate::Damage;
 use crate::Direction;
-use crate::Player;
 use crate::SpritesResources;
-use crate::Weapon;
 use bevy_inspector_egui::prelude::*;
 
 #[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]

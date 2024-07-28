@@ -114,6 +114,7 @@ pub fn on_player_spawned(
         return;
     }
     let weapon_by_level = current_wave_weapon.unwrap();
+
     spawn_weapon(
         &mut commands,
         weapon_by_level,
@@ -177,6 +178,7 @@ pub fn on_all_enemies_died(
         return;
     }
     let weapon_by_level = current_wave_weapon.unwrap();
+
     spawn_weapon(
         &mut commands,
         weapon_by_level,

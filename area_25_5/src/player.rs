@@ -37,8 +37,6 @@ impl PlayerBundle {
         asset_server: &Res<AssetServer>,
     ) -> Self {
         let player_sprite = sprites.player_char_idle.clone();
-        let weapon_sprite = sprites.bow.clone();
-        let ammo_sprite = sprites.arrow.clone();
 
         let player_animation = player_sprite.animation.unwrap();
         let handle_texture_atlas_layout = texture_atlas_layout.add(player_sprite.layout);

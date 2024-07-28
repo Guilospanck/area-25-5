@@ -23,23 +23,26 @@ fn main() {
         ))
         // INFO: uncomment to inspect the world elements
         .register_type::<Weapon>()
+        .register_type::<Ammo>()
         .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(Msaa::Off)
+        // systems
         .add_systems(
             Startup,
             (setup_resources, setup_camera, setup_sprite, setup_ui).chain(),
         )
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
-        .add_systems(Update, (move_ammo, move_enemies_towards_player))
+        .add_systems(FixedUpdate, (move_ammo, move_enemies_towards_player))
         .add_systems(
-            Update,
+            FixedUpdate,
             (
                 check_for_ammo_collisions,
                 check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
-                check_for_weapon_collisions,
             ),
         )
+        .add_systems(FixedUpdate, check_for_weapon_collisions)
+        // events
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)

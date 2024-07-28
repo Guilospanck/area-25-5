@@ -1,11 +1,12 @@
 use crate::{
-    ammo::Ammo,
+    ammo::{self, Ammo},
     enemy::Enemy,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::{Item, ItemStatsType},
     player::Player,
     prelude::*,
-    AllEnemiesDied, Armor, Damage, Health, Speed, SpritesResources, Weapon, WeaponBundle,
+    AllEnemiesDied, AmmoBundle, Armor, Damage, Health, Speed, SpritesResources, Weapon,
+    WeaponBundle,
 };
 
 pub fn check_for_ammo_collisions(
@@ -121,7 +122,8 @@ pub fn check_for_weapon_collisions(
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
 
-    player_query: Query<(Entity, &Transform), With<Player>>,
+    player_query: Query<(Entity, &Transform, &Children), With<Player>>,
+    player_weapon_query: Query<(Entity, &Weapon)>,
     weapons_not_from_player_query: Query<(Entity, &Weapon, &Damage, &Transform), Without<Player>>,
 ) {
     // Get an entity that has player
@@ -132,15 +134,30 @@ pub fn check_for_weapon_collisions(
     let player = player_query.get_single().unwrap();
     let player_entity = player.0;
     let player_transform = player.1;
+    let player_children = player.2;
     let player_collider = Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
+
+    let mut player_weapon = None;
+    for &child in player_children {
+        if let Ok(pw) = player_weapon_query.get(child) {
+            player_weapon = Some(pw);
+        }
+    }
 
     // Check for collision of the player entity with the weapons on the map
     let direction = Vec3::ZERO;
     let pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
-    let scale = Vec3::new(0.5, 0.5, 1.);
+    let weapon_scale = Vec3::new(0.5, 0.5, 1.);
+    let ammo_scale = Vec3::ONE;
+    let rotation = Quat::default();
     for (weapon_entity, weapon, weapon_damage, weapon_transform) in
         weapons_not_from_player_query.iter()
     {
+        // if the weapon belongs to the player, do not check for collision
+        if weapon_entity == player_weapon.unwrap().0 {
+            continue;
+        }
+
         let weapon_collider = Aabb2d::new(
             weapon_transform.translation.truncate(),
             CAPSULE_COLLIDER + 5.,
@@ -152,7 +169,20 @@ pub fn check_for_weapon_collisions(
             let weapon_type = weapon.0.clone();
             let damage = weapon_damage.0;
 
-            commands.entity(weapon_entity).despawn_recursive();
+            let scale = ammo_scale;
+            let ammo_bundle = AmmoBundle::new(
+                &mut texture_atlas_layout,
+                &sprites,
+                &asset_server,
+                scale,
+                pos,
+                weapon_type.clone(),
+                direction,
+                damage,
+                rotation,
+            );
+
+            let scale = weapon_scale;
             let weapon_bundle = WeaponBundle::new(
                 &mut texture_atlas_layout,
                 &sprites,
@@ -163,10 +193,27 @@ pub fn check_for_weapon_collisions(
                 damage,
                 weapon_type,
             );
+
+            // despawn current player's weapon
+            // (otherwise it will only remove the link
+            // to the parent entity and will look like it
+            // was spawned on the center of the screen)
+            commands
+                .entity(player_weapon.unwrap().0)
+                .despawn_recursive();
+
             commands.entity(player_entity).clear_children();
+
+            // Add new weapon and ammo to player's entity
             commands.entity(player_entity).with_children(|parent| {
-                parent.spawn(weapon_bundle);
+                parent.spawn(weapon_bundle).with_children(|parent| {
+                    parent.spawn(ammo_bundle);
+                });
             });
+
+            // remove collided weapon
+            commands.entity(weapon_entity).despawn();
+
             return;
         }
     }

@@ -94,7 +94,6 @@ pub fn spawn_weapon(
     sprites: &Res<SpritesResources>,
     asset_server: Res<AssetServer>,
 ) {
-    println!("Spawn");
     let weapon_type = &weapon_by_level.weapon.weapon_type;
     let damage = weapon_by_level.weapon.damage;
     let scale = Vec3::ONE;
