@@ -1,6 +1,11 @@
 use crate::{
-    enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, weapon::Ammo, Speed, Weapon,
+    ammo::Ammo,
+    enemy::Enemy,
+    events::ShootBullets,
+    player::Player,
+    prelude::*,
+    util::{get_ammo_sprite_based_on_weapon_type, get_unit_direction_vector},
+    AmmoBundle, Speed, SpritesResources, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -34,38 +39,55 @@ pub fn shoot(
     mut commands: Commands,
     x: f32,
     y: f32,
-    player: Query<(&Transform, &Weapon), With<Player>>,
+    player_query: Query<(&Transform, &Children), With<Player>>,
+    ammo_query: Query<&Ammo>,
+    weapon_query: Query<&Children, With<Weapon>>,
     asset_server: Res<AssetServer>,
+    sprites: &Res<SpritesResources>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let player_query = player.get_single().unwrap();
-    let position = Vec2::new(player_query.0.translation.x, player_query.0.translation.y);
+    let player = player_query.get_single().unwrap();
+    let position = Vec2::new(player.0.translation.x, player.0.translation.y);
     let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 
     let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
 
     let rotation = Quat::from_rotation_z(angle);
 
-    let player_weapon = player_query.1;
-    let player_ammo = player_weapon.ammo.clone();
-    let ammo = Ammo {
-        source: player_ammo.source,
-        direction: unit_direction,
-        damage: AMMO_DAMAGE,
-    };
+    let mut weapon_type = WeaponTypeEnum::default();
 
-    commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load(ammo.source.clone()),
-            transform: Transform {
-                rotation,
-                translation: player_weapon.pos,
-                scale: Vec3::new(1., 1., 1.),
-            },
-            ..default()
-        },
-        ammo,
-        GAME_LAYER,
-    ));
+    for &child in player.1.iter() {
+        if let Ok(weapon_children) = weapon_query.get(child) {
+            for &ammo_child in weapon_children.iter() {
+                if let Ok(res) = ammo_query.get(ammo_child) {
+                    weapon_type = res.0.clone();
+                }
+            }
+        }
+    }
+
+    let damage = AMMO_DAMAGE;
+    let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
+    let pos = Vec3::new(
+        player.0.translation.x + 20.0,
+        player.0.translation.y,
+        player.0.translation.z,
+    );
+    let scale = Vec3::ONE;
+
+    let ammo_bundle = AmmoBundle::new(
+        texture_atlas_layout,
+        sprites,
+        &asset_server,
+        scale,
+        pos,
+        weapon_type.clone(),
+        direction,
+        damage,
+        rotation,
+    );
+
+    commands.spawn(ammo_bundle);
 }
 
 pub fn handle_click(
@@ -89,7 +111,7 @@ pub fn handle_click(
 
 pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &Speed, &mut Weapon), With<Player>>,
+    mut player_query: Query<(&mut Transform, &Speed), (With<Player>, Without<Weapon>)>,
     time: Res<Time>,
 ) {
     let mut direction_x = 0.;
@@ -98,8 +120,7 @@ pub fn move_char(
     if player_query.get_single_mut().is_err() {
         return;
     }
-    let (mut player_transform, player_speed, mut player_weapon) =
-        player_query.get_single_mut().unwrap();
+    let (mut player_transform, player_speed) = player_query.get_single_mut().unwrap();
 
     // left move
     if keyboard_input.pressed(KeyCode::KeyH) {
@@ -139,6 +160,4 @@ pub fn move_char(
 
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
-
-    player_weapon.pos = Vec3::new(char_new_pos_x, char_new_pos_y, CHAR_Z_INDEX);
 }

@@ -1,7 +1,7 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
-    ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar, SpritesResources,
-    Weapon, WeaponWaves,
+    ui::PlayerHealthBar, Ammo, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar,
+    SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -28,13 +28,27 @@ pub struct AllEnemiesDied;
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
     commands: Commands,
-    player: Query<(&Transform, &Weapon), With<Player>>,
+    player_query: Query<(&Transform, &Children), With<Player>>,
+    weapon_query: Query<&Children, With<Weapon>>,
+    ammo_query: Query<&Ammo>,
     asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
 
-    shoot(commands, x, y, player, asset_server);
+    shoot(
+        commands,
+        x,
+        y,
+        player_query,
+        ammo_query,
+        weapon_query,
+        asset_server,
+        &sprites,
+        &mut texture_atlas_layout,
+    );
 }
 
 pub fn on_player_health_changed(
@@ -104,7 +118,7 @@ pub fn on_player_spawned(
         &mut commands,
         weapon_by_level,
         texture_atlas_layout,
-        sprites,
+        &sprites,
         asset_server,
     );
 
@@ -167,7 +181,7 @@ pub fn on_all_enemies_died(
         &mut commands,
         weapon_by_level,
         texture_atlas_layout,
-        sprites,
+        &sprites,
         asset_server,
     );
 

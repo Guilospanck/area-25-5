@@ -1,6 +1,6 @@
 use crate::{
-    animation::AnimationInfo, player::PlayerBundle, prelude::*, PlayerSpawned, SpritesResources,
-    WeaponBundle,
+    animation::AnimationInfo, player::PlayerBundle, prelude::*, AmmoBundle, PlayerSpawned,
+    SpritesResources, WeaponBundle,
 };
 
 #[derive(Clone, Debug)]
@@ -59,6 +59,7 @@ pub fn setup_sprite(
         &mut texture_atlas_layout,
         &sprites.0,
         &asset_server,
+        &sprites,
     );
 }
 
@@ -67,24 +68,50 @@ fn setup_player_sprite(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites<'static>,
     asset_server: &Res<AssetServer>,
+    sprites_resources: &Res<SpritesResources>,
 ) {
     let player = PlayerBundle::idle(texture_atlas_layout, sprites, asset_server);
 
-    let mut weapon = player.weapon.clone();
-    weapon.pos.x = 8.0;
-    weapon.pos.y = 0.0;
+    let damage = AMMO_DAMAGE;
+    let direction = Vec3::ZERO;
+    let pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
     let weapon_scale = Vec3::new(0.5, 0.5, 1.);
+    let weapon_type = WeaponTypeEnum::Bow;
 
     let weapon_bundle = WeaponBundle::new(
         texture_atlas_layout,
-        sprites,
+        sprites_resources,
         asset_server,
-        weapon,
         weapon_scale,
+        pos,
+        direction,
+        damage,
+        weapon_type,
     );
-    let weapon_entity_id = commands.spawn(weapon_bundle).id();
 
+    let scale = Vec3::ONE;
+    let weapon_type = WeaponTypeEnum::default();
+    let rotation = Quat::default();
+
+    let ammo_bundle = AmmoBundle::new(
+        texture_atlas_layout,
+        sprites_resources,
+        asset_server,
+        scale,
+        pos,
+        weapon_type,
+        direction,
+        damage,
+        rotation,
+    );
+
+    let ammo_entity_id = commands.spawn(ammo_bundle).id();
+    let weapon_entity_id = commands.spawn(weapon_bundle).id();
     let player_entity_id = commands.spawn(player).id();
+
+    commands
+        .entity(weapon_entity_id)
+        .push_children(&[ammo_entity_id]);
     commands
         .entity(player_entity_id)
         .push_children(&[weapon_entity_id]);

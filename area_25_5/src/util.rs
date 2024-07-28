@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, SpriteInfo, SpritesResources};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -28,4 +28,24 @@ pub(crate) fn get_random_vec3(increment: u64) -> Vec3 {
         (rng.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.y_px,
         CHAR_Z_INDEX,
     )
+}
+
+pub(crate) fn get_ammo_sprite_based_on_weapon_type(
+    weapon_type: WeaponTypeEnum,
+    sprites: &Res<SpritesResources>,
+) -> SpriteInfo<'static> {
+    match weapon_type {
+        WeaponTypeEnum::Bow => sprites.0.arrow.clone(),
+        WeaponTypeEnum::Wand => sprites.0.magic_ball.clone(),
+    }
+}
+
+pub(crate) fn get_weapon_sprite_based_on_weapon_type(
+    weapon_type: WeaponTypeEnum,
+    sprites: &Res<SpritesResources>,
+) -> SpriteInfo<'static> {
+    match weapon_type {
+        WeaponTypeEnum::Bow => sprites.0.bow.clone(),
+        WeaponTypeEnum::Wand => sprites.0.wand.clone(),
+    }
 }

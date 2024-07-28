@@ -1,3 +1,4 @@
+pub mod ammo;
 pub mod animation;
 pub mod camera;
 pub mod collision;
@@ -15,6 +16,7 @@ pub mod ui;
 mod util;
 pub mod weapon;
 
+pub use ammo::*;
 pub use animation::*;
 pub use camera::*;
 pub use collision::*;

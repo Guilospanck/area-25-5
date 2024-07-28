@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 pub use bevy::render::view::RenderLayers;
+use bevy_inspector_egui::prelude::*;
 
 pub(crate) const GAME_LAYER: RenderLayers = RenderLayers::layer(1);
 pub(crate) const TILE_Z_INDEX: f32 = 0.;
@@ -15,7 +16,7 @@ pub(crate) const ENEMY_COLLISION_BOX_WIDTH: f32 = 19.;
 pub(crate) const ENEMY_COLLISION_BOX_HEIGHT: f32 = 32.;
 
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
-pub(crate) const AMMO_DAMAGE: f32 = 50.0;
+pub(crate) const AMMO_DAMAGE: f32 = 10.0;
 
 pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
@@ -40,6 +41,14 @@ pub const NUMBER_OF_WAVES: usize = 5;
 
 pub enum EnemyClassEnum {
     Orc,
+}
+
+#[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]
+#[reflect(InspectorOptions)]
+pub enum WeaponTypeEnum {
+    #[default]
+    Bow,
+    Wand,
 }
 
 pub struct EnemyType {
@@ -117,36 +126,42 @@ pub struct WeaponType<'a> {
     pub damage: f32,
     pub source: &'a str,
     pub ammo_source: &'a str,
+    pub weapon_type: WeaponTypeEnum,
 }
 
 const WEAPON_LVL_1: WeaponType = WeaponType {
     damage: 10.0,
     source: "textures/Weapon/Wand.png",
     ammo_source: "textures/Weapon/MagicBall.png",
+    weapon_type: WeaponTypeEnum::Wand,
 };
 
 const WEAPON_LVL_2: WeaponType = WeaponType {
     damage: 20.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
+    weapon_type: WeaponTypeEnum::Bow,
 };
 
 const WEAPON_LVL_3: WeaponType = WeaponType {
     damage: 30.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
+    weapon_type: WeaponTypeEnum::Bow,
 };
 
 const WEAPON_LVL_4: WeaponType = WeaponType {
     damage: 40.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
+    weapon_type: WeaponTypeEnum::Bow,
 };
 
 const WEAPON_LVL_5: WeaponType = WeaponType {
     damage: 50.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
+    weapon_type: WeaponTypeEnum::Bow,
 };
 
 pub struct WeaponByLevel<'a> {

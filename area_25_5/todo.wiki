@@ -14,8 +14,10 @@ Todo:
 - [x] Apply texture to enemy
 - [x] Apply texture to bullet
 - [x] Apply texture to weapon
-- [ ] Remove health, damage from enemy
+- [x] Remove health, damage from enemy
 - [ ] (Maybe) Remove pos from Weapon and use the transform from the bundle 
+- [ ] (Maybe) Remove source and ammo_source from WeaponType struct
+- [ ] (Maybe) Change collision from capsule to Ammo and Weapon sizes
 
 - [ ] Apply texture to speed stats
 - [ ] Spawn different weapons

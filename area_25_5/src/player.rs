@@ -1,9 +1,6 @@
 use crate::{
-    animation::*,
-    prelude::*,
-    sprites::Sprites,
-    weapon::{Ammo, Weapon},
-    Armor, Health, Speed,
+    ammo::Ammo, animation::*, prelude::*, sprites::Sprites, weapon::Weapon, AmmoBundle, Armor,
+    Damage, Health, Speed, WeaponBundle,
 };
 
 #[derive(Component, Debug, Clone)]
@@ -13,7 +10,6 @@ pub struct Player;
 pub(crate) struct PlayerBundle {
     pub(crate) marker: Player,
 
-    pub(crate) weapon: Weapon,
     pub(crate) health: Health,
     pub(crate) armor: Armor,
     pub(crate) speed: Speed,
@@ -53,20 +49,9 @@ impl PlayerBundle {
             CHAR_Z_INDEX,
         );
 
-        let ammo = Ammo {
-            source: ammo_sprite.source.to_string(),
-            direction: Vec2::splat(0.0),
-            damage: AMMO_DAMAGE,
-        };
-        let weapon = Weapon {
-            ammo,
-            pos,
-            source: weapon_sprite.source.to_string(),
-        };
         PlayerBundle {
             name: Name::new("Player"),
             marker: Player,
-            weapon,
             health: Health(PLAYER_HEALTH),
             speed: Speed(PLAYER_MOVE_SPEED),
             armor: Armor(PLAYER_ARMOR),
