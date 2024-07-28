@@ -251,7 +251,6 @@ fn damage_player(
     player_armor: &mut Armor,
     damage: f32,
 ) {
-    return;
     let new_damage = damage - player_armor.0 * 0.02;
     let mut new_player_health = player_health.0 - new_damage;
     if new_player_health <= 0. {
