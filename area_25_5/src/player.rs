@@ -1,6 +1,5 @@
 use crate::{
-    ammo::Ammo, animation::*, prelude::*, sprites::Sprites, weapon::Weapon, AmmoBundle, Armor,
-    Damage, Health, Speed, WeaponBundle,
+    animation::*, prelude::*, sprites::Sprites, Armor, Health, Speed,
 };
 
 #[derive(Component, Debug, Clone)]

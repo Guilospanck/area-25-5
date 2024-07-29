@@ -1,10 +1,9 @@
 use crate::{
-    ammo::Ammo,
     enemy::Enemy,
     events::ShootBullets,
     player::Player,
     prelude::*,
-    util::{get_ammo_sprite_based_on_weapon_type, get_unit_direction_vector},
+    util::{get_unit_direction_vector},
     AmmoBundle, Speed, SpritesResources, Weapon,
 };
 

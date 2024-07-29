@@ -1,7 +1,7 @@
 use area_25_5::*;
 
 use bevy::{prelude::*, sprite::Wireframe2dPlugin, window::WindowResolution};
-use bevy_inspector_egui::{quick::WorldInspectorPlugin, DefaultInspectorConfigPlugin};
+// use bevy_inspector_egui::{quick::WorldInspectorPlugin, DefaultInspectorConfigPlugin};
 
 fn main() {
     App::new()
@@ -22,10 +22,10 @@ fn main() {
             Wireframe2dPlugin,
         ))
         // INFO: uncomment to inspect the world elements
-        .register_type::<Weapon>()
-        .register_type::<Ammo>()
-        .register_type::<Item>()
-        .add_plugins(WorldInspectorPlugin::new())
+        // .register_type::<Weapon>()
+        // .register_type::<Ammo>()
+        // .register_type::<Item>()
+        // .add_plugins(WorldInspectorPlugin::new())
         .insert_resource(Msaa::Off)
         // systems
         .add_systems(

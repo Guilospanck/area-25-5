@@ -15,14 +15,18 @@ Todo:
 - [x] Apply texture to bullet
 - [x] Apply texture to weapon
 - [x] Remove health, damage from enemy
-- [ ] (Maybe) Remove pos from Weapon and use the transform from the bundle 
-- [ ] (Maybe) Remove source and ammo_source from WeaponType struct
-- [ ] (Maybe) Change collision from capsule to Ammo and Weapon sizes
+- [x] (Maybe) Remove pos from Weapon and use the transform from the bundle 
+- [ ] Compile to web
+- [ ] Show something when player dies or the next wave comes
+- [ ] Welcoming screen
+- [ ] Check when player dies, it is being despawned, but we still have queries
+looking for him, therefore we're gonna have panic
 
+Backlog:
 - [ ] Apply texture to speed stats
-- [ ] Spawn different weapons
+- [-] Spawn different weapons (Still need more)
 - [ ] Spawn different enemies
-
+- [ ] Spawn different potions
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
 - Add time limit
@@ -33,14 +37,12 @@ Features:
 
 Latest:
 - Write game design document
- 
-Bugs:
-- [ ] Check when player dies, it is being despawned, but we still have queries
-looking for him, therefore we're gonna have panic
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
 - Limit spawn of bullets to not be too close
+- [ ] (Maybe) Remove source and ammo_source from WeaponType struct
+- [ ] (Maybe) Change collision from capsule to Ammo and Weapon sizes
 
 
 When you finish, it says: "You're half done"
