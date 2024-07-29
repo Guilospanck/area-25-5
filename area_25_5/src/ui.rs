@@ -14,6 +14,12 @@ pub struct PlayerSpeedBar;
 #[derive(Component)]
 pub struct CurrentWaveUI;
 
+#[derive(Component)]
+pub struct RestartButton;
+
+#[derive(Component)]
+pub struct GameOverOverlay;
+
 fn health_points_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
@@ -134,6 +140,7 @@ pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
             align_content: AlignContent::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
             ..default()
         },
         // /// This component is automatically managed by the UI layout system.
@@ -143,8 +150,29 @@ pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     };
 
+    let button = (
+        ButtonBundle {
+            style: Style {
+                width: Val::Px(150.0),
+                height: Val::Px(65.0),
+                border: UiRect::all(Val::Px(1.0)),
+                // horizontally center child text
+                justify_content: JustifyContent::Center,
+                // vertically center child text
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            border_color: BorderColor(Color::BLACK),
+            border_radius: BorderRadius::MAX,
+            background_color: Color::BLACK.into(),
+            ..default()
+        },
+        GAME_LAYER,
+        RestartButton,
+    );
+
     commands
-        .spawn((node_bundle, GAME_LAYER))
+        .spawn((node_bundle, GAME_LAYER, GameOverOverlay))
         .with_children(|parent| {
             parent.spawn((
                 TextBundle::from_section(
@@ -158,5 +186,19 @@ pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
                 .with_text_justify(JustifyText::Center),
                 GAME_LAYER,
             ));
+
+            parent.spawn(button).with_children(|parent| {
+                parent.spawn((
+                    TextBundle::from_section(
+                        "Restart",
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 40.0,
+                            color: Color::srgb(0.9, 0.9, 0.9),
+                        },
+                    ),
+                    GAME_LAYER,
+                ));
+            });
         });
 }

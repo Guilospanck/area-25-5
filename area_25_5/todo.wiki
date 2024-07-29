@@ -17,7 +17,8 @@ Todo:
 - [x] Remove health, damage from enemy
 - [x] (Maybe) Remove pos from Weapon and use the transform from the bundle 
 - [x] Compile to web
-- [x] Show something when player dies or the next wave comes
+- [x] Show something when player dies or the next wave comes (Missing next wave and buttons
+to restart)
 - [ ] Welcoming screen
 - [ ] Check when player dies, it is being despawned, but we still have queries
 looking for him, therefore we're gonna have panic

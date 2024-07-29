@@ -159,7 +159,7 @@ pub fn check_for_weapon_collisions(
 ) {
     // Get an entity that has player
     if player_query.get_single().is_err() {
-        // TODO: trigger game over
+        commands.trigger(GameOver);
         return;
     }
     let player = player_query.get_single().unwrap();
@@ -276,7 +276,7 @@ fn damage_enemy(
     commands.entity(ammo_entity).despawn();
 
     if enemy_health.0 <= 0. {
-        commands.entity(enemy_entity).despawn();
+        commands.entity(enemy_entity).despawn_recursive();
     }
 }
 
@@ -302,6 +302,6 @@ fn damage_player(
     if player_health.0 <= 0. {
         // YOU DIED!!!
         println!("DEAD");
-        commands.entity(player_entity).despawn();
+        commands.entity(player_entity).despawn_recursive();
     }
 }

@@ -36,7 +36,14 @@ fn main() {
         // systems
         .add_systems(
             Startup,
-            (setup_resources, setup_camera, setup_sprite, setup_ui).chain(),
+            (
+                setup_resources,
+                setup_camera,
+                setup_sprite,
+                setup_ui,
+                setup_player,
+            )
+                .chain(),
         )
         .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
         .add_systems(FixedUpdate, (move_ammo, move_enemies_towards_player))
@@ -47,6 +54,7 @@ fn main() {
                 check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
                 check_for_weapon_collisions,
+                check_restart_click,
             ),
         )
         // events
@@ -56,5 +64,6 @@ fn main() {
         .observe(on_player_speed_changed)
         .observe(on_all_enemies_died)
         .observe(on_game_over)
+        .observe(on_restart_click)
         .run();
 }

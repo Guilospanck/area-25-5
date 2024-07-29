@@ -1,6 +1,7 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, Speed, SpritesResources, Weapon,
+    util::get_unit_direction_vector, AmmoBundle, GameOver, RestartButton, RestartGame, Speed,
+    SpritesResources, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -42,7 +43,7 @@ pub fn shoot(
 ) {
     let player = player_query.get_single();
     if player.is_err() {
-        // TODO: Trigger game over
+        commands.trigger(GameOver);
         return;
     }
     let player = player.unwrap();
@@ -156,4 +157,24 @@ pub fn move_char(
 
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
+}
+
+pub fn check_restart_click(
+    mut commands: Commands,
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &RestartButton),
+        Changed<Interaction>,
+    >,
+) {
+    for (interaction, mut background_color, _) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => commands.trigger(RestartGame),
+            Interaction::Hovered => {
+                *background_color = Color::srgb(0., 255., 0.).into();
+            }
+            Interaction::None => {
+                *background_color = Color::BLACK.into();
+            }
+        }
+    }
 }
