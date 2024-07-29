@@ -23,7 +23,6 @@ fn main() {
     ));
 
     if cfg!(not(target_family = "wasm")) {
-        println!("oottat");
         // INFO: uncomment to inspect the world elements
         use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
@@ -56,5 +55,6 @@ fn main() {
         .observe(on_player_health_changed)
         .observe(on_player_speed_changed)
         .observe(on_all_enemies_died)
+        .observe(on_game_over)
         .run();
 }

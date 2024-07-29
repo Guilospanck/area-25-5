@@ -1,4 +1,7 @@
-use bevy::{color::palettes::css::YELLOW, sprite::Anchor};
+use bevy::{
+    color::palettes::css::{WHITE, YELLOW},
+    sprite::Anchor,
+};
 
 use crate::prelude::*;
 
@@ -114,4 +117,46 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     health_points_bar(&mut commands, &asset_server);
     speed_bar(&mut commands, &asset_server);
     current_wave(&mut commands, &asset_server);
+}
+
+pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 100.0,
+        color: Color::WHITE,
+    };
+
+    let node_bundle = NodeBundle {
+        style: Style {
+            width: Val::Px(WINDOW_RESOLUTION.x_px),
+            height: Val::Px(WINDOW_RESOLUTION.y_px),
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            ..default()
+        },
+        // /// This component is automatically managed by the UI layout system.
+        // /// To alter the position of the `NodeBundle`, use the properties of the [`Style`] component.
+        // transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
+        background_color: Color::srgb(255., 0., 0.).into(),
+        ..default()
+    };
+
+    commands
+        .spawn((node_bundle, GAME_LAYER))
+        .with_children(|parent| {
+            parent.spawn((
+                TextBundle::from_section(
+                    "GAME OVER",
+                    TextStyle {
+                        font: text_style.clone().font,
+                        font_size: text_style.font_size,
+                        color: text_style.color,
+                    },
+                )
+                .with_text_justify(JustifyText::Center),
+                GAME_LAYER,
+            ));
+        });
 }

@@ -1,7 +1,7 @@
 use crate::{
-    game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
-    ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar,
-    SpritesResources, Weapon, WeaponWaves,
+    game_actions::shoot, game_over, player::Player, prelude::*, spawn_enemy, spawn_item,
+    spawn_weapon, ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar,
+    PlayerState, SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -24,6 +24,9 @@ pub struct PlayerSpawned;
 
 #[derive(Event)]
 pub struct AllEnemiesDied;
+
+#[derive(Event)]
+pub struct GameOver;
 
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
@@ -144,6 +147,7 @@ pub fn on_all_enemies_died(
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
     if new_wave as usize > NUMBER_OF_WAVES {
+        commands.trigger(GameOver);
         return;
     }
     current_wave.0 = new_wave;
@@ -189,4 +193,19 @@ pub fn on_all_enemies_died(
     if let Ok(mut text) = current_wave_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
     }
+}
+
+pub fn on_game_over(
+    _trigger: Trigger<GameOver>,
+    commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut player_state: ResMut<PlayerState>,
+) {
+    if *player_state == PlayerState::Dead {
+        return;
+    }
+
+    *player_state = PlayerState::Dead;
+
+    game_over(commands, asset_server);
 }

@@ -1,10 +1,6 @@
 use crate::{
-    enemy::Enemy,
-    events::ShootBullets,
-    player::Player,
-    prelude::*,
-    util::{get_unit_direction_vector},
-    AmmoBundle, Speed, SpritesResources, Weapon,
+    enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
+    util::get_unit_direction_vector, AmmoBundle, Speed, SpritesResources, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -44,7 +40,13 @@ pub fn shoot(
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let player = player_query.get_single().unwrap();
+    let player = player_query.get_single();
+    if player.is_err() {
+        // TODO: Trigger game over
+        return;
+    }
+    let player = player.unwrap();
+
     let position = Vec2::new(player.0.translation.x, player.0.translation.y);
     let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 

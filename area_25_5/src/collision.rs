@@ -5,11 +5,10 @@ use crate::{
     item::{Item, ItemStatsType},
     player::Player,
     prelude::*,
-    AllEnemiesDied, AmmoBundle, Armor, Damage, Health, Speed, SpritesResources, Weapon,
+    AllEnemiesDied, AmmoBundle, Armor, Damage, GameOver, Health, Speed, SpritesResources, Weapon,
     WeaponBundle,
 };
 
-//FIXME:
 pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
     ammos_query: Query<(Entity, &Transform), With<Ammo>>,
@@ -25,7 +24,13 @@ pub fn check_for_ammo_collisions_with_enemy(
         return;
     }
 
-    let player_children = player_query.get_single().unwrap();
+    let player_children = player_query.get_single();
+    if player_children.is_err() {
+        commands.trigger(GameOver);
+        return;
+    }
+    let player_children = player_children.unwrap();
+
     let mut player_weapon = None;
     let mut player_ammo = None;
     for &child in player_children {
@@ -154,7 +159,7 @@ pub fn check_for_weapon_collisions(
 ) {
     // Get an entity that has player
     if player_query.get_single().is_err() {
-        println!("Player not found on check_for_weapon_collisions");
+        // TODO: trigger game over
         return;
     }
     let player = player_query.get_single().unwrap();

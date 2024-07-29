@@ -64,7 +64,7 @@ pub struct EnemyType {
 }
 
 const ENEMY_LVL_1: EnemyType = EnemyType {
-    damage: 5.0,
+    damage: 115.0,
     health: ENEMY_HEALTH,
     scale: Vec3::splat(1.0),
     class: EnemyClassEnum::Orc,
