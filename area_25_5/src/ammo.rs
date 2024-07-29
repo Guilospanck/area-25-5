@@ -1,15 +1,19 @@
+use crate::animation::AnimationIndices;
+use crate::animation::AnimationTimer;
 use crate::prelude::*;
+use crate::resources::SpritesResources;
+use crate::stats::Damage;
+use crate::stats::Direction;
 use crate::util::get_ammo_sprite_based_on_weapon_type;
 use crate::util::get_random_vec3;
-use crate::AnimationIndices;
-use crate::AnimationTimer;
-use crate::Damage;
-use crate::Direction;
-use crate::SpritesResources;
+#[cfg(not(web))]
 use bevy_inspector_egui::prelude::*;
 
-#[derive(Reflect, Component, Default, Debug, Clone, InspectorOptions)]
-#[reflect(Component, InspectorOptions)]
+#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(not(web), reflect(Component))]
+// #[derive(Reflect, Component, Default, Debug, Clone)]
+// #[reflect(Component)]
+#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
 pub struct Ammo(pub WeaponTypeEnum);
 
 #[derive(Bundle, Clone)]

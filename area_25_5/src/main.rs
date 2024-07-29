@@ -1,32 +1,39 @@
 use area_25_5::*;
 
 use bevy::{prelude::*, sprite::Wireframe2dPlugin, window::WindowResolution};
-// use bevy_inspector_egui::{quick::WorldInspectorPlugin, DefaultInspectorConfigPlugin};
 
 fn main() {
-    App::new()
-        .add_plugins((
-            DefaultPlugins
-                .set(ImagePlugin::default_nearest())
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        resolution: WindowResolution::new(
-                            WINDOW_RESOLUTION.x_px,
-                            WINDOW_RESOLUTION.y_px,
-                        )
-                        .with_scale_factor_override(1.0),
-                        ..default()
-                    }),
+    let mut app = App::new();
+
+    app.add_plugins((
+        DefaultPlugins
+            .set(ImagePlugin::default_nearest())
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    resolution: WindowResolution::new(
+                        WINDOW_RESOLUTION.x_px,
+                        WINDOW_RESOLUTION.y_px,
+                    )
+                    .with_scale_factor_override(1.0),
                     ..default()
                 }),
-            Wireframe2dPlugin,
-        ))
+                ..default()
+            }),
+        Wireframe2dPlugin,
+    ));
+
+    if cfg!(not(target_family = "wasm")) {
+        println!("oottat");
         // INFO: uncomment to inspect the world elements
-        // .register_type::<Weapon>()
-        // .register_type::<Ammo>()
-        // .register_type::<Item>()
-        // .add_plugins(WorldInspectorPlugin::new())
-        .insert_resource(Msaa::Off)
+        use bevy_inspector_egui::quick::WorldInspectorPlugin;
+
+        app.register_type::<Weapon>()
+            .register_type::<Ammo>()
+            .register_type::<Item>()
+            .add_plugins(WorldInspectorPlugin::new());
+    }
+
+    app.insert_resource(Msaa::Off)
         // systems
         .add_systems(
             Startup,
