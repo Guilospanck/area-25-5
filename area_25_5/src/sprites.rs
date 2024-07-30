@@ -1,6 +1,6 @@
 use crate::{
-    animation::AnimationInfo, player::PlayerBundle, prelude::*, AmmoBundle, PlayerSpawned,
-    SpritesResources, WeaponBundle,
+    animation::AnimationInfo, prelude::*,
+    SpritesResources,
 };
 
 #[derive(Clone, Debug)]

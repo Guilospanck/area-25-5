@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::css::{WHITE, YELLOW},
+    color::palettes::css::{YELLOW},
     sprite::Anchor,
 };
 

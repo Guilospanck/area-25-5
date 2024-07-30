@@ -1,7 +1,6 @@
 use crate::{
-    game_actions::shoot, game_over, player::Player, prelude::*, setup_sprite, spawn_enemy,
-    spawn_item, spawn_player, spawn_weapon, ui::PlayerHealthBar, Ammo, CurrentWave, CurrentWaveUI,
-    Damage, Enemy, EnemyWaves, GameOverOverlay, Health, Item, PlayerSpeedBar, PlayerState, Speed,
+    game_actions::shoot, player::Player, prelude::*, spawn_enemy,
+    spawn_item, spawn_weapon, ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar, PlayerState,
     SpritesResources, Weapon, WeaponWaves,
 };
 
