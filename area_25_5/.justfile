@@ -28,6 +28,7 @@ optimise-web:
 web: build-web bind-web optimise-web
   cp -R ./assets ./out
   cp ./index.html ./out
+  zip game.zip -r ./out 
 
 run-web:
   npx http-server ./out -o

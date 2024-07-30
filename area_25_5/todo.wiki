@@ -20,7 +20,7 @@ Todo:
 - [x] Show something when player dies or the next wave comes 
 - [x] Check when player dies, it is being despawned, but we still have queries
 looking for him, therefore we're gonna have panic
-- [ ] Welcoming screen
+- [x] Welcoming screen
 - [ ] Apply texture to speed stats
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] Write game design document
