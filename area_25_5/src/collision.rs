@@ -26,7 +26,6 @@ pub fn check_for_ammo_collisions_with_enemy(
 
     let player_children = player_query.get_single();
     if player_children.is_err() {
-        commands.trigger(GameOver);
         return;
     }
     let player_children = player_children.unwrap();
@@ -86,7 +85,7 @@ pub fn check_for_ammo_collisions_with_enemy(
 pub fn check_for_player_collisions_to_enemy(
     mut commands: Commands,
     mut enemies: Query<(&Transform, &Damage), With<Enemy>>,
-    mut player: Query<(Entity, &Transform, &mut Health, &mut Armor), With<Player>>,
+    mut player: Query<(&Transform, &mut Health, &mut Armor), With<Player>>,
 ) {
     for (enemy_transform, enemy_damage) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
@@ -98,14 +97,13 @@ pub fn check_for_player_collisions_to_enemy(
         );
 
         if let Ok(result) = player.get_single_mut() {
-            let (player_entity, player_transform, mut player_health, mut player_armor) = result;
+            let (player_transform, mut player_health, mut player_armor) = result;
             let player_collider =
                 Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
             if player_collider.intersects(&enemy_collider) {
                 damage_player(
                     &mut commands,
-                    player_entity,
                     &mut player_health,
                     &mut player_armor,
                     enemy_damage.0,
@@ -159,7 +157,6 @@ pub fn check_for_weapon_collisions(
 ) {
     // Get an entity that has player
     if player_query.get_single().is_err() {
-        commands.trigger(GameOver);
         return;
     }
     let player = player_query.get_single().unwrap();
@@ -282,7 +279,6 @@ fn damage_enemy(
 
 fn damage_player(
     commands: &mut Commands,
-    player_entity: Entity,
     player_health: &mut Health,
     player_armor: &mut Armor,
     damage: f32,
@@ -296,7 +292,7 @@ fn damage_player(
 
     let new_player_health = player_health.0 - new_damage;
     if new_player_health <= 0. {
-        commands.entity(player_entity).despawn_recursive();
+        commands.trigger(GameOver);
         return;
     }
 

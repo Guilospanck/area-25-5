@@ -1,7 +1,7 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, GameOver, RestartButton, RestartGame, Speed,
-    SpritesResources, StartButton, Weapon,
+    util::get_unit_direction_vector, AmmoBundle, GameOver, PlayAgainButton, RestartGame,
+    RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -43,7 +43,6 @@ pub fn shoot(
 ) {
     let player = player_query.get_single();
     if player.is_err() {
-        commands.trigger(GameOver);
         return;
     }
     let player = player.unwrap();
@@ -159,36 +158,48 @@ pub fn move_char(
     player_transform.translation.y = char_new_pos_y;
 }
 
-pub fn handle_start_click(
-    mut commands: Commands,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &StartButton),
+// Won
+pub fn handle_play_again_click(
+    commands: Commands,
+    interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &PlayAgainButton),
         Changed<Interaction>,
     >,
 ) {
-    for (interaction, mut background_color, _) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => commands.trigger(RestartGame),
-            Interaction::Hovered => {
-                *background_color = Color::srgb(0., 255., 0.).into();
-            }
-            Interaction::None => {
-                *background_color = Color::BLACK.into();
-            }
-        }
-    }
+    _handle_button_click(commands, interaction_query);
 }
 
+// Dead
 pub fn handle_restart_click(
-    mut commands: Commands,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &RestartButton),
+    commands: Commands,
+    interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &RestartGameButton),
         Changed<Interaction>,
     >,
 ) {
+    _handle_button_click(commands, interaction_query);
+}
+
+// Menu
+pub fn handle_start_game_click(
+    commands: Commands,
+    interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &StartGameButton),
+        Changed<Interaction>,
+    >,
+) {
+    _handle_button_click(commands, interaction_query);
+}
+
+fn _handle_button_click<T: Component>(
+    mut commands: Commands,
+    mut interaction_query: Query<(&Interaction, &mut BackgroundColor, &T), Changed<Interaction>>,
+) {
     for (interaction, mut background_color, _) in &mut interaction_query {
         match *interaction {
-            Interaction::Pressed => commands.trigger(RestartGame),
+            Interaction::Pressed => {
+                commands.trigger(RestartGame);
+            }
             Interaction::Hovered => {
                 *background_color = Color::srgb(0., 255., 0.).into();
             }

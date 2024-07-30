@@ -20,8 +20,9 @@ pub(crate) fn get_unit_vector(vec: Vec2) -> Vec2 {
 
     Vec2::new(normalized_direction_x, normalized_direction_y)
 }
-pub(crate) fn get_random_vec3(increment: u64) -> Vec3 {
-    let mut rng = ChaCha8Rng::seed_from_u64(ENEMY_RANDOM_SEED + increment);
+pub(crate) fn get_random_vec3(increment: u64, seed: Option<u64>) -> Vec3 {
+    let random_seed = seed.unwrap_or(ENEMY_RANDOM_SEED);
+    let mut rng = ChaCha8Rng::seed_from_u64(random_seed + increment);
 
     Vec3::new(
         (rng.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.x_px,

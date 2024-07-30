@@ -103,12 +103,12 @@ pub fn spawn_weapon(
     let direction = Vec3::ZERO;
 
     for idx in 1..=weapon_by_level.quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64);
+        let random_spawning_pos = get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED));
 
         let bundle = WeaponBundle::new(
             texture_atlas_layout,
             sprites,
-            &asset_server,
+            asset_server,
             scale,
             random_spawning_pos,
             direction,

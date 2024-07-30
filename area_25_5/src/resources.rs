@@ -24,6 +24,7 @@ pub enum GameState {
     Menu,
     Alive,
     Dead,
+    Won,
 }
 
 pub fn setup_resources(mut commands: Commands) {

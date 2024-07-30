@@ -95,7 +95,7 @@ pub fn spawn_item(
     let value = &item_by_level.item.value;
 
     for idx in 1..=*quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64);
+        let random_spawning_pos = get_random_vec3(idx as u64, Some(ITEM_RANDOM_SEED));
 
         let bundle = ItemBundle::new(
             &mut texture_atlas_layout,
@@ -108,6 +108,5 @@ pub fn spawn_item(
         );
 
         commands.spawn(bundle);
-        println!("spawned");
     }
 }

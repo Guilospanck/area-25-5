@@ -15,6 +15,7 @@ pub(crate) const ENEMY_COLLISION_BOX_WIDTH: f32 = 19.;
 pub(crate) const ENEMY_COLLISION_BOX_HEIGHT: f32 = 32.;
 pub(crate) const ENEMY_RANDOM_SEED: u64 = 1987836746771;
 
+pub(crate) const WEAPON_RANDOM_SEED: u64 = 1936836746771;
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
 pub(crate) const AMMO_DAMAGE: f32 = 10.0;
 
@@ -22,6 +23,7 @@ pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
 
 pub(crate) const ITEM_SPEED_VALUE: f32 = 50.;
+pub(crate) const ITEM_RANDOM_SEED: u64 = 1937836746771;
 
 pub struct CustomWindowResolution {
     pub x_px: f32,
@@ -51,7 +53,7 @@ pub struct EnemyType {
 }
 
 const ENEMY_LVL_1: EnemyType = EnemyType {
-    damage: 115.0,
+    damage: 5.0,
     health: ENEMY_HEALTH,
     scale: Vec3::splat(1.0),
     class: EnemyClassEnum::Orc,

@@ -24,14 +24,15 @@ looking for him, therefore we're gonna have panic
 - [x] Apply texture to speed stats
 - [x] Spawn items based on waves
 - [ ] Add a WON screen
-- [ ] Add information about next wave (and some pause maybe)
 - [ ] Audio
 - [ ] Write game design document
+- [ ] Add information about next wave (and some pause maybe)
 
 Backlog:
 - [-] Spawn different weapons (Still need more)
 - [ ] Spawn different enemies
 - [ ] Spawn different potions
+- [ ] Add effects (sparkles, explosions)
 - [ ] Create a way of enemies not getting too much together
 - [ ] Spawn more waves
 - Create the concept of enemies throwing magic or bullets as well

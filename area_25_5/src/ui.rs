@@ -1,6 +1,6 @@
 use bevy::{color::palettes::css::YELLOW, sprite::Anchor};
 
-use crate::prelude::*;
+use crate::{prelude::*, GameState};
 
 #[derive(Component)]
 pub struct PlayerHealthBar;
@@ -12,13 +12,22 @@ pub struct PlayerSpeedBar;
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
-pub struct StartButton;
+pub struct PlayAgainButton;
 
 #[derive(Component)]
-pub struct RestartButton;
+pub struct StartGameButton;
+
+#[derive(Component)]
+pub struct RestartGameButton;
+
+#[derive(Component)]
+pub struct MenuOverlay;
 
 #[derive(Component)]
 pub struct GameOverOverlay;
+
+#[derive(Component)]
+pub struct GameWonOverlay;
 
 fn health_points_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -125,7 +134,53 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     current_wave(&mut commands, &asset_server);
 }
 
-pub fn main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn menu_screen(commands: Commands, asset_server: Res<AssetServer>) {
+    let title = "MAIN MENU";
+    let button_title = "Start game";
+    _default_screen(
+        commands,
+        asset_server,
+        title,
+        button_title,
+        StartGameButton,
+        MenuOverlay,
+    );
+}
+
+pub fn game_over_screen(commands: Commands, asset_server: Res<AssetServer>) {
+    let title = "GAME OVER";
+    let button_title = "Restart game";
+    _default_screen(
+        commands,
+        asset_server,
+        title,
+        button_title,
+        RestartGameButton,
+        GameOverOverlay,
+    );
+}
+
+pub fn game_won_screen(commands: Commands, asset_server: Res<AssetServer>) {
+    let title = "YOU WON";
+    let button_title = "Play again";
+    _default_screen(
+        commands,
+        asset_server,
+        title,
+        button_title,
+        PlayAgainButton,
+        GameWonOverlay,
+    );
+}
+
+fn _default_screen<T: Component, R: Component>(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    title: &str,
+    button_title: &str,
+    button_component: T,
+    root_node_component: R,
+) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
@@ -165,15 +220,15 @@ pub fn main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         GAME_LAYER,
-        StartButton,
+        button_component,
     );
 
     commands
-        .spawn((node_bundle, GAME_LAYER, GameOverOverlay))
+        .spawn((node_bundle, GAME_LAYER, root_node_component))
         .with_children(|parent| {
             parent.spawn((
                 TextBundle::from_section(
-                    "MAIN MENU",
+                    title,
                     TextStyle {
                         font: text_style.clone().font,
                         font_size: text_style.font_size,
@@ -187,85 +242,7 @@ pub fn main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent.spawn(button).with_children(|parent| {
                 parent.spawn((
                     TextBundle::from_section(
-                        "Start game",
-                        TextStyle {
-                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                            font_size: 40.0,
-                            color: Color::srgb(0.9, 0.9, 0.9),
-                        },
-                    ),
-                    GAME_LAYER,
-                ));
-            });
-        });
-}
-
-pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-    let text_style = TextStyle {
-        font: font.clone(),
-        font_size: 100.0,
-        color: Color::WHITE,
-    };
-
-    let node_bundle = NodeBundle {
-        style: Style {
-            width: Val::Px(WINDOW_RESOLUTION.x_px),
-            height: Val::Px(WINDOW_RESOLUTION.y_px),
-            align_content: AlignContent::Center,
-            justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            ..default()
-        },
-        // /// This component is automatically managed by the UI layout system.
-        // /// To alter the position of the `NodeBundle`, use the properties of the [`Style`] component.
-        // transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
-        background_color: Color::srgb(255., 0., 0.).into(),
-        ..default()
-    };
-
-    let button = (
-        ButtonBundle {
-            style: Style {
-                width: Val::Px(150.0),
-                height: Val::Px(65.0),
-                border: UiRect::all(Val::Px(1.0)),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            border_color: BorderColor(Color::BLACK),
-            border_radius: BorderRadius::MAX,
-            background_color: Color::BLACK.into(),
-            ..default()
-        },
-        GAME_LAYER,
-        RestartButton,
-    );
-
-    commands
-        .spawn((node_bundle, GAME_LAYER, GameOverOverlay))
-        .with_children(|parent| {
-            parent.spawn((
-                TextBundle::from_section(
-                    "GAME OVER",
-                    TextStyle {
-                        font: text_style.clone().font,
-                        font_size: text_style.font_size,
-                        color: text_style.color,
-                    },
-                )
-                .with_text_justify(JustifyText::Center),
-                GAME_LAYER,
-            ));
-
-            parent.spawn(button).with_children(|parent| {
-                parent.spawn((
-                    TextBundle::from_section(
-                        "Restart",
+                        button_title,
                         TextStyle {
                             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                             font_size: 40.0,

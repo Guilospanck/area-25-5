@@ -107,7 +107,7 @@ pub fn spawn_ammo(
     let rotation = Quat::default();
 
     for idx in 1..=weapon_by_level.quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64);
+        let random_spawning_pos = get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED));
 
         let bundle = AmmoBundle::new(
             &mut texture_atlas_layout,

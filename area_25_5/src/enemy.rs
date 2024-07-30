@@ -87,7 +87,7 @@ pub fn spawn_enemy(
     let damage = enemy_by_level.enemy.damage;
 
     for idx in 1..=enemy_by_level.quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64);
+        let random_spawning_pos = get_random_vec3(idx as u64, None);
 
         let bundle = EnemyBundle::idle(
             texture_atlas_layout,

@@ -90,8 +90,11 @@ pub fn on_player_spawned(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<GameState>>,
+    player_state: Res<State<GameState>>,
 ) {
-    next_state.set(GameState::Alive);
+    if *player_state.get() != GameState::Alive {
+        next_state.set(GameState::Alive);
+    }
 
     let current_wave_enemy = enemy_waves
         .0
@@ -158,12 +161,15 @@ pub fn on_all_enemies_died(
     sprites: Res<SpritesResources>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
+    mut next_state: ResMut<NextState<GameState>>,
+    player_state: Res<State<GameState>>,
 ) {
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
     if new_wave as usize > NUMBER_OF_WAVES {
-        // TODO: YOU WON!
-        // commands.trigger(GameOver);
+        if *player_state.get() != GameState::Won {
+            next_state.set(GameState::Won);
+        }
         return;
     }
     current_wave.0 = new_wave;
@@ -233,7 +239,7 @@ pub fn on_game_over(
     player_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    if *player_state == GameState::Dead {
+    if *player_state.get() == GameState::Dead {
         return;
     }
     next_state.set(GameState::Dead);
@@ -244,7 +250,7 @@ pub fn on_restart_click(
     player_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    if *player_state == GameState::Alive {
+    if *player_state.get() == GameState::Alive {
         return;
     }
     next_state.set(GameState::Alive);
