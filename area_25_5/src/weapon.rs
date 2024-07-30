@@ -8,13 +8,8 @@ use crate::util::get_random_vec3;
 use crate::util::get_weapon_sprite_based_on_weapon_type;
 use crate::CleanupWhenPlayerDies;
 
-#[cfg(not(web))]
-use bevy_inspector_egui::prelude::*;
-
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
-// #[derive(Reflect, Component, Default, Debug, Clone)]
-// #[reflect(Component)]
 #[cfg_attr(web, derive(Component, Default, Debug, Clone))]
 pub struct Weapon(pub WeaponTypeEnum);
 

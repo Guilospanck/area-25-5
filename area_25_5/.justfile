@@ -7,6 +7,9 @@ clippy:
 check:
   cargo check --all-targets
 
+fix:
+  cargo fix --lib -p area_25_5 --allow-dirty
+
 test:
   cargo test --tests
 

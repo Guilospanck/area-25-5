@@ -42,13 +42,8 @@ pub enum EnemyClassEnum {
     Orc,
 }
 
-#[cfg(not(web))]
-use bevy_inspector_egui::prelude::*;
-
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
-// #[derive(Reflect, Component, Default, Debug, Clone)]
-// #[reflect(Component)]
 #[cfg_attr(web, derive(Component, Default, Debug, Clone))]
 pub enum WeaponTypeEnum {
     #[default]
