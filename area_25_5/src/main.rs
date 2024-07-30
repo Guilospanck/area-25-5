@@ -21,6 +21,7 @@ fn main() {
             }),
         // INFO: this is used to generate meta files for the assets.
         // They are going to be generate at `imported_assets`.
+        // Run with `cargo run --features bevy/asset_processor`
         // Just copy the contents and replace them on the assets/ folder.
         // Then, run the compilation to wasm.
         // .set(AssetPlugin {
