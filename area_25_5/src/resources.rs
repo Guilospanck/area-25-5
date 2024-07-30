@@ -13,6 +13,9 @@ pub struct EnemyWaves(pub [EnemyByLevel; NUMBER_OF_WAVES]);
 pub struct WeaponWaves(pub [WeaponByLevel<'static>; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
+pub struct ItemWaves(pub [ItemByLevel<'static>; NUMBER_OF_WAVES]);
+
+#[derive(Resource)]
 pub struct SpritesResources(pub Sprites<'static>);
 
 #[derive(States, Default, Clone, PartialEq, Eq, Hash, Debug)]
@@ -27,6 +30,7 @@ pub fn setup_resources(mut commands: Commands) {
     commands.insert_resource(CurrentWave(1));
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
+    commands.insert_resource(ItemWaves(ITEMS_PER_WAVE));
     commands.insert_resource(SpritesResources(get_sprites()));
 }
 
@@ -187,6 +191,36 @@ pub fn get_sprites() -> Sprites<'static> {
                 height: 32,
             },
             source: "textures/Weapon/MagicBall.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
+        },
+        speed_potion: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Effects/speed_potion.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
+        },
+        lightning: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Effects/lightning.png",
             animation: Some(AnimationInfo {
                 indices: AnimationIndices { first: 0, last: 0 },
                 timer: AnimationTimer(Timer::from_seconds(

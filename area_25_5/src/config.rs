@@ -38,17 +38,9 @@ pub const CAPSULE_COLLIDER: Vec2 =
 
 pub const NUMBER_OF_WAVES: usize = 5;
 
+// ##################### ENEMY #####################################
 pub enum EnemyClassEnum {
     Orc,
-}
-
-#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
-pub enum WeaponTypeEnum {
-    #[default]
-    Bow,
-    Wand,
 }
 
 pub struct EnemyType {
@@ -121,6 +113,16 @@ pub const ENEMIES_PER_WAVE: [EnemyByLevel; NUMBER_OF_WAVES] = [
         quantity: 25,
     },
 ];
+
+// ##################### WEAPON #####################################
+#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(not(web), reflect(Component))]
+#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
+pub enum WeaponTypeEnum {
+    #[default]
+    Bow,
+    Wand,
+}
 
 pub struct WeaponType<'a> {
     pub damage: f32,
@@ -195,5 +197,85 @@ pub const WEAPONS_PER_WAVE: [WeaponByLevel; NUMBER_OF_WAVES] = [
         level: 5,
         weapon: WEAPON_LVL_5,
         quantity: 1,
+    },
+];
+
+// ##################### ITEMS #####################################
+#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(not(web), reflect(Component))]
+#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
+pub enum ItemStatsType {
+    #[default]
+    Speed,
+    Armor,
+}
+
+pub struct ItemType<'a> {
+    pub value: f32,
+    pub source: &'a str,
+    pub item_type: ItemStatsType,
+}
+
+const ITEM_LVL_1: ItemType = ItemType {
+    value: 10.0,
+    source: "textures/Effects/speed_potion.png",
+    item_type: ItemStatsType::Speed,
+};
+
+const ITEM_LVL_2: ItemType = ItemType {
+    value: 20.0,
+    source: "textures/Effects/speed_potion.png",
+    item_type: ItemStatsType::Speed,
+};
+
+const ITEM_LVL_3: ItemType = ItemType {
+    value: 30.0,
+    source: "textures/Effects/speed_potion.png",
+    item_type: ItemStatsType::Speed,
+};
+
+const ITEM_LVL_4: ItemType = ItemType {
+    value: 40.0,
+    source: "textures/Effects/speed_potion.png",
+    item_type: ItemStatsType::Speed,
+};
+
+const ITEM_LVL_5: ItemType = ItemType {
+    value: 50.0,
+    source: "textures/Effects/speed_potion.png",
+    item_type: ItemStatsType::Speed,
+};
+
+pub struct ItemByLevel<'a> {
+    pub level: usize,
+    pub item: ItemType<'a>,
+    pub quantity: u32,
+}
+
+pub const ITEMS_PER_WAVE: [ItemByLevel; NUMBER_OF_WAVES] = [
+    ItemByLevel {
+        level: 1,
+        item: ITEM_LVL_1,
+        quantity: 1,
+    },
+    ItemByLevel {
+        level: 2,
+        item: ITEM_LVL_2,
+        quantity: 2,
+    },
+    ItemByLevel {
+        level: 3,
+        item: ITEM_LVL_3,
+        quantity: 2,
+    },
+    ItemByLevel {
+        level: 4,
+        item: ITEM_LVL_4,
+        quantity: 1,
+    },
+    ItemByLevel {
+        level: 5,
+        item: ITEM_LVL_5,
+        quantity: 3,
     },
 ];

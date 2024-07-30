@@ -93,9 +93,9 @@ impl WeaponBundle {
 pub fn spawn_weapon(
     commands: &mut Commands,
     weapon_by_level: &WeaponByLevel,
-    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
+    asset_server: &Res<AssetServer>,
 ) {
     let weapon_type = &weapon_by_level.weapon.weapon_type;
     let damage = weapon_by_level.weapon.damage;
@@ -106,7 +106,7 @@ pub fn spawn_weapon(
         let random_spawning_pos = get_random_vec3(idx as u64);
 
         let bundle = WeaponBundle::new(
-            &mut texture_atlas_layout,
+            texture_atlas_layout,
             sprites,
             &asset_server,
             scale,

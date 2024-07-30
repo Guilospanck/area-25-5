@@ -49,3 +49,13 @@ pub(crate) fn get_weapon_sprite_based_on_weapon_type(
         WeaponTypeEnum::Wand => sprites.0.wand.clone(),
     }
 }
+
+pub(crate) fn get_item_sprite_based_on_item_type(
+    item_type: ItemStatsType,
+    sprites: &Res<SpritesResources>,
+) -> SpriteInfo<'static> {
+    match item_type {
+        ItemStatsType::Speed => sprites.0.speed_potion.clone(),
+        ItemStatsType::Armor => todo!("create armor sprite"),
+    }
+}

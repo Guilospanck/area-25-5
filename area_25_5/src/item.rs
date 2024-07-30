@@ -1,69 +1,113 @@
-use crate::{prelude::*, CleanupWhenPlayerDies};
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use rand::{Rng, SeedableRng};
-use rand_chacha::ChaCha8Rng;
+use crate::{
+    prelude::*,
+    util::{get_item_sprite_based_on_item_type, get_random_vec3},
+    AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, SpritesResources,
+};
 
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
-pub enum ItemStatsType {
-    #[default]
-    Speed,
-    Armor,
-}
-
-#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-// #[derive(Reflect, Component, Default, Debug, Clone)]
-// #[reflect(Component)]
 #[cfg_attr(web, derive(Component, Default, Debug, Clone))]
 pub struct Item {
-    pub pos: Vec2,
-    pub stats: ItemStatsType,
+    pub item_type: ItemStatsType,
     pub value: f32,
 }
 
-impl Item {
-    fn random(rand: &mut ChaCha8Rng, stats: ItemStatsType, value: f32) -> Self {
-        Item {
-            pos: Vec2::new(
-                (rand.gen::<f32>() - 0.5) * (WINDOW_RESOLUTION.x_px - 100.0),
-                (rand.gen::<f32>() - 0.5) * (WINDOW_RESOLUTION.y_px - 100.0),
-            ),
-            stats,
+#[derive(Bundle, Clone)]
+pub(crate) struct ItemBundle {
+    pub(crate) marker: Item,
+    pub(crate) sprite: SpriteBundle,
+    pub(crate) atlas: TextureAtlas,
+    pub(crate) animation_indices: AnimationIndices,
+    pub(crate) animation_timer: AnimationTimer,
+    pub(crate) layer: RenderLayers,
+    pub(crate) cleanup: CleanupWhenPlayerDies,
+    name: Name,
+}
+
+impl ItemBundle {
+    pub(crate) fn new(
+        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+        sprites: &Res<SpritesResources>,
+        asset_server: &Res<AssetServer>,
+        scale: Vec3,
+        pos: Vec3,
+        item_type: ItemStatsType,
+        value: f32,
+    ) -> Self {
+        Self::_util(
+            texture_atlas_layout,
+            sprites,
+            asset_server,
+            scale,
+            pos,
+            item_type,
             value,
+        )
+    }
+
+    fn _util(
+        texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+        sprites: &Res<SpritesResources>,
+        asset_server: &Res<AssetServer>,
+        scale: Vec3,
+        pos: Vec3,
+        item_type: ItemStatsType,
+        value: f32,
+    ) -> Self {
+        let item_sprite = get_item_sprite_based_on_item_type(item_type.clone(), sprites);
+        let item_animation = item_sprite.animation.unwrap();
+        let texture_atlas_layout = texture_atlas_layout.add(item_sprite.layout);
+
+        ItemBundle {
+            name: Name::new("Item"),
+            marker: Item { item_type, value },
+            sprite: SpriteBundle {
+                texture: asset_server.load(item_sprite.source),
+                transform: Transform {
+                    rotation: Quat::default(),
+                    translation: pos,
+                    scale,
+                },
+                ..default()
+            },
+            atlas: TextureAtlas {
+                layout: texture_atlas_layout,
+                index: item_animation.indices.first,
+            },
+            animation_indices: item_animation.indices,
+            animation_timer: item_animation.timer,
+            layer: GAME_LAYER,
+            cleanup: CleanupWhenPlayerDies,
         }
     }
 }
 
 pub fn spawn_item(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    stats: ItemStatsType,
-    value: f32,
+    commands: &mut Commands,
+    item_by_level: &ItemByLevel,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    sprites: &Res<SpritesResources>,
+    asset_server: Res<AssetServer>,
 ) {
-    let shape = Mesh2dHandle(meshes.add(Capsule2d::new(CAPSULE_RADIUS, CAPSULE_LENGTH)));
-    let color = Color::srgb(0., 255., 0.);
-    let mut rng = ChaCha8Rng::seed_from_u64(13878367467713);
+    let quantity = &item_by_level.quantity;
+    let item_type = &item_by_level.item.item_type;
+    let scale = Vec3::splat(2.);
+    let value = &item_by_level.item.value;
 
-    for _ in 1..=10 {
-        let item = Item::random(&mut rng, stats.clone(), value);
-        commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: shape.clone(),
-                material: materials.add(color),
-                transform: Transform {
-                    translation: Vec3::new(item.pos.x, item.pos.y, 1.),
-                    scale: Vec3::new(1., 1., 1.),
-                    rotation: Quat::default(),
-                },
-                ..default()
-            },
-            Name::new("Item"),
-            item,
-            GAME_LAYER,
-            CleanupWhenPlayerDies,
-        ));
+    for idx in 1..=*quantity {
+        let random_spawning_pos = get_random_vec3(idx as u64);
+
+        let bundle = ItemBundle::new(
+            &mut texture_atlas_layout,
+            sprites,
+            &asset_server,
+            scale,
+            random_spawning_pos,
+            item_type.clone(),
+            *value,
+        );
+
+        commands.spawn(bundle);
+        println!("spawned");
     }
 }

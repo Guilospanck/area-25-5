@@ -1,7 +1,7 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
-    ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, GameState, PlayerSpeedBar,
-    SpritesResources, Weapon, WeaponWaves,
+    ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, GameState, ItemWaves,
+    PlayerSpeedBar, SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -82,11 +82,10 @@ pub fn on_player_speed_changed(
 pub fn on_player_spawned(
     _trigger: Trigger<PlayerSpawned>,
     mut commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
     current_wave: Res<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
+    item_waves: Res<ItemWaves>,
     sprites: Res<SpritesResources>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
@@ -125,17 +124,26 @@ pub fn on_player_spawned(
     spawn_weapon(
         &mut commands,
         weapon_by_level,
+        &mut texture_atlas_layout,
+        &sprites,
+        &asset_server,
+    );
+
+    let current_wave_item = item_waves
+        .0
+        .iter()
+        .find(|item| item.level == current_wave.0 as usize);
+    if current_wave_item.is_none() {
+        println!("NO ITEM MATCHING WAVE FOUND!!!");
+        return;
+    }
+    let item_by_level = current_wave_item.unwrap();
+    spawn_item(
+        &mut commands,
+        item_by_level,
         texture_atlas_layout,
         &sprites,
         asset_server,
-    );
-
-    spawn_item(
-        commands,
-        meshes,
-        materials,
-        crate::ItemStatsType::Speed,
-        ITEM_SPEED_VALUE,
     );
 }
 
@@ -145,6 +153,7 @@ pub fn on_all_enemies_died(
     mut current_wave: ResMut<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
+    item_waves: Res<ItemWaves>,
     mut current_wave_ui: Query<&mut Text, With<CurrentWaveUI>>,
     sprites: Res<SpritesResources>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
@@ -153,7 +162,8 @@ pub fn on_all_enemies_died(
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
     if new_wave as usize > NUMBER_OF_WAVES {
-        commands.trigger(GameOver);
+        // TODO: YOU WON!
+        // commands.trigger(GameOver);
         return;
     }
     current_wave.0 = new_wave;
@@ -190,6 +200,23 @@ pub fn on_all_enemies_died(
     spawn_weapon(
         &mut commands,
         weapon_by_level,
+        &mut texture_atlas_layout,
+        &sprites,
+        &asset_server,
+    );
+
+    let current_wave_item = item_waves
+        .0
+        .iter()
+        .find(|item| item.level == current_wave.0 as usize);
+    if current_wave_item.is_none() {
+        println!("NO ITEM MATCHING WAVE FOUND!!!");
+        return;
+    }
+    let item_by_level = current_wave_item.unwrap();
+    spawn_item(
+        &mut commands,
+        item_by_level,
         texture_atlas_layout,
         &sprites,
         asset_server,

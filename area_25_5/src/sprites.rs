@@ -1,7 +1,4 @@
-use crate::{
-    animation::AnimationInfo, prelude::*,
-    SpritesResources,
-};
+use crate::{animation::AnimationInfo, prelude::*, SpritesResources};
 
 #[derive(Clone, Debug)]
 pub struct RectangularDimensions {
@@ -29,6 +26,8 @@ pub struct Sprites<'a> {
     pub arrow: SpriteInfo<'a>,
     pub wand: SpriteInfo<'a>,
     pub magic_ball: SpriteInfo<'a>,
+    pub speed_potion: SpriteInfo<'a>,
+    pub lightning: SpriteInfo<'a>,
 }
 
 #[derive(Component)]

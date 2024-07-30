@@ -2,7 +2,7 @@ use crate::{
     ammo::Ammo,
     enemy::Enemy,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
-    item::{Item, ItemStatsType},
+    item::Item,
     player::Player,
     prelude::*,
     AllEnemiesDied, AmmoBundle, Armor, Damage, GameOver, Health, Speed, SpritesResources, Weapon,
@@ -131,7 +131,7 @@ pub fn check_for_item_collisions(
 
             if player_collider.intersects(&item_collider) {
                 player_speed.0 += item.value;
-                match item.stats {
+                match item.item_type {
                     ItemStatsType::Speed => {
                         commands.trigger(PlayerSpeedChanged {
                             speed: player_speed.0,
