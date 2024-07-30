@@ -1,7 +1,7 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, PlayAgainButton, RestartGame,
-    RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
+    util::get_unit_direction_vector, AmmoBundle, PlayAgainButton, RestartGame, RestartGameButton,
+    Speed, SpritesResources, StartGameButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -119,21 +119,21 @@ pub fn move_char(
     let (mut player_transform, player_speed, _) = player_query.get_single_mut().unwrap();
 
     // left move
-    if keyboard_input.pressed(KeyCode::KeyH) {
+    if keyboard_input.pressed(KeyCode::KeyA) {
         direction_x -= 1.0;
     }
 
     // right move
-    if keyboard_input.pressed(KeyCode::KeyL) {
+    if keyboard_input.pressed(KeyCode::KeyD) {
         direction_x += 1.0;
     }
     // top move
-    if keyboard_input.pressed(KeyCode::KeyK) {
+    if keyboard_input.pressed(KeyCode::KeyW) {
         direction_y += 1.0;
     }
 
     // bottom move
-    if keyboard_input.pressed(KeyCode::KeyJ) {
+    if keyboard_input.pressed(KeyCode::KeyS) {
         direction_y -= 1.0;
     }
 
