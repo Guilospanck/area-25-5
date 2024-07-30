@@ -17,14 +17,15 @@ Todo:
 - [x] Remove health, damage from enemy
 - [x] (Maybe) Remove pos from Weapon and use the transform from the bundle 
 - [x] Compile to web
-- [x] Show something when player dies or the next wave comes (Missing next wave and buttons
-to restart)
-- [ ] Welcoming screen
-- [ ] Check when player dies, it is being despawned, but we still have queries
+- [x] Show something when player dies or the next wave comes 
+- [x] Check when player dies, it is being despawned, but we still have queries
 looking for him, therefore we're gonna have panic
+- [ ] Welcoming screen
+- [ ] Apply texture to speed stats
+- [ ] Add information about next wave (and some pause maybe)
+- [ ] Write game design document
 
 Backlog:
-- [ ] Apply texture to speed stats
 - [-] Spawn different weapons (Still need more)
 - [ ] Spawn different enemies
 - [ ] Spawn different potions
@@ -37,7 +38,6 @@ Features:
 - [ ] Create HP bars for the player
 
 Latest:
-- Write game design document
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
@@ -45,7 +45,7 @@ MAYBE
 - [ ] (Maybe) Remove source and ammo_source from WeaponType struct
 - [ ] (Maybe) Change collision from capsule to Ammo and Weapon sizes
 
-
+HISTORY:
 When you finish, it says: "You're half done"
 So you start with left half, then second campaign right half and then finally third campaign
 you're whole, but you still have to fight the US boss to go home.
