@@ -22,7 +22,6 @@ pub(crate) const AMMO_DAMAGE: f32 = 10.0;
 pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
 
-pub(crate) const ITEM_SPEED_VALUE: f32 = 50.;
 pub(crate) const ITEM_RANDOM_SEED: u64 = 1937836746771;
 
 pub struct CustomWindowResolution {

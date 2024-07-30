@@ -1,6 +1,6 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, GameOver, PlayAgainButton, RestartGame,
+    util::get_unit_direction_vector, AmmoBundle, PlayAgainButton, RestartGame,
     RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
 };
 

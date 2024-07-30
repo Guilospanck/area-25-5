@@ -1,6 +1,6 @@
 use bevy::{color::palettes::css::YELLOW, sprite::Anchor};
 
-use crate::{prelude::*, GameState};
+use crate::{prelude::*};
 
 #[derive(Component)]
 pub struct PlayerHealthBar;
