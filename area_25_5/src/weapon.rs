@@ -6,6 +6,7 @@ use crate::stats::Damage;
 use crate::stats::Direction;
 use crate::util::get_random_vec3;
 use crate::util::get_weapon_sprite_based_on_weapon_type;
+use crate::CleanupWhenPlayerDies;
 
 #[cfg(not(web))]
 use bevy_inspector_egui::prelude::*;
@@ -27,6 +28,7 @@ pub(crate) struct WeaponBundle {
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
     pub(crate) layer: RenderLayers,
+    pub(crate) cleanup: CleanupWhenPlayerDies,
     name: Name,
 }
 
@@ -88,6 +90,7 @@ impl WeaponBundle {
             animation_indices: weapon_animation.indices,
             animation_timer: weapon_animation.timer,
             layer: GAME_LAYER,
+            cleanup: CleanupWhenPlayerDies,
         }
     }
 }

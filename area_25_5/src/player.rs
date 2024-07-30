@@ -1,6 +1,6 @@
 use crate::{
-    animation::*, prelude::*, sprites::Sprites, AmmoBundle, Armor, Health, PlayerSpawned, Speed,
-    SpritesResources, WeaponBundle,
+    animation::*, prelude::*, sprites::Sprites, AmmoBundle, Armor, CleanupWhenPlayerDies, Health,
+    PlayerSpawned, Speed, SpritesResources, WeaponBundle,
 };
 
 #[derive(Component, Debug, Clone)]
@@ -19,7 +19,10 @@ pub(crate) struct PlayerBundle {
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
     pub(crate) layer: RenderLayers,
+
     name: Name,
+
+    pub(crate) cleanup: CleanupWhenPlayerDies,
 }
 
 impl PlayerBundle {
@@ -69,6 +72,7 @@ impl PlayerBundle {
             animation_indices: player_animation.indices,
             animation_timer: player_animation.timer,
             layer: GAME_LAYER,
+            cleanup: CleanupWhenPlayerDies,
         }
     }
 }

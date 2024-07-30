@@ -13,6 +13,7 @@ pub(crate) const ENEMY_MOVE_SPEED: f32 = 100.0;
 pub(crate) const ENEMY_HEALTH: f32 = 100.0;
 pub(crate) const ENEMY_COLLISION_BOX_WIDTH: f32 = 19.;
 pub(crate) const ENEMY_COLLISION_BOX_HEIGHT: f32 = 32.;
+pub(crate) const ENEMY_RANDOM_SEED: u64 = 1987836746771;
 
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
 pub(crate) const AMMO_DAMAGE: f32 = 10.0;
@@ -21,7 +22,6 @@ pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
 
 pub(crate) const ITEM_SPEED_VALUE: f32 = 50.;
-pub(crate) const ENEMY_RANDOM_SEED: u64 = 1987836746771;
 
 pub struct CustomWindowResolution {
     pub x_px: f32,

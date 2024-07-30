@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, CleanupWhenPlayerDies};
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -68,6 +68,7 @@ pub fn spawn_item(
             Name::new("Item"),
             item,
             GAME_LAYER,
+            CleanupWhenPlayerDies,
         ));
     }
 }

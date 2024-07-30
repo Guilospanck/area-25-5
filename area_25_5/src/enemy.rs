@@ -1,6 +1,6 @@
 use crate::{
-    prelude::*, util::get_random_vec3, AnimationIndices, AnimationTimer, Damage, Health,
-    SpriteInfo, Sprites, SpritesResources,
+    prelude::*, util::get_random_vec3, AnimationIndices, AnimationTimer, CleanupWhenPlayerDies,
+    Damage, Health, SpriteInfo, Sprites, SpritesResources,
 };
 
 #[derive(Component, Clone)]
@@ -16,6 +16,7 @@ pub(crate) struct EnemyBundle {
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
     pub(crate) layer: RenderLayers,
+    pub(crate) cleanup: CleanupWhenPlayerDies,
     name: Name,
 }
 
@@ -70,6 +71,7 @@ impl EnemyBundle {
             animation_indices: enemy_animation.indices,
             animation_timer: enemy_animation.timer,
             layer: GAME_LAYER,
+            cleanup: CleanupWhenPlayerDies,
         }
     }
 }

@@ -6,6 +6,7 @@ use crate::stats::Damage;
 use crate::stats::Direction;
 use crate::util::get_ammo_sprite_based_on_weapon_type;
 use crate::util::get_random_vec3;
+use crate::CleanupWhenPlayerDies;
 #[cfg(not(web))]
 use bevy_inspector_egui::prelude::*;
 
@@ -26,6 +27,7 @@ pub(crate) struct AmmoBundle {
     pub(crate) animation_indices: AnimationIndices,
     pub(crate) animation_timer: AnimationTimer,
     pub(crate) layer: RenderLayers,
+    pub(crate) cleanup: CleanupWhenPlayerDies,
     name: Name,
 }
 
@@ -90,6 +92,7 @@ impl AmmoBundle {
             animation_indices: ammo_animation.indices,
             animation_timer: ammo_animation.timer,
             layer: GAME_LAYER,
+            cleanup: CleanupWhenPlayerDies,
         }
     }
 }

@@ -15,8 +15,9 @@ pub struct WeaponWaves(pub [WeaponByLevel<'static>; NUMBER_OF_WAVES]);
 #[derive(Resource)]
 pub struct SpritesResources(pub Sprites<'static>);
 
-#[derive(Resource, PartialEq)]
+#[derive(States, Default, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum PlayerState {
+    #[default]
     Alive,
     Dead,
 }
@@ -26,7 +27,6 @@ pub fn setup_resources(mut commands: Commands) {
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
     commands.insert_resource(SpritesResources(get_sprites()));
-    commands.insert_resource(PlayerState::Alive);
 }
 
 pub fn get_sprites() -> Sprites<'static> {

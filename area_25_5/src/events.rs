@@ -91,8 +91,10 @@ pub fn on_player_spawned(
     sprites: Res<SpritesResources>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
-    mut player_state: ResMut<PlayerState>,
+    mut next_state: ResMut<NextState<PlayerState>>,
 ) {
+    next_state.set(PlayerState::Alive);
+
     let current_wave_enemy = enemy_waves
         .0
         .iter()
@@ -101,8 +103,6 @@ pub fn on_player_spawned(
         println!("NO ENEMY MATCHING WAVE FOUND!!!");
         return;
     }
-
-    *player_state = PlayerState::Alive;
 
     let enemy_by_level = current_wave_enemy.unwrap();
     spawn_enemy(
@@ -204,69 +204,22 @@ pub fn on_all_enemies_died(
 
 pub fn on_game_over(
     _trigger: Trigger<GameOver>,
-    commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut player_state: ResMut<PlayerState>,
+    player_state: Res<State<PlayerState>>,
+    mut next_state: ResMut<NextState<PlayerState>>,
 ) {
     if *player_state == PlayerState::Dead {
         return;
     }
-
-    *player_state = PlayerState::Dead;
-
-    game_over(commands, asset_server);
+    next_state.set(PlayerState::Dead);
 }
 
-//FIXME: not updating correctly the resources and ui values and it is taking
-//at least two clicks to really do something
 pub fn on_restart_click(
     _trigger: Trigger<RestartGame>,
-    mut commands: Commands,
-    texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    sprites: Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
-
-    // Game components/resources
-    mut current_wave: ResMut<CurrentWave>,
-    player_entity: Query<Entity, With<Player>>,
-    enemies_entity: Query<Entity, With<Enemy>>,
-    weapon_entity: Query<Entity, (With<Weapon>, Without<Player>)>,
-    game_over_overlay: Query<(Entity, &GameOverOverlay)>,
-
-    // UI
-    mut current_wave_ui: Query<
-        (&mut Text, &CurrentWaveUI),
-        (Without<CurrentWaveUI>, Without<PlayerSpeedBar>),
-    >,
+    player_state: Res<State<PlayerState>>,
+    mut next_state: ResMut<NextState<PlayerState>>,
 ) {
-    if let Ok(go_overlay) = game_over_overlay.get_single() {
-        commands.entity(go_overlay.0).despawn_recursive();
+    if *player_state == PlayerState::Alive {
+        return;
     }
-
-    // Cleanup
-    for entity in player_entity.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
-    for entity in weapon_entity.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
-    for entity in enemies_entity.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    current_wave.0 = 1u32;
-
-    // Update UI
-    if let Ok(mut text) = current_wave_ui.get_single_mut() {
-        text.0.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
-    }
-
-    spawn_player(&mut commands, texture_atlas_layout, asset_server, sprites);
-
-    commands.trigger(PlayerSpeedChanged {
-        speed: PLAYER_MOVE_SPEED,
-    });
-    commands.trigger(PlayerHealthChanged {
-        health: PLAYER_HEALTH,
-    });
+    next_state.set(PlayerState::Alive);
 }

@@ -287,10 +287,17 @@ fn damage_player(
     player_armor: &mut Armor,
     damage: f32,
 ) {
-    let new_damage = damage - player_armor.0 * 0.02;
-    let mut new_player_health = player_health.0 - new_damage;
+    // reduces damage based on the armor of the player
+    let mut new_damage = damage - player_armor.0 * 0.02;
+    if new_damage <= 0. {
+        new_damage = 0.0;
+        println!("Blocked everything!");
+    }
+
+    let new_player_health = player_health.0 - new_damage;
     if new_player_health <= 0. {
-        new_player_health = 0.;
+        commands.entity(player_entity).despawn_recursive();
+        return;
     }
 
     player_health.0 = new_player_health;
@@ -298,10 +305,4 @@ fn damage_player(
     commands.trigger(PlayerHealthChanged {
         health: player_health.0,
     });
-
-    if player_health.0 <= 0. {
-        // YOU DIED!!!
-        println!("DEAD");
-        commands.entity(player_entity).despawn_recursive();
-    }
 }

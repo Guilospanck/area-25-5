@@ -33,20 +33,31 @@ fn main() {
     }
 
     app.insert_resource(Msaa::Off)
+        // states
+        .insert_state(PlayerState::Alive)
+        // system sets
+        .configure_sets(
+            FixedUpdate,
+            (
+                CollisionSet.run_if(in_state(PlayerState::Alive)),
+                MoveSet.run_if(in_state(PlayerState::Alive)),
+                InputSet.run_if(in_state(PlayerState::Alive)),
+            ),
+        )
         // systems
         .add_systems(
             Startup,
-            (
-                setup_resources,
-                setup_camera,
-                setup_sprite,
-                setup_ui,
-                setup_player,
-            )
-                .chain(),
+            (setup_resources, setup_camera, setup_sprite, setup_ui).chain(),
         )
-        .add_systems(FixedUpdate, (animate_sprite, move_char, handle_click))
-        .add_systems(FixedUpdate, (move_ammo, move_enemies_towards_player))
+        .add_systems(
+            FixedUpdate,
+            (move_ammo, move_enemies_towards_player, animate_sprite).in_set(MoveSet),
+        )
+        .add_systems(FixedUpdate, (move_char, handle_click).in_set(InputSet))
+        .add_systems(
+            FixedUpdate,
+            handle_restart_click.run_if(in_state(PlayerState::Dead)),
+        )
         .add_systems(
             FixedUpdate,
             (
@@ -54,8 +65,20 @@ fn main() {
                 check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
                 check_for_weapon_collisions,
-                check_restart_click,
+            )
+                .in_set(CollisionSet),
+        )
+        .add_systems(
+            OnEnter(PlayerState::Alive),
+            (
+                cleanup_system::<GameOverOverlay>,
+                reset_initial_state,
+                setup_player,
             ),
+        )
+        .add_systems(
+            OnEnter(PlayerState::Dead),
+            (cleanup_system::<CleanupWhenPlayerDies>, game_over),
         )
         // events
         .observe(on_player_spawned)

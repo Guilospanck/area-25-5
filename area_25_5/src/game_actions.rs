@@ -159,7 +159,7 @@ pub fn move_char(
     player_transform.translation.y = char_new_pos_y;
 }
 
-pub fn check_restart_click(
+pub fn handle_restart_click(
     mut commands: Commands,
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &RestartButton),
