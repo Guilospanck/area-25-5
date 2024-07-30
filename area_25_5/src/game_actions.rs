@@ -1,7 +1,7 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, GameOver, RestartGame, Speed, SpritesResources,
-    StartButton, Weapon,
+    util::get_unit_direction_vector, AmmoBundle, GameOver, RestartButton, RestartGame, Speed,
+    SpritesResources, StartButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -159,10 +159,30 @@ pub fn move_char(
     player_transform.translation.y = char_new_pos_y;
 }
 
-pub fn handle_restart_click(
+pub fn handle_start_click(
     mut commands: Commands,
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &StartButton),
+        Changed<Interaction>,
+    >,
+) {
+    for (interaction, mut background_color, _) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => commands.trigger(RestartGame),
+            Interaction::Hovered => {
+                *background_color = Color::srgb(0., 255., 0.).into();
+            }
+            Interaction::None => {
+                *background_color = Color::BLACK.into();
+            }
+        }
+    }
+}
+
+pub fn handle_restart_click(
+    mut commands: Commands,
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &RestartButton),
         Changed<Interaction>,
     >,
 ) {

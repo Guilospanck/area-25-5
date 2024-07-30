@@ -64,7 +64,10 @@ fn main() {
         .add_systems(FixedUpdate, (move_char, handle_click).in_set(InputSet))
         .add_systems(
             FixedUpdate,
-            handle_restart_click.run_if(in_state(GameState::Dead)),
+            (
+                handle_start_click.run_if(in_state(GameState::Menu)),
+                handle_restart_click.run_if(in_state(GameState::Dead)),
+            ),
         )
         .add_systems(
             FixedUpdate,

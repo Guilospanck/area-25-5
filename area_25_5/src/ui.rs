@@ -15,6 +15,9 @@ pub struct CurrentWaveUI;
 pub struct StartButton;
 
 #[derive(Component)]
+pub struct RestartButton;
+
+#[derive(Component)]
 pub struct GameOverOverlay;
 
 fn health_points_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
@@ -240,7 +243,7 @@ pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         GAME_LAYER,
-        StartButton,
+        RestartButton,
     );
 
     commands

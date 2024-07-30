@@ -217,7 +217,6 @@ pub fn on_restart_click(
     player_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    println!("triggered");
     if *player_state == GameState::Alive {
         return;
     }
