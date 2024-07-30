@@ -16,8 +16,9 @@ pub struct WeaponWaves(pub [WeaponByLevel<'static>; NUMBER_OF_WAVES]);
 pub struct SpritesResources(pub Sprites<'static>);
 
 #[derive(States, Default, Clone, PartialEq, Eq, Hash, Debug)]
-pub enum PlayerState {
+pub enum GameState {
     #[default]
+    Menu,
     Alive,
     Dead,
 }

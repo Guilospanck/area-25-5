@@ -1,7 +1,7 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, GameOver, RestartButton, RestartGame, Speed,
-    SpritesResources, Weapon,
+    util::get_unit_direction_vector, AmmoBundle, GameOver, RestartGame, Speed, SpritesResources,
+    StartButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -162,7 +162,7 @@ pub fn move_char(
 pub fn handle_restart_click(
     mut commands: Commands,
     mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor, &RestartButton),
+        (&Interaction, &mut BackgroundColor, &StartButton),
         Changed<Interaction>,
     >,
 ) {

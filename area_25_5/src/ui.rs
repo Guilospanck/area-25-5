@@ -1,7 +1,4 @@
-use bevy::{
-    color::palettes::css::{YELLOW},
-    sprite::Anchor,
-};
+use bevy::{color::palettes::css::YELLOW, sprite::Anchor};
 
 use crate::prelude::*;
 
@@ -15,7 +12,7 @@ pub struct PlayerSpeedBar;
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
-pub struct RestartButton;
+pub struct StartButton;
 
 #[derive(Component)]
 pub struct GameOverOverlay;
@@ -125,6 +122,81 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     current_wave(&mut commands, &asset_server);
 }
 
+pub fn main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 100.0,
+        color: Color::WHITE,
+    };
+
+    let node_bundle = NodeBundle {
+        style: Style {
+            width: Val::Px(WINDOW_RESOLUTION.x_px),
+            height: Val::Px(WINDOW_RESOLUTION.y_px),
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        background_color: Color::srgb(255., 0., 0.).into(),
+        ..default()
+    };
+
+    let button = (
+        ButtonBundle {
+            style: Style {
+                width: Val::Px(250.0),
+                height: Val::Px(65.0),
+                border: UiRect::all(Val::Px(1.0)),
+                // horizontally center child text
+                justify_content: JustifyContent::Center,
+                // vertically center child text
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            border_color: BorderColor(Color::BLACK),
+            border_radius: BorderRadius::MAX,
+            background_color: Color::BLACK.into(),
+            ..default()
+        },
+        GAME_LAYER,
+        StartButton,
+    );
+
+    commands
+        .spawn((node_bundle, GAME_LAYER, GameOverOverlay))
+        .with_children(|parent| {
+            parent.spawn((
+                TextBundle::from_section(
+                    "MAIN MENU",
+                    TextStyle {
+                        font: text_style.clone().font,
+                        font_size: text_style.font_size,
+                        color: text_style.color,
+                    },
+                )
+                .with_text_justify(JustifyText::Center),
+                GAME_LAYER,
+            ));
+
+            parent.spawn(button).with_children(|parent| {
+                parent.spawn((
+                    TextBundle::from_section(
+                        "Start game",
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 40.0,
+                            color: Color::srgb(0.9, 0.9, 0.9),
+                        },
+                    ),
+                    GAME_LAYER,
+                ));
+            });
+        });
+}
+
 pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
@@ -168,7 +240,7 @@ pub fn game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         GAME_LAYER,
-        RestartButton,
+        StartButton,
     );
 
     commands

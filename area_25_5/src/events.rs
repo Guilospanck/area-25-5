@@ -1,6 +1,6 @@
 use crate::{
-    game_actions::shoot, player::Player, prelude::*, spawn_enemy,
-    spawn_item, spawn_weapon, ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, PlayerSpeedBar, PlayerState,
+    game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
+    ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, GameState, PlayerSpeedBar,
     SpritesResources, Weapon, WeaponWaves,
 };
 
@@ -90,9 +90,9 @@ pub fn on_player_spawned(
     sprites: Res<SpritesResources>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
-    mut next_state: ResMut<NextState<PlayerState>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
-    next_state.set(PlayerState::Alive);
+    next_state.set(GameState::Alive);
 
     let current_wave_enemy = enemy_waves
         .0
@@ -203,22 +203,23 @@ pub fn on_all_enemies_died(
 
 pub fn on_game_over(
     _trigger: Trigger<GameOver>,
-    player_state: Res<State<PlayerState>>,
-    mut next_state: ResMut<NextState<PlayerState>>,
+    player_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
-    if *player_state == PlayerState::Dead {
+    if *player_state == GameState::Dead {
         return;
     }
-    next_state.set(PlayerState::Dead);
+    next_state.set(GameState::Dead);
 }
 
 pub fn on_restart_click(
     _trigger: Trigger<RestartGame>,
-    player_state: Res<State<PlayerState>>,
-    mut next_state: ResMut<NextState<PlayerState>>,
+    player_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
-    if *player_state == PlayerState::Alive {
+    println!("triggered");
+    if *player_state == GameState::Alive {
         return;
     }
-    next_state.set(PlayerState::Alive);
+    next_state.set(GameState::Alive);
 }

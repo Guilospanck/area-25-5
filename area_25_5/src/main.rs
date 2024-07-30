@@ -19,6 +19,14 @@ fn main() {
                 }),
                 ..default()
             }),
+        // INFO: this is used to generate meta files for the assets.
+        // They are going to be generate at `imported_assets`.
+        // Just copy the contents and replace them on the assets/ folder.
+        // Then, run the compilation to wasm.
+        // .set(AssetPlugin {
+        //     mode: AssetMode::Processed,
+        //     ..default()
+        // }),
         Wireframe2dPlugin,
     ));
 
@@ -34,14 +42,14 @@ fn main() {
 
     app.insert_resource(Msaa::Off)
         // states
-        .insert_state(PlayerState::Alive)
+        .insert_state(GameState::Menu)
         // system sets
         .configure_sets(
             FixedUpdate,
             (
-                CollisionSet.run_if(in_state(PlayerState::Alive)),
-                MoveSet.run_if(in_state(PlayerState::Alive)),
-                InputSet.run_if(in_state(PlayerState::Alive)),
+                CollisionSet.run_if(in_state(GameState::Alive)),
+                MoveSet.run_if(in_state(GameState::Alive)),
+                InputSet.run_if(in_state(GameState::Alive)),
             ),
         )
         // systems
@@ -56,7 +64,7 @@ fn main() {
         .add_systems(FixedUpdate, (move_char, handle_click).in_set(InputSet))
         .add_systems(
             FixedUpdate,
-            handle_restart_click.run_if(in_state(PlayerState::Dead)),
+            handle_restart_click.run_if(in_state(GameState::Dead)),
         )
         .add_systems(
             FixedUpdate,
@@ -68,8 +76,9 @@ fn main() {
             )
                 .in_set(CollisionSet),
         )
+        .add_systems(OnEnter(GameState::Menu), main_menu)
         .add_systems(
-            OnEnter(PlayerState::Alive),
+            OnEnter(GameState::Alive),
             (
                 cleanup_system::<GameOverOverlay>,
                 reset_initial_state,
@@ -77,7 +86,7 @@ fn main() {
             ),
         )
         .add_systems(
-            OnEnter(PlayerState::Dead),
+            OnEnter(GameState::Dead),
             (cleanup_system::<CleanupWhenPlayerDies>, game_over),
         )
         // events
