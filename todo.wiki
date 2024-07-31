@@ -25,6 +25,9 @@ looking for him, therefore we're gonna have panic
 - [x] Spawn items based on waves
 - [x] Add a WON screen
 - [x] Write game design document
+- [ ] Add HP bar to enemies and player
+- [ ] Add score
+- [ ] Add time limit
 - [ ] Audio
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] Randomize spawns
@@ -39,7 +42,6 @@ Backlog:
 - [ ] Spawning of enemies can come from outside the screen
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
-- Add time limit
  
 Features:
 - HP bar for some boss at some point

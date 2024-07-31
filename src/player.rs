@@ -1,6 +1,6 @@
 use crate::{
-    animation::*, prelude::*, sprites::Sprites, AmmoBundle, Armor, CleanupWhenPlayerDies, Health,
-    PlayerSpawned, Speed, SpritesResources, WeaponBundle,
+    animation::*, prelude::*, spawn_health_bar, sprites::Sprites, AmmoBundle, Armor,
+    CleanupWhenPlayerDies, Health, PlayerSpawned, Speed, SpritesResources, WeaponBundle,
 };
 
 #[derive(Component, Debug, Clone)]
@@ -82,8 +82,17 @@ pub fn setup_player(
     texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    spawn_player(&mut commands, texture_atlas_layout, asset_server, sprites);
+    spawn_player(
+        &mut commands,
+        texture_atlas_layout,
+        asset_server,
+        sprites,
+        meshes,
+        materials,
+    );
 }
 
 pub(crate) fn spawn_player(
@@ -91,6 +100,8 @@ pub(crate) fn spawn_player(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
     sprites_resources: Res<SpritesResources>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let player = PlayerBundle::idle(
         &mut texture_atlas_layout,
@@ -133,11 +144,16 @@ pub(crate) fn spawn_player(
 
     let player_entity_id = commands.spawn(player).id();
 
-    commands.entity(player_entity_id).with_children(|parent| {
-        parent.spawn(weapon_bundle).with_children(|parent| {
-            parent.spawn(ammo_bundle);
-        });
-    });
+    let health_bar = spawn_health_bar(commands, meshes, materials, PLAYER_HEALTH, PLAYER_HEALTH);
+
+    commands
+        .entity(player_entity_id)
+        .with_children(|parent| {
+            parent.spawn(weapon_bundle).with_children(|parent| {
+                parent.spawn(ammo_bundle);
+            });
+        })
+        .push_children(&[health_bar]);
 
     commands.trigger(PlayerSpawned);
 }

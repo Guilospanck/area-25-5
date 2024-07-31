@@ -1,7 +1,8 @@
+
 use crate::{
-    game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_item, spawn_weapon,
-    ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, GameState, ItemWaves,
-    PlayerSpeedBar, SpritesResources, Weapon, WeaponWaves,
+    game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
+    spawn_weapon, ui::PlayerHealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, GameState,
+    ItemWaves, PlayerSpeedBar, SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -57,13 +58,26 @@ pub fn on_mouse_click(
 
 pub fn on_player_health_changed(
     trigger: Trigger<PlayerHealthChanged>,
-    mut player_health_bar: Query<&mut Text, With<PlayerHealthBar>>,
+    mut commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
+    player_health_bar: Query<Entity, With<PlayerHealthBar>>,
+    player_query: Query<Entity, With<Player>>,
 ) {
     let event = trigger.event();
     let health = event.health;
 
-    if let Ok(mut text) = player_health_bar.get_single_mut() {
-        text.sections.first_mut().unwrap().value = health.to_string();
+    let player = player_query.get_single();
+    if player.is_err() {
+        return;
+    }
+    let player = player.unwrap();
+
+    if let Ok(entity) = player_health_bar.get_single() {
+        commands.entity(entity).despawn_recursive();
+        let health_bar = spawn_health_bar(&mut commands, meshes, materials, health, PLAYER_HEALTH);
+        commands.entity(player).remove_children(&[entity]);
+        commands.entity(player).add_child(health_bar);
     }
 }
 

@@ -287,7 +287,6 @@ fn damage_player(
     let mut new_damage = damage - player_armor.0 * 0.02;
     if new_damage <= 0. {
         new_damage = 0.0;
-        println!("Blocked everything!");
     }
 
     let new_player_health = player_health.0 - new_damage;
