@@ -37,17 +37,18 @@ const HEALTH_BAR_SCALE: f32 = 0.2;
 
 pub(crate) fn spawn_health_bar(
     commands: &mut Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
     health: f32,
     max_health: f32,
+    translation: Vec3,
 ) -> Entity {
     let parent_shape =
         Mesh2dHandle(meshes.add(Rectangle::new(MAX_HEALTH_BAR * HEALTH_BAR_SCALE, 2.5)));
     let parent = MaterialMesh2dBundle {
         mesh: parent_shape,
         material: materials.add(Color::srgba(255., 255., 255., 0.1)),
-        transform: Transform::from_xyz(2.0, 12.0, 0.0),
+        transform: Transform::from_xyz(translation.x, translation.y, translation.z),
         ..default()
     };
 

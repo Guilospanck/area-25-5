@@ -82,16 +82,16 @@ pub fn setup_player(
     texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     spawn_player(
         &mut commands,
         texture_atlas_layout,
         asset_server,
         sprites,
-        meshes,
-        materials,
+        &mut meshes,
+        &mut materials,
     );
 }
 
@@ -100,8 +100,8 @@ pub(crate) fn spawn_player(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
     sprites_resources: Res<SpritesResources>,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
 ) {
     let player = PlayerBundle::idle(
         &mut texture_atlas_layout,
@@ -144,7 +144,15 @@ pub(crate) fn spawn_player(
 
     let player_entity_id = commands.spawn(player).id();
 
-    let health_bar = spawn_health_bar(commands, meshes, materials, PLAYER_HEALTH, PLAYER_HEALTH);
+    let health_bar_translation = Vec3::new(2.0, 12.0, 0.0);
+    let health_bar = spawn_health_bar(
+        commands,
+        meshes,
+        materials,
+        PLAYER_HEALTH,
+        PLAYER_HEALTH,
+        health_bar_translation,
+    );
 
     commands
         .entity(player_entity_id)

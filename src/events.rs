@@ -1,7 +1,7 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
-    spawn_weapon, ui::HealthBar, CurrentWave, CurrentWaveUI, EnemyWaves, GameState, ItemWaves,
-    PlayerSpeedBar, SpritesResources, Weapon, WeaponWaves,
+    spawn_weapon, ui::HealthBar, CurrentWave, CurrentWaveUI, Enemy, EnemyWaves, GameState,
+    ItemWaves, PlayerSpeedBar, SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -21,6 +21,12 @@ pub struct PlayerSpeedChanged {
 
 #[derive(Event)]
 pub struct PlayerSpawned;
+
+#[derive(Event)]
+pub struct EnemyHealthChanged {
+    pub health: f32,
+    pub entity: Entity,
+}
 
 #[derive(Event)]
 pub struct AllEnemiesDied;
@@ -58,8 +64,8 @@ pub fn on_mouse_click(
 pub fn on_player_health_changed(
     trigger: Trigger<PlayerHealthChanged>,
     mut commands: Commands,
-    meshes: ResMut<Assets<Mesh>>,
-    materials: ResMut<Assets<ColorMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     player_query: Query<(Entity, &Children), With<Player>>,
     player_health_bar_query: Query<Entity, With<HealthBar>>,
 ) {
@@ -72,12 +78,19 @@ pub fn on_player_health_changed(
     }
     let player = player.unwrap();
     let player_entity = player.0;
+    let health_bar_translation = Vec3::new(2.0, 12.0, 0.0);
 
     for &child in player.1.iter() {
         if let Ok(health_bar_entity) = player_health_bar_query.get(child) {
             commands.entity(health_bar_entity).despawn_recursive();
-            let health_bar =
-                spawn_health_bar(&mut commands, meshes, materials, health, PLAYER_HEALTH);
+            let health_bar = spawn_health_bar(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                health,
+                PLAYER_HEALTH,
+                health_bar_translation,
+            );
             commands
                 .entity(player_entity)
                 .remove_children(&[health_bar_entity]);
@@ -111,6 +124,8 @@ pub fn on_player_spawned(
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<GameState>>,
     player_state: Res<State<GameState>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if *player_state.get() != GameState::Alive {
         next_state.set(GameState::Alive);
@@ -132,6 +147,8 @@ pub fn on_player_spawned(
         &sprites,
         &mut texture_atlas_layout,
         enemy_by_level,
+        &mut meshes,
+        &mut materials,
     );
 
     let current_wave_weapon = weapon_waves
@@ -170,6 +187,44 @@ pub fn on_player_spawned(
     );
 }
 
+pub fn on_enemy_health_changed(
+    trigger: Trigger<EnemyHealthChanged>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    enemy_query: Query<(Entity, &Children), With<Enemy>>,
+    enemy_health_bar_query: Query<Entity, With<HealthBar>>,
+) {
+    let event = trigger.event();
+    let health = event.health;
+    let enemy_entity = event.entity;
+
+    let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
+    for (entity, children) in enemy_query.iter() {
+        if entity == enemy_entity {
+            for &child in children.iter() {
+                if let Ok(health_bar_entity) = enemy_health_bar_query.get(child) {
+                    commands.entity(health_bar_entity).despawn_recursive();
+                    let health_bar = spawn_health_bar(
+                        &mut commands,
+                        &mut meshes,
+                        &mut materials,
+                        health,
+                        ENEMY_HEALTH,
+                        health_bar_translation,
+                    );
+                    commands
+                        .entity(enemy_entity)
+                        .remove_children(&[health_bar_entity]);
+                    commands.entity(enemy_entity).add_child(health_bar);
+                    break;
+                }
+            }
+            break;
+        }
+    }
+}
+
 pub fn on_all_enemies_died(
     _trigger: Trigger<AllEnemiesDied>,
     mut commands: Commands,
@@ -183,6 +238,8 @@ pub fn on_all_enemies_died(
     asset_server: Res<AssetServer>,
     mut next_state: ResMut<NextState<GameState>>,
     player_state: Res<State<GameState>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
@@ -210,6 +267,8 @@ pub fn on_all_enemies_died(
         &sprites,
         &mut texture_atlas_layout,
         enemy_by_level,
+        &mut meshes,
+        &mut materials,
     );
 
     // Spawn more different weapons

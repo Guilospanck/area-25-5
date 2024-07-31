@@ -5,8 +5,8 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, AmmoBundle, Armor, Damage, GameOver, Health, Speed, SpritesResources, Weapon,
-    WeaponBundle,
+    AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health, Speed,
+    SpritesResources, Weapon, WeaponBundle,
 };
 
 pub fn check_for_ammo_collisions_with_enemy(
@@ -235,9 +235,11 @@ pub fn check_for_weapon_collisions(
             // (otherwise it will only remove the link
             // to the parent entity and will look like it
             // was spawned on the center of the screen)
-            commands.entity(player_entity).clear_children();
 
             if let Some(player_weapon_unwrapped) = player_weapon {
+                commands
+                    .entity(player_entity)
+                    .remove_children(&[player_weapon_unwrapped.1]);
                 commands.entity(player_weapon_unwrapped.1).clear_children();
                 commands.entity(player_weapon_unwrapped.1).despawn();
             }
@@ -275,6 +277,11 @@ fn damage_enemy(
     if enemy_health.0 <= 0. {
         commands.entity(enemy_entity).despawn_recursive();
     }
+
+    commands.trigger(EnemyHealthChanged {
+        health: enemy_health.0,
+        entity: enemy_entity,
+    });
 }
 
 fn damage_player(
