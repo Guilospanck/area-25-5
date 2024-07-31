@@ -1,0 +1,57 @@
+Game Summary Pitch
+Area 25.5 is a pixel-art roguelike survival game about an Alien stuck on planet Earth trying to find his other half while he fights earthly men in black that want to use him for scientific research.
+
+Inspiration
+
+Vampire Survivors
+This acclaimed game has a simple dynamic: you're a vampire that needs to fight a bunch of enemies so you can survive until dawn. While it looks simple, it is also super exciting and dopamine-fueled.
+
+Player Experience
+As this is still only the prototype, in a single screen you have to fight enemies that come at you in waves. Currently there are 5 waves that spawns different quantities of enemies with different stats (damage, health), getting harder wave after wave.
+To help you deal with this increasing difficulty, new weapons and speed potions will spawn randomly on the map, providing you with more damage and speed to fight.
+
+Platform
+The game runs in the browser.
+
+Development Software
+- Libresprite for graphics
+- Rust and Bevy engine for programming
+
+Genre
+Survival, singleplayer, roguelike
+
+Target audience
+This game is targeted at all audiences.
+
+Gameplay overview
+The player controls an alien character that starts with a bow and arrow weapon and a certain move speed. After he is able to kill all enemies (orcs), a new wave will come with stronger orcs and also new spawns on the map for weapons and speed potions. His objective is to survive through all waves.
+
+Theme Interpretation
+The theme for this Jam is Alchemy and Shadows. 
+The current game does not implement this as the timing wasn't enough, but the interpretation it aims to have is the following:
+
+- Alchemy: as you progress through the game you're going to find different potions that can give you some stats like armor, speed, damage, size and so on;
+
+- Shadows: you have to face this secret government that's trying to use you, an alien-being, as a research product without anyone knowing about it. To survive, you have to fight the deep state.
+
+Primary mechanics
+As you run throughout the map, you're gonna hit some spawned weapons and speed potions. As you do
+so, they will equip/buff you. If an enemy hits you, you take damage. If your health goes to zero, you lose.
+
+Art
+The art is very poor and prototypical and it was made by one person + some royalty-free sprites. This is not the state desired for the game, but only what was able to do in such a short time for the Jam.
+
+Audio
+The game still has no audio.
+
+UI
+You have 3 simple screens that will show up when necessary:
+- Menu: when you first open the game. It only has one "Start game" button
+- Game Over: when your health goes to zero, you lose the game. It only has one "Restart game" button
+- Game Won: when you kill all enemies from all waves. It only has one "Play again" button
+
+On top of that, while you are actually playing the game, you're gonna have 3 UI elements on the top to show you: current wave (top-left), current health (top-center) and current speed (top-right).
+
+Controls
+It's dead simple: move with WASD and shoot with left-click of the mouse.
+

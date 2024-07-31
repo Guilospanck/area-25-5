@@ -23,10 +23,11 @@ looking for him, therefore we're gonna have panic
 - [x] Welcoming screen
 - [x] Apply texture to speed stats
 - [x] Spawn items based on waves
-- [ ] Add a WON screen
+- [x] Add a WON screen
+- [x] Write game design document
 - [ ] Audio
-- [ ] Write game design document
 - [ ] Add information about next wave (and some pause maybe)
+- [ ] Randomize spawns
 
 Backlog:
 - [-] Spawn different weapons (Still need more)
@@ -35,6 +36,7 @@ Backlog:
 - [ ] Add effects (sparkles, explosions)
 - [ ] Create a way of enemies not getting too much together
 - [ ] Spawn more waves
+- [ ] Spawning of enemies can come from outside the screen
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
 - Add time limit
