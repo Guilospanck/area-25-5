@@ -6,7 +6,7 @@ use bevy::{
 use crate::prelude::*;
 
 #[derive(Component)]
-pub struct PlayerHealthBar;
+pub struct HealthBar;
 
 #[derive(Component)]
 pub struct PlayerSpeedBar;
@@ -66,7 +66,7 @@ pub(crate) fn spawn_health_bar(
     };
 
     commands
-        .spawn((parent, GAME_LAYER, PlayerHealthBar))
+        .spawn((parent, GAME_LAYER, HealthBar))
         .with_children(|parent| {
             parent.spawn((child, GAME_LAYER));
         })
