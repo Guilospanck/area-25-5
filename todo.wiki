@@ -28,7 +28,7 @@ looking for him, therefore we're gonna have panic
 - [x] Add HP bar to enemies and player
 - [x] Add score
 - [ ] Despawn items/weapons from one wave to another
-- [ ] Add time limit
+- [ ] Add time counter (or time limit)
 - [ ] Audio
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] Randomize spawns
