@@ -305,7 +305,7 @@ fn _default_screen<T: Component>(
     };
 
     commands
-        .spawn((node_bundle, GAME_LAYER, root_node_component))
+        .spawn((node_bundle, MENU_LAYER, root_node_component))
         .push_children(&children_entities);
 }
 
@@ -333,7 +333,7 @@ fn _build_custom_text_bundle(
             },
         )
         .with_text_justify(JustifyText::Center),
-        layer: GAME_LAYER,
+        layer: MENU_LAYER,
     }
 }
 
@@ -362,7 +362,7 @@ fn _build_custom_button<T: Component>(button: T) -> CustomButtonBundle<T> {
             background_color: Color::BLACK.into(),
             ..default()
         },
-        layer: GAME_LAYER,
+        layer: MENU_LAYER,
         component: button,
     }
 }

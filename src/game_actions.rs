@@ -1,6 +1,6 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, PlayAgainButton, RestartGame,
+    util::get_unit_direction_vector, AmmoBundle, PlayAgainButton, PlayerCamera, RestartGame,
     RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
 };
 
@@ -88,11 +88,11 @@ pub fn shoot(
 
 pub fn handle_click(
     mouse_button_input: Res<ButtonInput<MouseButton>>,
-    camera: Query<(&Camera, &GlobalTransform)>,
+    camera: Query<(&Camera, &GlobalTransform, &PlayerCamera)>,
     windows: Query<&Window>,
     mut commands: Commands,
 ) {
-    let (camera, camera_transform) = camera.single();
+    let (camera, camera_transform, _) = camera.single();
     if let Some(pos) = windows
         .single()
         .cursor_position()

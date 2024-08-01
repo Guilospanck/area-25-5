@@ -27,6 +27,7 @@ looking for him, therefore we're gonna have panic
 - [x] Write game design document
 - [x] Add HP bar to enemies and player
 - [x] Add score
+- [ ] Make camera zoomed in and following player
 - [ ] Despawn items/weapons from one wave to another
 - [ ] Add time counter (or time limit)
 - [ ] Audio
