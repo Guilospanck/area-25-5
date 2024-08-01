@@ -1,7 +1,7 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, PlayAgainButton, PlayerCamera, RestartGame,
-    RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
+    util::get_unit_direction_vector, Ammo, AmmoBundle, BaseCamera, Item, PlayAgainButton,
+    PlayerCamera, RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -109,9 +109,16 @@ pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&mut Transform, &Speed, &Player)>,
     time: Res<Time>,
+    mut base_camera: Query<(&mut Transform, &OrthographicProjection, &BaseCamera), Without<Player>>,
 ) {
     let mut direction_x = 0.;
     let mut direction_y = 0.;
+
+    if base_camera.get_single_mut().is_err() {
+        return;
+    }
+    let (mut base_camera_transform, base_camera_ortographic_projection, _) =
+        base_camera.get_single_mut().unwrap();
 
     if player_query.get_single_mut().is_err() {
         return;
@@ -156,6 +163,28 @@ pub fn move_char(
 
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
+
+    // pan camera
+    let mut camera_new_pos_x = char_new_pos_x;
+    let mut camera_new_pos_y = char_new_pos_y;
+    let player_camera_scale = base_camera_ortographic_projection.scale;
+    let limit_x = WINDOW_RESOLUTION.x_px / (2. / player_camera_scale);
+    let limit_y = WINDOW_RESOLUTION.y_px / (2. / player_camera_scale);
+    if char_new_pos_x < -limit_x {
+        camera_new_pos_x = -limit_x;
+    }
+    if char_new_pos_x > limit_x {
+        camera_new_pos_x = limit_x;
+    }
+    if char_new_pos_y < -limit_y {
+        camera_new_pos_y = -limit_y;
+    }
+    if char_new_pos_y > limit_y {
+        camera_new_pos_y = limit_y;
+    }
+
+    base_camera_transform.translation.x = camera_new_pos_x;
+    base_camera_transform.translation.y = camera_new_pos_y;
 }
 
 // Won

@@ -1,63 +1,53 @@
 use crate::prelude::*;
 
-pub trait CustomCamera: Component + Clone {
-    fn new() -> Self;
-    fn spawn(&self, commands: &mut Commands) -> Entity;
-}
-
 #[derive(Component, Clone)]
-pub struct MenuCamera;
-
-impl CustomCamera for MenuCamera {
-    fn new() -> Self {
-        Self
-    }
-
-    fn spawn(&self, commands: &mut Commands) -> Entity {
-        spawn_menu_camera(commands)
-    }
-}
+pub struct BaseCamera;
 
 #[derive(Component, Clone)]
 pub struct PlayerCamera;
 
-impl CustomCamera for PlayerCamera {
-    fn new() -> Self {
-        Self
-    }
+#[derive(Component, Clone)]
+pub struct OverlayCamera;
 
-    fn spawn(&self, commands: &mut Commands) -> Entity {
-        spawn_player_camera(commands)
-    }
+#[derive(Component, Clone)]
+pub struct MenuCamera;
+
+pub fn setup_base_camera(mut commands: Commands) {
+    spawn_base_camera(&mut commands);
+}
+
+pub fn setup_player_camera(mut commands: Commands) {
+    spawn_player_camera(&mut commands);
+}
+
+pub fn setup_overlay_camera(mut commands: Commands) {
+    spawn_overlay_camera(&mut commands);
 }
 
 pub fn setup_menu_camera(mut commands: Commands) {
     spawn_menu_camera(&mut commands);
 }
 
-pub fn setup_swap_camera<R: CustomCamera, S: CustomCamera>(
-    commands: Commands,
-    out_camera: Query<(Entity, &R)>,
-) {
-    let potato = S::new();
-    swap_camera(commands, out_camera, potato);
-}
-
-pub fn swap_camera<R: Component, S: CustomCamera>(
-    mut commands: Commands,
-    out_camera: Query<(Entity, &R)>,
-    in_camera: S,
-) {
-    if let Ok((entity, _)) = out_camera.get_single() {
-        commands.entity(entity).despawn();
-    }
-
-    in_camera.spawn(&mut commands);
-}
-
-pub fn spawn_menu_camera(commands: &mut Commands) -> Entity {
+pub fn spawn_base_camera(commands: &mut Commands) -> Entity {
     commands
-        .spawn((Camera2dBundle::default(), MenuCamera, MENU_LAYER))
+        .spawn((
+            Camera2dBundle {
+                camera: Camera {
+                    order: 0,
+                    ..default()
+                },
+                projection: OrthographicProjection {
+                    // don't forget to set `near` and `far`
+                    near: -1000.0,
+                    far: 1000.0,
+                    scale: 0.5,
+                    ..default()
+                },
+                ..default()
+            },
+            BaseCamera,
+            BASE_LAYER,
+        ))
         .id()
 }
 
@@ -65,15 +55,49 @@ pub fn spawn_player_camera(commands: &mut Commands) -> Entity {
     commands
         .spawn((
             Camera2dBundle {
-                transform: Transform {
-                    translation: Vec3::splat(0.),
-                    rotation: Quat::default(),
-                    scale: Vec3::new(1.5, 1.5, 1.),
+                camera: Camera {
+                    order: 1,
+                    clear_color: ClearColorConfig::None,
+                    ..default()
                 },
                 ..default()
             },
             PlayerCamera,
-            GAME_LAYER,
+            PLAYER_LAYER,
+        ))
+        .id()
+}
+
+pub fn spawn_overlay_camera(commands: &mut Commands) -> Entity {
+    commands
+        .spawn((
+            Camera2dBundle {
+                camera: Camera {
+                    order: 2,
+                    clear_color: ClearColorConfig::None,
+                    ..default()
+                },
+                ..default()
+            },
+            MenuCamera,
+            OVERLAY_LAYER,
+        ))
+        .id()
+}
+
+pub fn spawn_menu_camera(commands: &mut Commands) -> Entity {
+    commands
+        .spawn((
+            Camera2dBundle {
+                camera: Camera {
+                    order: 3,
+                    clear_color: ClearColorConfig::None,
+                    ..default()
+                },
+                ..default()
+            },
+            MenuCamera,
+            MENU_UI_LAYER,
         ))
         .id()
 }

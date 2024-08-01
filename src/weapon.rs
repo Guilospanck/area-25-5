@@ -84,7 +84,7 @@ impl WeaponBundle {
             },
             animation_indices: weapon_animation.indices,
             animation_timer: weapon_animation.timer,
-            layer: GAME_LAYER,
+            layer: PLAYER_LAYER,
             cleanup: CleanupWhenPlayerDies,
         }
     }

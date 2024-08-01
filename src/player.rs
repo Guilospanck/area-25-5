@@ -1,6 +1,6 @@
 use crate::{
     animation::*, prelude::*, spawn_health_bar, spawn_player_camera, sprites::Sprites, AmmoBundle,
-    Armor, CleanupWhenPlayerDies, Health, MenuCamera, PlayerSpawned, Speed, SpritesResources,
+    Armor, CleanupWhenPlayerDies, Health, PlayerCamera, PlayerSpawned, Speed, SpritesResources,
     WeaponBundle,
 };
 
@@ -72,7 +72,7 @@ impl PlayerBundle {
             },
             animation_indices: player_animation.indices,
             animation_timer: player_animation.timer,
-            layer: GAME_LAYER,
+            layer: PLAYER_LAYER,
             cleanup: CleanupWhenPlayerDies,
         }
     }
@@ -85,7 +85,6 @@ pub fn setup_player(
     sprites: Res<SpritesResources>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    menu_camera: Query<(Entity, &MenuCamera)>,
 ) {
     spawn_player(
         &mut commands,
@@ -94,7 +93,6 @@ pub fn setup_player(
         sprites,
         &mut meshes,
         &mut materials,
-        menu_camera,
     );
 }
 
@@ -105,7 +103,6 @@ pub(crate) fn spawn_player(
     sprites_resources: Res<SpritesResources>,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
-    menu_camera: Query<(Entity, &MenuCamera)>,
 ) {
     let player = PlayerBundle::idle(
         &mut texture_atlas_layout,
@@ -158,13 +155,6 @@ pub(crate) fn spawn_player(
         health_bar_translation,
     );
 
-    // despawn menu camera
-    if let Ok((entity, _)) = menu_camera.get_single() {
-        commands.entity(entity).despawn();
-    }
-
-    let camera = spawn_player_camera(commands);
-
     commands
         .entity(player_entity_id)
         .with_children(|parent| {
@@ -172,7 +162,7 @@ pub(crate) fn spawn_player(
                 parent.spawn(ammo_bundle);
             });
         })
-        .push_children(&[health_bar, camera]);
+        .push_children(&[health_bar]);
 
     commands.trigger(PlayerSpawned);
 }

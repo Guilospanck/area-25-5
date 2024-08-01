@@ -87,7 +87,7 @@ impl AmmoBundle {
             },
             animation_indices: ammo_animation.indices,
             animation_timer: ammo_animation.timer,
-            layer: GAME_LAYER,
+            layer: PLAYER_LAYER,
             cleanup: CleanupWhenPlayerDies,
         }
     }

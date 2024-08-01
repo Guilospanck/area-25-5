@@ -70,7 +70,7 @@ impl EnemyBundle {
             },
             animation_indices: enemy_animation.indices,
             animation_timer: enemy_animation.timer,
-            layer: GAME_LAYER,
+            layer: PLAYER_LAYER,
             cleanup: CleanupWhenPlayerDies,
         }
     }

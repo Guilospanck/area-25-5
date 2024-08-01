@@ -76,7 +76,7 @@ impl ItemBundle {
             },
             animation_indices: item_animation.indices,
             animation_timer: item_animation.timer,
-            layer: GAME_LAYER,
+            layer: PLAYER_LAYER,
             cleanup: CleanupWhenPlayerDies,
         }
     }

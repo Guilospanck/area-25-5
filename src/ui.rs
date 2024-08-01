@@ -73,9 +73,9 @@ pub(crate) fn spawn_health_bar(
     };
 
     commands
-        .spawn((parent, GAME_LAYER, HealthBar))
+        .spawn((parent, PLAYER_LAYER, HealthBar))
         .with_children(|parent| {
-            parent.spawn((child, GAME_LAYER));
+            parent.spawn((child, PLAYER_LAYER));
         })
         .id()
 }
@@ -109,7 +109,7 @@ fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             ..default()
         },
         PlayerSpeedBar,
-        GAME_LAYER,
+        OVERLAY_LAYER,
     ));
 }
 
@@ -142,7 +142,7 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             ..default()
         },
         CurrentWaveUI,
-        GAME_LAYER,
+        OVERLAY_LAYER,
     ));
 }
 
@@ -175,7 +175,7 @@ fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer
             ..default()
         },
         ScoreUI,
-        GAME_LAYER,
+        OVERLAY_LAYER,
     ));
 }
 
@@ -305,7 +305,7 @@ fn _default_screen<T: Component>(
     };
 
     commands
-        .spawn((node_bundle, MENU_LAYER, root_node_component))
+        .spawn((node_bundle, MENU_UI_LAYER, root_node_component))
         .push_children(&children_entities);
 }
 
@@ -333,7 +333,7 @@ fn _build_custom_text_bundle(
             },
         )
         .with_text_justify(JustifyText::Center),
-        layer: MENU_LAYER,
+        layer: MENU_UI_LAYER,
     }
 }
 
@@ -362,7 +362,7 @@ fn _build_custom_button<T: Component>(button: T) -> CustomButtonBundle<T> {
             background_color: Color::BLACK.into(),
             ..default()
         },
-        layer: MENU_LAYER,
+        layer: MENU_UI_LAYER,
         component: button,
     }
 }

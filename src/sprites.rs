@@ -80,7 +80,7 @@ fn setup_tile_sprite(
             layout: texture_atlas_layout.clone(),
             index: 0usize,
         },
-        layer: GAME_LAYER,
+        layer: BASE_LAYER,
     });
 }
 

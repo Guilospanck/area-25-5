@@ -56,7 +56,16 @@ fn main() {
         // systems
         .add_systems(
             Startup,
-            (setup_resources, setup_menu_camera, setup_sprite, setup_ui).chain(),
+            (
+                setup_resources,
+                setup_base_camera,
+                setup_player_camera,
+                setup_overlay_camera,
+                setup_menu_camera,
+                setup_sprite,
+                setup_ui,
+            )
+                .chain(),
         )
         .add_systems(
             OnEnter(GameState::Alive),
@@ -86,22 +95,9 @@ fn main() {
             )
                 .in_set(CollisionSet),
         )
-        .add_systems(
-            OnExit(GameState::Alive),
-            setup_swap_camera::<PlayerCamera, MenuCamera>,
-        )
-        .add_systems(
-            OnEnter(GameState::Menu),
-            menu_screen.after(setup_swap_camera::<PlayerCamera, MenuCamera>),
-        )
-        .add_systems(
-            OnEnter(GameState::Dead),
-            game_over_screen.after(setup_swap_camera::<PlayerCamera, MenuCamera>),
-        )
-        .add_systems(
-            OnEnter(GameState::Won),
-            game_won_screen.after(setup_swap_camera::<PlayerCamera, MenuCamera>),
-        )
+        .add_systems(OnEnter(GameState::Menu), menu_screen)
+        .add_systems(OnEnter(GameState::Dead), game_over_screen)
+        .add_systems(OnEnter(GameState::Won), game_won_screen)
         .add_systems(
             FixedUpdate,
             (
