@@ -5,14 +5,14 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health, Speed,
-    SpritesResources, Weapon, WeaponBundle,
+    AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health, ScoreChanged,
+    Speed, SpritesResources, Weapon, WeaponBundle,
 };
 
 pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
     ammos_query: Query<(Entity, &Transform), With<Ammo>>,
-    mut enemies: Query<(Entity, &Transform, &mut Health), With<Enemy>>,
+    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
     player_query: Query<&Children, With<Player>>,
     player_weapon_query: Query<(&Children, &Weapon, &Damage)>,
@@ -46,7 +46,7 @@ pub fn check_for_ammo_collisions_with_enemy(
     let player_weapon = player_weapon.unwrap();
     let player_weapon_damage = player_weapon.2;
 
-    for (enemy_entity, enemy_transform, mut enemy_health) in enemies.iter_mut() {
+    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
             Vec2::new(
@@ -75,6 +75,7 @@ pub fn check_for_ammo_collisions_with_enemy(
                     enemy_entity,
                     &mut enemy_health,
                     player_weapon_damage.0,
+                    enemy_damage,
                 );
                 continue;
             }
@@ -235,7 +236,6 @@ pub fn check_for_weapon_collisions(
             // (otherwise it will only remove the link
             // to the parent entity and will look like it
             // was spawned on the center of the screen)
-
             if let Some(player_weapon_unwrapped) = player_weapon {
                 commands
                     .entity(player_entity)
@@ -268,6 +268,7 @@ fn damage_enemy(
     enemy_entity: Entity,
     enemy_health: &mut Health,
     damage: f32,
+    enemy_damage: &Damage,
 ) {
     enemy_health.0 -= damage;
 
@@ -276,6 +277,11 @@ fn damage_enemy(
 
     if enemy_health.0 <= 0. {
         commands.entity(enemy_entity).despawn_recursive();
+        // INFO: we use the damage of the enemy to how much points the player
+        // will get
+        commands.trigger(ScoreChanged {
+            score: enemy_damage.0,
+        });
     }
 
     commands.trigger(EnemyHealthChanged {

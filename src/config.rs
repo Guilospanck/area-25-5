@@ -4,6 +4,7 @@ pub use bevy::render::view::RenderLayers;
 pub(crate) const GAME_LAYER: RenderLayers = RenderLayers::layer(1);
 pub(crate) const TILE_Z_INDEX: f32 = 0.;
 pub(crate) const CHAR_Z_INDEX: f32 = 1.;
+pub(crate) const UI_Z_INDEX: f32 = 2.;
 
 pub(crate) const PLAYER_MOVE_SPEED: f32 = 150.0;
 pub(crate) const PLAYER_ARMOR: f32 = 100.0;

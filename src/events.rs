@@ -1,7 +1,7 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
-    spawn_weapon, ui::HealthBar, CurrentWave, CurrentWaveUI, Enemy, EnemyWaves, GameState,
-    ItemWaves, PlayerSpeedBar, SpritesResources, Weapon, WeaponWaves,
+    spawn_weapon, ui::HealthBar, CurrentScore, CurrentWave, CurrentWaveUI, Enemy, EnemyWaves,
+    GameState, ItemWaves, PlayerSpeedBar, ScoreUI, SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -36,6 +36,11 @@ pub struct GameOver;
 
 #[derive(Event)]
 pub struct RestartGame;
+
+#[derive(Event)]
+pub struct ScoreChanged {
+    pub score: f32,
+}
 
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
@@ -333,4 +338,19 @@ pub fn on_restart_click(
         return;
     }
     next_state.set(GameState::Alive);
+}
+
+pub fn on_score_changed(
+    trigger: Trigger<ScoreChanged>,
+    mut current_score: ResMut<CurrentScore>,
+    mut score_ui: Query<&mut Text, With<ScoreUI>>,
+) {
+    let event = trigger.event();
+    let score = event.score;
+
+    current_score.0 += score;
+
+    if let Ok(mut text) = score_ui.get_single_mut() {
+        text.sections.first_mut().unwrap().value = current_score.0.to_string();
+    }
 }

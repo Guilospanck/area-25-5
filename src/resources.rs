@@ -7,6 +7,9 @@ use crate::{
 pub struct CurrentWave(pub u32);
 
 #[derive(Resource)]
+pub struct CurrentScore(pub f32);
+
+#[derive(Resource)]
 pub struct EnemyWaves(pub [EnemyByLevel; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
@@ -33,6 +36,7 @@ pub fn setup_resources(mut commands: Commands) {
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
     commands.insert_resource(ItemWaves(ITEMS_PER_WAVE));
     commands.insert_resource(SpritesResources(get_sprites()));
+    commands.insert_resource(CurrentScore(0.));
 }
 
 pub fn get_sprites() -> Sprites<'static> {

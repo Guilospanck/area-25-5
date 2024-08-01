@@ -106,5 +106,6 @@ fn main() {
         .observe(on_all_enemies_died)
         .observe(on_game_over)
         .observe(on_restart_click)
+        .observe(on_score_changed)
         .run();
 }

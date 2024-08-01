@@ -3,8 +3,9 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::prelude::*;
+use crate::{prelude::*, CurrentScore};
 
+// ############## UI ####################
 #[derive(Component)]
 pub struct HealthBar;
 
@@ -15,6 +16,10 @@ pub struct PlayerSpeedBar;
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
+pub struct ScoreUI;
+
+// ############## BUTTONS ####################
+#[derive(Component)]
 pub struct PlayAgainButton;
 
 #[derive(Component)]
@@ -23,6 +28,7 @@ pub struct StartGameButton;
 #[derive(Component)]
 pub struct RestartGameButton;
 
+// ############## SCREENS ####################
 #[derive(Component)]
 pub struct MenuOverlay;
 
@@ -61,7 +67,7 @@ pub(crate) fn spawn_health_bar(
         transform: Transform::from_xyz(
             -(MAX_HEALTH_BAR * HEALTH_BAR_SCALE / 2. - width / 2.),
             0.0,
-            0.0,
+            UI_Z_INDEX,
         ),
         ..default()
     };
@@ -97,7 +103,7 @@ fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             transform: Transform::from_translation(Vec3::new(
                 WINDOW_RESOLUTION.x_px / 2. - 30.,
                 WINDOW_RESOLUTION.y_px / 2. - 30.,
-                10.0,
+                UI_Z_INDEX,
             )),
             text_anchor: Anchor::TopCenter,
             ..default()
@@ -130,7 +136,7 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             transform: Transform::from_translation(Vec3::new(
                 -WINDOW_RESOLUTION.x_px / 2. + 100.,
                 WINDOW_RESOLUTION.y_px / 2. - 30.,
-                10.0,
+                UI_Z_INDEX,
             )),
             text_anchor: Anchor::TopCenter,
             ..default()
@@ -140,66 +146,150 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     ));
 }
 
-pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // health_points_bar(&mut commands, &asset_server);
-    speed_bar(&mut commands, &asset_server);
-    current_wave(&mut commands, &asset_server);
-}
-
-pub fn menu_screen(commands: Commands, asset_server: Res<AssetServer>) {
-    let title = "MAIN MENU";
-    let button_title = "Start game";
-    _default_screen(
-        commands,
-        asset_server,
-        title,
-        button_title,
-        StartGameButton,
-        MenuOverlay,
-    );
-}
-
-pub fn game_over_screen(commands: Commands, asset_server: Res<AssetServer>) {
-    let title = "GAME OVER";
-    let button_title = "Restart game";
-    _default_screen(
-        commands,
-        asset_server,
-        title,
-        button_title,
-        RestartGameButton,
-        GameOverOverlay,
-    );
-}
-
-pub fn game_won_screen(commands: Commands, asset_server: Res<AssetServer>) {
-    let title = "YOU WON";
-    let button_title = "Play again";
-    _default_screen(
-        commands,
-        asset_server,
-        title,
-        button_title,
-        PlayAgainButton,
-        GameWonOverlay,
-    );
-}
-
-fn _default_screen<T: Component, R: Component>(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    title: &str,
-    button_title: &str,
-    button_component: T,
-    root_node_component: R,
-) {
+fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
-        font_size: 100.0,
-        color: Color::WHITE,
+        font_size: 60.0,
+        ..default()
     };
 
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![TextSection::new(
+                    "0",
+                    TextStyle {
+                        color: Color::Srgba(YELLOW),
+                        ..text_style.clone()
+                    },
+                )],
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(
+                0.0,
+                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                UI_Z_INDEX,
+            )),
+            text_anchor: Anchor::TopCenter,
+            ..default()
+        },
+        ScoreUI,
+        GAME_LAYER,
+    ));
+}
+
+pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    speed_bar(&mut commands, &asset_server);
+    current_wave(&mut commands, &asset_server);
+    spawn_score_points_ui(&mut commands, &asset_server);
+}
+
+pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let title = "MAIN MENU";
+    let button_title = "Start game";
+    let font_size = 100.;
+
+    let one = commands
+        .spawn(_build_custom_text_bundle(
+            &asset_server,
+            title,
+            font_size,
+            Color::WHITE,
+        ))
+        .id();
+
+    let two = commands
+        .spawn(_build_custom_button(StartGameButton))
+        .with_children(|parent| {
+            parent.spawn(_build_custom_text_bundle(
+                &asset_server,
+                button_title,
+                40.,
+                Color::srgb(0.9, 0.9, 0.9),
+            ));
+        })
+        .id();
+
+    _default_screen(commands, MenuOverlay, vec![one, two]);
+}
+
+pub fn game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let title = "GAME OVER";
+    let button_title = "Restart game";
+    let font_size = 100.;
+
+    let one = commands
+        .spawn(_build_custom_text_bundle(
+            &asset_server,
+            title,
+            font_size,
+            Color::WHITE,
+        ))
+        .id();
+
+    let two = commands
+        .spawn(_build_custom_button(RestartGameButton))
+        .with_children(|parent| {
+            parent.spawn(_build_custom_text_bundle(
+                &asset_server,
+                button_title,
+                40.,
+                Color::srgb(0.9, 0.9, 0.9),
+            ));
+        })
+        .id();
+
+    _default_screen(commands, GameOverOverlay, vec![one, two]);
+}
+
+pub fn game_won_screen(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_score: Res<CurrentScore>,
+) {
+    let title = "YOU WON";
+    let button_title = "Play again";
+    let font_size = 100.;
+
+    let one = commands
+        .spawn(_build_custom_text_bundle(
+            &asset_server,
+            title,
+            font_size,
+            Color::WHITE,
+        ))
+        .id();
+
+    let two = commands
+        .spawn(_build_custom_text_bundle(
+            &asset_server,
+            &format!("Final score: {}", &current_score.0.to_string()),
+            40.,
+            Color::WHITE,
+        ))
+        .id();
+
+    let three = commands
+        .spawn(_build_custom_button(PlayAgainButton))
+        .with_children(|parent| {
+            parent.spawn(_build_custom_text_bundle(
+                &asset_server,
+                button_title,
+                40.,
+                Color::srgb(0.9, 0.9, 0.9),
+            ));
+        })
+        .id();
+
+    _default_screen(commands, GameWonOverlay, vec![one, two, three]);
+}
+
+fn _default_screen<T: Component>(
+    mut commands: Commands,
+    root_node_component: T,
+    children_entities: Vec<Entity>,
+) {
     let node_bundle = NodeBundle {
         style: Style {
             width: Val::Px(WINDOW_RESOLUTION.x_px),
@@ -214,8 +304,49 @@ fn _default_screen<T: Component, R: Component>(
         ..default()
     };
 
-    let button = (
-        ButtonBundle {
+    commands
+        .spawn((node_bundle, GAME_LAYER, root_node_component))
+        .push_children(&children_entities);
+}
+
+#[derive(Bundle)]
+struct CustomTextBundle {
+    bundle: TextBundle,
+    layer: RenderLayers,
+}
+
+fn _build_custom_text_bundle(
+    asset_server: &Res<AssetServer>,
+    title: &str,
+    font_size: f32,
+    color: Color,
+) -> CustomTextBundle {
+    let text_style = _build_text_style(asset_server, font_size, color);
+
+    CustomTextBundle {
+        bundle: TextBundle::from_section(
+            title,
+            TextStyle {
+                font: text_style.clone().font,
+                font_size: text_style.font_size,
+                color: text_style.color,
+            },
+        )
+        .with_text_justify(JustifyText::Center),
+        layer: GAME_LAYER,
+    }
+}
+
+#[derive(Bundle)]
+struct CustomButtonBundle<T: Component> {
+    bundle: ButtonBundle,
+    layer: RenderLayers,
+    component: T,
+}
+
+fn _build_custom_button<T: Component>(button: T) -> CustomButtonBundle<T> {
+    CustomButtonBundle {
+        bundle: ButtonBundle {
             style: Style {
                 width: Val::Px(250.0),
                 height: Val::Px(65.0),
@@ -231,38 +362,16 @@ fn _default_screen<T: Component, R: Component>(
             background_color: Color::BLACK.into(),
             ..default()
         },
-        GAME_LAYER,
-        button_component,
-    );
+        layer: GAME_LAYER,
+        component: button,
+    }
+}
 
-    commands
-        .spawn((node_bundle, GAME_LAYER, root_node_component))
-        .with_children(|parent| {
-            parent.spawn((
-                TextBundle::from_section(
-                    title,
-                    TextStyle {
-                        font: text_style.clone().font,
-                        font_size: text_style.font_size,
-                        color: text_style.color,
-                    },
-                )
-                .with_text_justify(JustifyText::Center),
-                GAME_LAYER,
-            ));
-
-            parent.spawn(button).with_children(|parent| {
-                parent.spawn((
-                    TextBundle::from_section(
-                        button_title,
-                        TextStyle {
-                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                            font_size: 40.0,
-                            color: Color::srgb(0.9, 0.9, 0.9),
-                        },
-                    ),
-                    GAME_LAYER,
-                ));
-            });
-        });
+fn _build_text_style(asset_server: &Res<AssetServer>, font_size: f32, color: Color) -> TextStyle {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    TextStyle {
+        font: font.clone(),
+        font_size,
+        color,
+    }
 }

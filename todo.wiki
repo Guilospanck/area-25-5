@@ -25,12 +25,15 @@ looking for him, therefore we're gonna have panic
 - [x] Spawn items based on waves
 - [x] Add a WON screen
 - [x] Write game design document
-- [ ] Add HP bar to enemies and player
-- [ ] Add score
+- [x] Add HP bar to enemies and player
+- [x] Add score
+- [ ] Despawn items/weapons from one wave to another
 - [ ] Add time limit
 - [ ] Audio
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] Randomize spawns
+- [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
+as the time passes (cooldown)
 
 Backlog:
 - [-] Spawn different weapons (Still need more)
