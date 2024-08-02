@@ -60,7 +60,7 @@ impl EnemyBundle {
                 transform: Transform {
                     rotation: Quat::default(),
                     translation: pos,
-                    scale: Vec3::ONE,
+                    scale: Vec3::splat(3.0),
                 },
                 ..default()
             },

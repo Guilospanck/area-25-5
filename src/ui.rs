@@ -300,7 +300,7 @@ fn _default_screen<T: Component>(
             align_items: AlignItems::Center,
             ..default()
         },
-        background_color: Color::srgb(255., 0., 0.).into(),
+        background_color: Color::srgb(0.1, 0.1, 0.1).into(),
         ..default()
     };
 

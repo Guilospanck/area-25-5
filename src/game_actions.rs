@@ -1,7 +1,7 @@
 use crate::{
     enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, Ammo, AmmoBundle, BaseCamera, Item, PlayAgainButton,
-    PlayerCamera, RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
+    util::get_unit_direction_vector, AmmoBundle, BaseCamera, PlayAgainButton, PlayerCamera,
+    RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -105,6 +105,7 @@ pub fn handle_click(
     }
 }
 
+const PLAYER_MARGIN: f32 = 400.0;
 pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&mut Transform, &Speed, &Player)>,
@@ -129,7 +130,6 @@ pub fn move_char(
     if keyboard_input.pressed(KeyCode::KeyA) {
         direction_x -= 1.0;
     }
-
     // right move
     if keyboard_input.pressed(KeyCode::KeyD) {
         direction_x += 1.0;
@@ -138,7 +138,6 @@ pub fn move_char(
     if keyboard_input.pressed(KeyCode::KeyW) {
         direction_y += 1.0;
     }
-
     // bottom move
     if keyboard_input.pressed(KeyCode::KeyS) {
         direction_y -= 1.0;
@@ -149,6 +148,37 @@ pub fn move_char(
 
     let char_new_pos_x = old_pos_x + direction_x * player_speed.0 * time.delta_seconds();
     let char_new_pos_y = old_pos_y + direction_y * player_speed.0 * time.delta_seconds();
+
+    let is_player_on_the_margin_range_x_left = ((-WINDOW_RESOLUTION.x_px + 20.) / 2.0
+        ..=(-WINDOW_RESOLUTION.x_px - 20.) / 2.0 + PLAYER_MARGIN)
+        .contains(&char_new_pos_x);
+
+    let is_player_on_the_margin_range_x_right = ((WINDOW_RESOLUTION.x_px - 20.) / 2.0
+        - PLAYER_MARGIN
+        ..=(WINDOW_RESOLUTION.x_px - 20.) / 2.0)
+        .contains(&char_new_pos_x);
+
+    let is_player_on_the_margin_range_y_bottom = ((-WINDOW_RESOLUTION.y_px + 20.) / 2.0
+        ..=(-WINDOW_RESOLUTION.y_px - 20.) / 2.0 + PLAYER_MARGIN)
+        .contains(&char_new_pos_y);
+
+    let is_player_on_the_margin_range_y_top = ((WINDOW_RESOLUTION.y_px - 20.) / 2.0 - PLAYER_MARGIN
+        ..=(WINDOW_RESOLUTION.y_px - 20.) / 2.0)
+        .contains(&char_new_pos_y);
+
+    if is_player_on_the_margin_range_x_left
+        || is_player_on_the_margin_range_x_right
+        || is_player_on_the_margin_range_y_bottom
+        || is_player_on_the_margin_range_y_top
+    {
+        _pan_camera(
+            &mut base_camera_transform,
+            time,
+            base_camera_ortographic_projection,
+            direction_x,
+            direction_y,
+        );
+    }
 
     let off_screen_x = !((-WINDOW_RESOLUTION.x_px + 20.) / 2.0
         ..=(WINDOW_RESOLUTION.x_px - 20.) / 2.0)
@@ -163,23 +193,33 @@ pub fn move_char(
 
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
+}
 
-    // pan camera
-    let mut camera_new_pos_x = char_new_pos_x;
-    let mut camera_new_pos_y = char_new_pos_y;
+fn _pan_camera(
+    base_camera_transform: &mut Transform,
+    time: Res<Time>,
+    base_camera_ortographic_projection: &OrthographicProjection,
+    direction_x: f32,
+    direction_y: f32,
+) {
+    let mut camera_new_pos_x = base_camera_transform.translation.x
+        + direction_x * PLAYER_MOVE_SPEED * time.delta_seconds();
+    let mut camera_new_pos_y = base_camera_transform.translation.y
+        + direction_y * PLAYER_MOVE_SPEED * time.delta_seconds();
+
     let player_camera_scale = base_camera_ortographic_projection.scale;
-    let limit_x = WINDOW_RESOLUTION.x_px / (2. / player_camera_scale);
-    let limit_y = WINDOW_RESOLUTION.y_px / (2. / player_camera_scale);
-    if char_new_pos_x < -limit_x {
+    let limit_x = WINDOW_RESOLUTION.x_px / (2. / player_camera_scale); // 480
+    let limit_y = WINDOW_RESOLUTION.y_px / (2. / player_camera_scale); // 270
+    if camera_new_pos_x < -limit_x {
         camera_new_pos_x = -limit_x;
     }
-    if char_new_pos_x > limit_x {
+    if camera_new_pos_x > limit_x {
         camera_new_pos_x = limit_x;
     }
-    if char_new_pos_y < -limit_y {
+    if camera_new_pos_y < -limit_y {
         camera_new_pos_y = -limit_y;
     }
-    if char_new_pos_y > limit_y {
+    if camera_new_pos_y > limit_y {
         camera_new_pos_y = limit_y;
     }
 
