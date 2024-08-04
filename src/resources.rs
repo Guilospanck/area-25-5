@@ -45,8 +45,8 @@ pub fn setup_resources(mut commands: Commands) {
     commands.insert_resource(CurrentScore(0.));
 
     commands.insert_resource(TimePassed {
-        minutes: 1,
-        seconds: 0,
+        minutes: 0,
+        seconds: 30,
     });
 }
 

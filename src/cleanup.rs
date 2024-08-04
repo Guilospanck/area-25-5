@@ -20,8 +20,8 @@ pub fn reset_initial_state(
 ) {
     // Update UI
     current_wave.0 = 1u16;
-    current_time.minutes = 1u16;
-    current_time.seconds = 0u16;
+    current_time.minutes = 0u16;
+    current_time.seconds = 30u16;
     current_score.0 = 0.0;
 
     commands.trigger(CurrentWaveChanged);
