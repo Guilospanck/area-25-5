@@ -31,7 +31,7 @@ looking for him, therefore we're gonna have panic
 - [x] Change translation speed of background when moving char
 - [x] Check items and weapons spawning position when bg has zoom
 - [x] Add time counter (or time limit)
-- [ ] Change score multiplier based on time spent to get rid of wave
+- [x] Change score multiplier based on time spent to get rid of wave
 - [ ] Add score when you lose the game
 - [ ] Despawn items/weapons from one wave to another
 - [ ] Audio
