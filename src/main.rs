@@ -1,6 +1,11 @@
+use std::time::Duration;
+
 use area_25_5::*;
 
-use bevy::{prelude::*, sprite::Wireframe2dPlugin, window::WindowResolution};
+use bevy::{
+    prelude::*, sprite::Wireframe2dPlugin, time::common_conditions::on_timer,
+    window::WindowResolution,
+};
 
 fn main() {
     let mut app = App::new();
@@ -106,7 +111,10 @@ fn main() {
                 handle_play_again_click.run_if(in_state(GameState::Won)),
             ),
         )
-        // events
+        .add_systems(
+            FixedUpdate,
+            tick_timer.run_if(on_timer(Duration::from_secs(1))),
+        )
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
@@ -116,5 +124,7 @@ fn main() {
         .observe(on_game_over)
         .observe(on_restart_click)
         .observe(on_score_changed)
+        .observe(on_wave_changed)
+        .observe(on_current_time_changed)
         .run();
 }

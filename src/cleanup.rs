@@ -1,4 +1,7 @@
-use crate::{prelude::*, CurrentWave, CurrentWaveUI, PlayerHealthChanged, PlayerSpeedChanged};
+use crate::{
+    prelude::*, CurrentScore, CurrentTimeChanged, CurrentWave, CurrentWaveChanged,
+    PlayerHealthChanged, PlayerSpeedChanged, ScoreChanged, TimePassed,
+};
 
 #[derive(Component, Clone)]
 pub struct CleanupWhenPlayerDies;
@@ -11,18 +14,23 @@ pub fn cleanup_system<T: Component>(mut commands: Commands, q: Query<Entity, Wit
 
 pub fn reset_initial_state(
     mut commands: Commands,
-    mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI)>,
     mut current_wave: ResMut<CurrentWave>,
+    mut current_time: ResMut<TimePassed>,
+    mut current_score: ResMut<CurrentScore>,
 ) {
     // Update UI
-    current_wave.0 = 1u32;
-    if let Ok(mut text) = current_wave_ui.get_single_mut() {
-        text.0.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
-    }
+    current_wave.0 = 1u16;
+    current_time.minutes = 1u16;
+    current_time.seconds = 0u16;
+    current_score.0 = 0.0;
+
+    commands.trigger(CurrentWaveChanged);
+    commands.trigger(CurrentTimeChanged);
     commands.trigger(PlayerSpeedChanged {
         speed: PLAYER_MOVE_SPEED,
     });
     commands.trigger(PlayerHealthChanged {
         health: PLAYER_HEALTH,
     });
+    commands.trigger(ScoreChanged { score: 0.0 });
 }
