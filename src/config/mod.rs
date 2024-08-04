@@ -41,6 +41,7 @@ pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
 
 pub(crate) const BASE_CAMERA_PROJECTION_SCALE: f32 = 0.5;
+pub(crate) const SCORE_MULTIPLIER: f32 = 0.1;
 
 pub struct CustomWindowResolution {
     pub x_px: f32,

@@ -18,6 +18,9 @@ pub struct CurrentWaveUI;
 #[derive(Component)]
 pub struct ScoreUI;
 
+#[derive(Component)]
+pub struct CurrentTimeUI;
+
 // ############## BUTTONS ####################
 #[derive(Component)]
 pub struct PlayAgainButton;
@@ -179,10 +182,44 @@ fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer
     ));
 }
 
+fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 60.0,
+        ..default()
+    };
+
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![TextSection::new(
+                    "01:00",
+                    TextStyle {
+                        color: Color::Srgba(YELLOW),
+                        ..text_style.clone()
+                    },
+                )],
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(
+                200.0,
+                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                UI_Z_INDEX,
+            )),
+            text_anchor: Anchor::TopCenter,
+            ..default()
+        },
+        CurrentTimeUI,
+        OVERLAY_LAYER,
+    ));
+}
+
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     speed_bar(&mut commands, &asset_server);
     current_wave(&mut commands, &asset_server);
     spawn_score_points_ui(&mut commands, &asset_server);
+    spawn_current_timer_ui(&mut commands, &asset_server);
 }
 
 pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -264,7 +301,7 @@ pub fn game_won_screen(
     let two = commands
         .spawn(_build_custom_text_bundle(
             &asset_server,
-            &format!("Final score: {}", &current_score.0.to_string()),
+            &format!("Final score: {:.6}", &current_score.0.to_string()),
             40.,
             Color::WHITE,
         ))
