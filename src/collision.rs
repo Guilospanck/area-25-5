@@ -120,13 +120,23 @@ pub fn check_for_item_collisions(
     items: Query<(Entity, &Transform, &Item)>,
 ) {
     for (item_entity, item_transform, item) in items.iter() {
-        let item_collider =
-            Aabb2d::new(item_transform.translation.truncate(), CAPSULE_COLLIDER + 5.);
+        let item_collider = Aabb2d::new(
+            item_transform.translation.truncate(),
+            Vec2::splat(ITEM_SPRITE_SIZE as f32 / 2.),
+        );
 
         if let Ok(result) = player.get_single_mut() {
             let (player_transform, mut player_speed) = result;
+            // the items are being rendered on top of the base layer
+            // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
+            // the units must be changed in order to be able to collide them
+            // properly
+            let player_center = Vec2::new(
+                player_transform.translation.x / BASE_CAMERA_PROJECTION_SCALE,
+                player_transform.translation.y / BASE_CAMERA_PROJECTION_SCALE,
+            );
             let player_collider =
-                Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
+                Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
 
             if player_collider.intersects(&item_collider) {
                 player_speed.0 += item.value;

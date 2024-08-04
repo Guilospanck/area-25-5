@@ -58,6 +58,11 @@ impl ItemBundle {
         let item_animation = item_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(item_sprite.layout);
 
+        // The base layer in which item is being rendered on is being scaled
+        // by BASE_CAMERA_PROJECTION_SCALE, therefore we must change the item
+        // position to be able to render items on the whole background "map"
+        let new_pos = pos / BASE_CAMERA_PROJECTION_SCALE;
+
         ItemBundle {
             name: Name::new("Item"),
             marker: Item { item_type, value },
@@ -65,7 +70,7 @@ impl ItemBundle {
                 texture: asset_server.load(item_sprite.source),
                 transform: Transform {
                     rotation: Quat::default(),
-                    translation: pos,
+                    translation: new_pos,
                     scale,
                 },
                 ..default()
@@ -76,7 +81,7 @@ impl ItemBundle {
             },
             animation_indices: item_animation.indices,
             animation_timer: item_animation.timer,
-            layer: PLAYER_LAYER,
+            layer: BASE_LAYER,
             cleanup: CleanupWhenPlayerDies,
         }
     }

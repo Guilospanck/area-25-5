@@ -1,6 +1,7 @@
 use super::*;
 
 pub(crate) const ITEM_RANDOM_SEED: u64 = 1937836746771;
+pub(crate) const ITEM_SPRITE_SIZE: u8 = 32;
 
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]

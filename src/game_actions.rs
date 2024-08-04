@@ -105,12 +105,11 @@ pub fn handle_click(
     }
 }
 
-const PLAYER_MARGIN: f32 = 400.0;
 pub fn move_char(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&mut Transform, &Speed, &Player)>,
     time: Res<Time>,
-    mut base_camera: Query<(&mut Transform, &OrthographicProjection, &BaseCamera), Without<Player>>,
+    mut base_camera: Query<(&mut Transform, &BaseCamera), Without<Player>>,
 ) {
     let mut direction_x = 0.;
     let mut direction_y = 0.;
@@ -118,8 +117,7 @@ pub fn move_char(
     if base_camera.get_single_mut().is_err() {
         return;
     }
-    let (mut base_camera_transform, base_camera_ortographic_projection, _) =
-        base_camera.get_single_mut().unwrap();
+    let (mut base_camera_transform, _) = base_camera.get_single_mut().unwrap();
 
     if player_query.get_single_mut().is_err() {
         return;
@@ -146,85 +144,34 @@ pub fn move_char(
     let old_pos_x = player_transform.translation.x;
     let old_pos_y = player_transform.translation.y;
 
-    let char_new_pos_x = old_pos_x + direction_x * player_speed.0 * time.delta_seconds();
-    let char_new_pos_y = old_pos_y + direction_y * player_speed.0 * time.delta_seconds();
+    let mut char_new_pos_x = old_pos_x + direction_x * player_speed.0 * time.delta_seconds();
+    let mut char_new_pos_y = old_pos_y + direction_y * player_speed.0 * time.delta_seconds();
 
-    let is_player_on_the_margin_range_x_left = ((-WINDOW_RESOLUTION.x_px + 20.) / 2.0
-        ..=(-WINDOW_RESOLUTION.x_px - 20.) / 2.0 + PLAYER_MARGIN)
-        .contains(&char_new_pos_x);
+    let limit_x_left = (-WINDOW_RESOLUTION.x_px + PLAYER_X_MARGIN) / 2.0;
+    let limit_x_right = (WINDOW_RESOLUTION.x_px - PLAYER_X_MARGIN) / 2.0;
+    let limit_y_bottom = (-WINDOW_RESOLUTION.y_px + PLAYER_Y_MARGIN) / 2.0;
+    let limit_y_top = (WINDOW_RESOLUTION.y_px - PLAYER_Y_MARGIN) / 2.0;
 
-    let is_player_on_the_margin_range_x_right = ((WINDOW_RESOLUTION.x_px - 20.) / 2.0
-        - PLAYER_MARGIN
-        ..=(WINDOW_RESOLUTION.x_px - 20.) / 2.0)
-        .contains(&char_new_pos_x);
-
-    let is_player_on_the_margin_range_y_bottom = ((-WINDOW_RESOLUTION.y_px + 20.) / 2.0
-        ..=(-WINDOW_RESOLUTION.y_px - 20.) / 2.0 + PLAYER_MARGIN)
-        .contains(&char_new_pos_y);
-
-    let is_player_on_the_margin_range_y_top = ((WINDOW_RESOLUTION.y_px - 20.) / 2.0 - PLAYER_MARGIN
-        ..=(WINDOW_RESOLUTION.y_px - 20.) / 2.0)
-        .contains(&char_new_pos_y);
-
-    if is_player_on_the_margin_range_x_left
-        || is_player_on_the_margin_range_x_right
-        || is_player_on_the_margin_range_y_bottom
-        || is_player_on_the_margin_range_y_top
-    {
-        _pan_camera(
-            &mut base_camera_transform,
-            time,
-            base_camera_ortographic_projection,
-            direction_x,
-            direction_y,
-        );
+    if char_new_pos_x < limit_x_left {
+        char_new_pos_x = limit_x_left;
+    }
+    if char_new_pos_x > limit_x_right {
+        char_new_pos_x = limit_x_right;
+    }
+    if char_new_pos_y < limit_y_bottom {
+        char_new_pos_y = limit_y_bottom;
+    }
+    if char_new_pos_y > limit_y_top {
+        char_new_pos_y = limit_y_top;
     }
 
-    let off_screen_x = !((-WINDOW_RESOLUTION.x_px + 20.) / 2.0
-        ..=(WINDOW_RESOLUTION.x_px - 20.) / 2.0)
-        .contains(&char_new_pos_x);
-    let off_screen_y = !((-WINDOW_RESOLUTION.y_px + 80.) / 2.0
-        ..=(WINDOW_RESOLUTION.y_px - 80.) / 2.0)
-        .contains(&char_new_pos_y);
+    // pan camera
+    base_camera_transform.translation.x = char_new_pos_x;
+    base_camera_transform.translation.y = char_new_pos_y;
 
-    if off_screen_x || off_screen_y {
-        return;
-    }
-
+    // translate player
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
-}
-
-fn _pan_camera(
-    base_camera_transform: &mut Transform,
-    time: Res<Time>,
-    base_camera_ortographic_projection: &OrthographicProjection,
-    direction_x: f32,
-    direction_y: f32,
-) {
-    let mut camera_new_pos_x = base_camera_transform.translation.x
-        + direction_x * PLAYER_MOVE_SPEED * time.delta_seconds();
-    let mut camera_new_pos_y = base_camera_transform.translation.y
-        + direction_y * PLAYER_MOVE_SPEED * time.delta_seconds();
-
-    let player_camera_scale = base_camera_ortographic_projection.scale;
-    let limit_x = WINDOW_RESOLUTION.x_px / (2. / player_camera_scale); // 480
-    let limit_y = WINDOW_RESOLUTION.y_px / (2. / player_camera_scale); // 270
-    if camera_new_pos_x < -limit_x {
-        camera_new_pos_x = -limit_x;
-    }
-    if camera_new_pos_x > limit_x {
-        camera_new_pos_x = limit_x;
-    }
-    if camera_new_pos_y < -limit_y {
-        camera_new_pos_y = -limit_y;
-    }
-    if camera_new_pos_y > limit_y {
-        camera_new_pos_y = limit_y;
-    }
-
-    base_camera_transform.translation.x = camera_new_pos_x;
-    base_camera_transform.translation.y = camera_new_pos_y;
 }
 
 // Won

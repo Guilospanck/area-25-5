@@ -57,11 +57,11 @@ fn main() {
         .add_systems(
             Startup,
             (
-                setup_resources,
                 setup_base_camera,
                 setup_player_camera,
                 setup_overlay_camera,
                 setup_menu_camera,
+                setup_resources,
                 setup_sprite,
                 setup_ui,
             )

@@ -24,12 +24,23 @@ pub(crate) const UI_Z_INDEX: f32 = 2.;
 pub(crate) const PLAYER_MOVE_SPEED: f32 = 150.0;
 pub(crate) const PLAYER_ARMOR: f32 = 100.0;
 pub(crate) const PLAYER_HEALTH: f32 = 10000.;
+pub(crate) const PLAYER_SPRITE_SIZE: u8 = 32;
+
+// These are margins so when we move the player
+// it doesn't show only his half on the screen
+// (remember that the point of translation is at the center of the player,
+// therefore we must have these so we translate it properly and his head/legs
+// are not outside the screen)
+pub(crate) const PLAYER_X_MARGIN: f32 = 20.;
+pub(crate) const PLAYER_Y_MARGIN: f32 = 80.;
 
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
 pub(crate) const AMMO_DAMAGE: f32 = 10.0;
 
 pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
+
+pub(crate) const BASE_CAMERA_PROJECTION_SCALE: f32 = 0.5;
 
 pub struct CustomWindowResolution {
     pub x_px: f32,

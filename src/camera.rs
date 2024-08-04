@@ -36,13 +36,6 @@ pub fn spawn_base_camera(commands: &mut Commands) -> Entity {
                     order: 0,
                     ..default()
                 },
-                projection: OrthographicProjection {
-                    // don't forget to set `near` and `far`
-                    near: -1000.0,
-                    far: 1000.0,
-                    scale: 0.5,
-                    ..default()
-                },
                 ..default()
             },
             BaseCamera,

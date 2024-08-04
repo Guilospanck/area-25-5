@@ -72,7 +72,7 @@ fn setup_tile_sprite(
             transform: Transform {
                 rotation: Quat::default(),
                 translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
-                scale: Vec3::splat(1.),
+                scale: Vec3::splat(2.),
             },
             ..default()
         },

@@ -45,11 +45,7 @@ impl PlayerBundle {
         let player_animation = player_sprite.animation.unwrap();
         let handle_texture_atlas_layout = texture_atlas_layout.add(player_sprite.layout);
 
-        let pos: Vec3 = Vec3::new(
-            -WINDOW_RESOLUTION.x_px / 2. + 50.,
-            WINDOW_RESOLUTION.y_px / 2. - 80.,
-            CHAR_Z_INDEX,
-        );
+        let pos: Vec3 = Vec3::new(0.0, 0.0, CHAR_Z_INDEX);
 
         PlayerBundle {
             name: Name::new("Player"),
