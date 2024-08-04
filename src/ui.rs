@@ -301,7 +301,7 @@ pub fn game_won_screen(
     let two = commands
         .spawn(_build_custom_text_bundle(
             &asset_server,
-            &format!("Final score: {}", &current_score.0.to_string()),
+            &format!("Final score: {:.6}", &current_score.0.to_string()),
             40.,
             Color::WHITE,
         ))

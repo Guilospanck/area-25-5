@@ -1,8 +1,8 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
-    spawn_weapon, ui::HealthBar, CurrentScore, CurrentTimeUI, CurrentWave, CurrentWaveUI, Enemy,
-    EnemyWaves, GameState, ItemWaves, PlayerSpeedBar, ScoreUI, SpritesResources, TimePassed,
-    Weapon, WeaponWaves,
+    spawn_weapon, ui::HealthBar, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
+    CurrentWaveUI, Enemy, EnemyWaves, GameState, ItemWaves, PlayerSpeedBar, ScoreUI,
+    SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -241,10 +241,16 @@ pub fn on_all_enemies_died(
     _trigger: Trigger<AllEnemiesDied>,
     mut commands: Commands,
     mut current_wave: ResMut<CurrentWave>,
-    mut time_passed: ResMut<TimePassed>,
+    mut current_time: ResMut<CurrentTime>,
     mut next_state: ResMut<NextState<GameState>>,
     player_state: Res<State<GameState>>,
 ) {
+    // Add multiplier to score based on the time left
+    let mut seconds = current_time.seconds;
+    seconds += current_time.minutes * 60;
+    let score = SCORE_MULTIPLIER * seconds as f32;
+    commands.trigger(ScoreChanged { score });
+
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
     if new_wave as usize > NUMBER_OF_WAVES {
@@ -254,6 +260,7 @@ pub fn on_all_enemies_died(
         return;
     }
     current_wave.0 = new_wave;
+    commands.trigger(CurrentWaveChanged);
 
     // Update current time
     let mut seconds: u16 = new_wave * 30;
@@ -264,10 +271,7 @@ pub fn on_all_enemies_died(
     } else {
         seconds = mod_seconds;
     }
-
-    *time_passed = TimePassed { minutes, seconds };
-
-    commands.trigger(CurrentWaveChanged);
+    *current_time = CurrentTime { minutes, seconds };
     commands.trigger(CurrentTimeChanged);
 }
 
@@ -380,13 +384,12 @@ pub fn on_score_changed(
     current_score.0 += score;
 
     if let Ok(mut text) = score_ui.get_single_mut() {
-        text.sections.first_mut().unwrap().value = current_score.0.to_string();
+        text.sections.first_mut().unwrap().value = format!("{:.6}", current_score.0.to_string());
     }
 }
 
-pub fn tick_timer(mut commands: Commands, mut time_passed: ResMut<TimePassed>) {
+pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>) {
     // Update current time
-    let current_time = time_passed.clone();
     let mut minutes = current_time.minutes;
     let mut seconds = current_time.seconds;
 
@@ -402,13 +405,13 @@ pub fn tick_timer(mut commands: Commands, mut time_passed: ResMut<TimePassed>) {
         seconds = seconds.saturating_sub(1);
     }
 
-    *time_passed = TimePassed { minutes, seconds };
+    *current_time = CurrentTime { minutes, seconds };
     commands.trigger(CurrentTimeChanged);
 }
 
 pub fn on_current_time_changed(
     _trigger: Trigger<CurrentTimeChanged>,
-    current_time: Res<TimePassed>,
+    current_time: Res<CurrentTime>,
     mut current_time_ui: Query<(&mut Text, &CurrentTimeUI), Without<CurrentWaveUI>>,
 ) {
     if let Ok((mut text, _)) = current_time_ui.get_single_mut() {

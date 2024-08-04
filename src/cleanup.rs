@@ -1,6 +1,6 @@
 use crate::{
-    prelude::*, CurrentScore, CurrentTimeChanged, CurrentWave, CurrentWaveChanged,
-    PlayerHealthChanged, PlayerSpeedChanged, ScoreChanged, TimePassed,
+    prelude::*, CurrentScore, CurrentTime, CurrentTimeChanged, CurrentWave, CurrentWaveChanged,
+    PlayerHealthChanged, PlayerSpeedChanged, ScoreChanged,
 };
 
 #[derive(Component, Clone)]
@@ -15,7 +15,7 @@ pub fn cleanup_system<T: Component>(mut commands: Commands, q: Query<Entity, Wit
 pub fn reset_initial_state(
     mut commands: Commands,
     mut current_wave: ResMut<CurrentWave>,
-    mut current_time: ResMut<TimePassed>,
+    mut current_time: ResMut<CurrentTime>,
     mut current_score: ResMut<CurrentScore>,
 ) {
     // Update UI

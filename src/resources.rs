@@ -10,7 +10,7 @@ pub struct CurrentWave(pub u16);
 pub struct CurrentScore(pub f32);
 
 #[derive(Resource, Clone)]
-pub struct TimePassed {
+pub struct CurrentTime {
     pub minutes: u16,
     pub seconds: u16,
 }
@@ -44,7 +44,7 @@ pub fn setup_resources(mut commands: Commands) {
     commands.insert_resource(SpritesResources(get_sprites()));
     commands.insert_resource(CurrentScore(0.));
 
-    commands.insert_resource(TimePassed {
+    commands.insert_resource(CurrentTime {
         minutes: 0,
         seconds: 30,
     });
