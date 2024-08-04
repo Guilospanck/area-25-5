@@ -37,6 +37,7 @@ impl WeaponBundle {
         direction: Vec3,
         damage: f32,
         weapon_type: WeaponTypeEnum,
+        layer: RenderLayers,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -47,6 +48,7 @@ impl WeaponBundle {
             direction,
             damage,
             weapon_type,
+            layer,
         )
     }
 
@@ -59,6 +61,7 @@ impl WeaponBundle {
         direction: Vec3,
         damage: f32,
         weapon_type: WeaponTypeEnum,
+        layer: RenderLayers,
     ) -> Self {
         let weapon_sprite = get_weapon_sprite_based_on_weapon_type(weapon_type.clone(), sprites);
         let weapon_animation = weapon_sprite.animation.unwrap();
@@ -84,7 +87,7 @@ impl WeaponBundle {
             },
             animation_indices: weapon_animation.indices,
             animation_timer: weapon_animation.timer,
-            layer: PLAYER_LAYER,
+            layer,
             cleanup: CleanupWhenPlayerDies,
         }
     }
@@ -101,19 +104,25 @@ pub fn spawn_weapon(
     let damage = weapon_by_level.weapon.damage;
     let scale = Vec3::ONE;
     let direction = Vec3::ZERO;
+    let layer = BASE_LAYER;
 
     for idx in 1..=weapon_by_level.quantity {
         let random_spawning_pos = get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED));
+        // The base layer in which weapon is being rendered on is being scaled
+        // by BASE_CAMERA_PROJECTION_SCALE, therefore we must change the weapon
+        // position to be able to render weapons on the whole background "map"
+        let new_pos = random_spawning_pos / BASE_CAMERA_PROJECTION_SCALE;
 
         let bundle = WeaponBundle::new(
             texture_atlas_layout,
             sprites,
             asset_server,
             scale,
-            random_spawning_pos,
+            new_pos,
             direction,
             damage,
             weapon_type.clone(),
+            layer.clone(),
         );
 
         commands.spawn(bundle);

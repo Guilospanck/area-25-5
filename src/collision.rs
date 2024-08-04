@@ -174,7 +174,15 @@ pub fn check_for_weapon_collisions(
     let player_entity = player.0;
     let player_transform = player.1;
     let player_children = player.2;
-    let player_collider = Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
+    // the items are being rendered on top of the base layer
+    // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
+    // the units must be changed in order to be able to collide them
+    // properly
+    let player_center = Vec2::new(
+        player_transform.translation.x / BASE_CAMERA_PROJECTION_SCALE,
+        player_transform.translation.y / BASE_CAMERA_PROJECTION_SCALE,
+    );
+    let player_collider = Aabb2d::new(player_center, CAPSULE_COLLIDER);
 
     let mut player_weapon = None;
     let mut player_ammo = None;
@@ -216,6 +224,7 @@ pub fn check_for_weapon_collisions(
         if player_collider.intersects(&weapon_collider) {
             let weapon_type = weapon.0.clone();
             let damage = weapon_damage.0;
+            let layer = PLAYER_LAYER;
 
             let scale = ammo_scale;
             let ammo_bundle = AmmoBundle::new(
@@ -228,6 +237,7 @@ pub fn check_for_weapon_collisions(
                 direction,
                 damage,
                 rotation,
+                layer.clone(),
             );
 
             let scale = weapon_scale;
@@ -240,6 +250,7 @@ pub fn check_for_weapon_collisions(
                 direction,
                 damage,
                 weapon_type,
+                layer.clone(),
             );
 
             // despawn current player's weapon

@@ -111,6 +111,7 @@ pub(crate) fn spawn_player(
     let pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
     let weapon_scale = Vec3::new(0.5, 0.5, 1.);
     let weapon_type = WeaponTypeEnum::Bow;
+    let layer = PLAYER_LAYER;
 
     let weapon_bundle = WeaponBundle::new(
         &mut texture_atlas_layout,
@@ -121,6 +122,7 @@ pub(crate) fn spawn_player(
         direction,
         damage,
         weapon_type,
+        layer.clone(),
     );
 
     let scale = Vec3::ONE;
@@ -137,6 +139,7 @@ pub(crate) fn spawn_player(
         direction,
         damage,
         rotation,
+        layer.clone(),
     );
 
     let player_entity_id = commands.spawn(player).id();

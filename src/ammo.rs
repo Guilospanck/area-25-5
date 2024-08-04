@@ -38,6 +38,7 @@ impl AmmoBundle {
         direction: Vec3,
         damage: f32,
         rotation: Quat,
+        layer: RenderLayers,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -49,6 +50,7 @@ impl AmmoBundle {
             direction,
             damage,
             rotation,
+            layer,
         )
     }
 
@@ -62,6 +64,7 @@ impl AmmoBundle {
         direction: Vec3,
         damage: f32,
         rotation: Quat,
+        layer: RenderLayers,
     ) -> Self {
         let ammo_sprite = get_ammo_sprite_based_on_weapon_type(weapon_type.clone(), sprites);
         let ammo_animation = ammo_sprite.animation.unwrap();
@@ -87,7 +90,7 @@ impl AmmoBundle {
             },
             animation_indices: ammo_animation.indices,
             animation_timer: ammo_animation.timer,
-            layer: PLAYER_LAYER,
+            layer,
             cleanup: CleanupWhenPlayerDies,
         }
     }
@@ -105,6 +108,7 @@ pub fn spawn_ammo(
     let scale = Vec3::ONE;
     let direction = Vec3::ZERO;
     let rotation = Quat::default();
+    let layer = PLAYER_LAYER;
 
     for idx in 1..=weapon_by_level.quantity {
         let random_spawning_pos = get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED));
@@ -119,6 +123,7 @@ pub fn spawn_ammo(
             direction,
             damage,
             rotation,
+            layer.clone(),
         );
 
         commands.spawn(bundle);

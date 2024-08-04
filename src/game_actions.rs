@@ -70,6 +70,7 @@ pub fn shoot(
         player.0.translation.z,
     );
     let scale = Vec3::ONE;
+    let layer = PLAYER_LAYER;
 
     let ammo_bundle = AmmoBundle::new(
         texture_atlas_layout,
@@ -81,6 +82,7 @@ pub fn shoot(
         direction,
         damage,
         rotation,
+        layer.clone(),
     );
 
     commands.spawn(ammo_bundle);
