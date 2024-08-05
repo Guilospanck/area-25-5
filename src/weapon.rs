@@ -7,6 +7,7 @@ use crate::stats::Direction;
 use crate::util::get_random_vec3;
 use crate::util::get_weapon_sprite_based_on_weapon_type;
 use crate::CleanupWhenPlayerDies;
+use rand::Rng;
 
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
@@ -107,7 +108,10 @@ pub fn spawn_weapon(
     let layer = BASE_LAYER;
 
     for idx in 1..=weapon_by_level.quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED));
+        let mut rng = rand::thread_rng();
+        let n1: u8 = rng.gen();
+        let random_spawning_pos = get_random_vec3(idx as u64, Some(n1 as u64 * WEAPON_RANDOM_SEED));
+
         // The base layer in which weapon is being rendered on is being scaled
         // by BASE_CAMERA_PROJECTION_SCALE, therefore we must change the weapon
         // position to be able to render weapons on the whole background "map"

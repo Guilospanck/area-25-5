@@ -1,6 +1,6 @@
 use crate::{
-    prelude::*, CurrentScore, CurrentTime, CurrentTimeChanged, CurrentWave, CurrentWaveChanged,
-    PlayerHealthChanged, PlayerSpeedChanged, ScoreChanged,
+    prelude::*, CurrentScore, CurrentTime, CurrentTimeChanged, CurrentTimeUI, CurrentWave,
+    CurrentWaveChanged, CurrentWaveUI, PlayerHealthChanged, PlayerSpeedChanged, ScoreChanged,
 };
 
 #[derive(Component, Clone)]
@@ -17,14 +17,17 @@ pub fn reset_initial_state(
     mut current_wave: ResMut<CurrentWave>,
     mut current_time: ResMut<CurrentTime>,
     mut current_score: ResMut<CurrentScore>,
+    mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
 ) {
     // Update UI
     current_wave.0 = 1u16;
+    if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
+        text.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
+    }
     current_time.minutes = 0u16;
     current_time.seconds = 30u16;
     current_score.0 = 0.0;
 
-    commands.trigger(CurrentWaveChanged);
     commands.trigger(CurrentTimeChanged);
     commands.trigger(PlayerSpeedChanged {
         speed: PLAYER_MOVE_SPEED,
