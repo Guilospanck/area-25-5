@@ -3,6 +3,7 @@ use crate::{
     util::{get_item_sprite_based_on_item_type, get_random_vec3},
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, SpritesResources,
 };
+use rand::Rng;
 
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
@@ -100,7 +101,9 @@ pub fn spawn_item(
     let value = &item_by_level.item.value;
 
     for idx in 1..=*quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64, Some(ITEM_RANDOM_SEED));
+        let mut rng = rand::thread_rng();
+        let n1: u8 = rng.gen();
+        let random_spawning_pos = get_random_vec3(idx as u64, Some(n1 as u64 * ITEM_RANDOM_SEED));
 
         let bundle = ItemBundle::new(
             &mut texture_atlas_layout,

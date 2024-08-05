@@ -35,8 +35,7 @@ looking for him, therefore we're gonna have panic
 - [x] Despawn items/weapons from one wave to another
 - [x] Add score when you lose the game
 - [x] Audio
-- [ ] Add information about next wave (and some pause maybe)
-- [ ] Randomize spawns
+- [x] Randomize spawns
 - [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
 
@@ -59,6 +58,7 @@ MAYBE
 - Limit spawn of bullets to not be too close
 - [ ] (Maybe) Remove source and ammo_source from WeaponType struct
 - [ ] (Maybe) Change collision from capsule to Ammo and Weapon sizes
+- [ ] Add information about next wave (and some pause maybe)
 
 HISTORY:
 When you finish, it says: "You're half done"
