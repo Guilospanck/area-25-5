@@ -22,7 +22,7 @@ pub(crate) const CHAR_Z_INDEX: f32 = 1.;
 pub(crate) const UI_Z_INDEX: f32 = 2.;
 
 pub(crate) const PLAYER_MOVE_SPEED: f32 = 150.0;
-pub(crate) const PLAYER_ARMOR: f32 = 100.0;
+pub(crate) const PLAYER_ARMOR: f32 = 0.0;
 pub(crate) const PLAYER_HEALTH: f32 = 10000.;
 pub(crate) const PLAYER_SPRITE_SIZE: u8 = 32;
 

@@ -28,6 +28,7 @@ pub struct Sprites<'a> {
     pub magic_ball: SpriteInfo<'a>,
     pub speed_potion: SpriteInfo<'a>,
     pub lightning: SpriteInfo<'a>,
+    pub shield: SpriteInfo<'a>,
 }
 
 #[derive(Component)]

@@ -7,7 +7,8 @@ use crate::{
     player::Player,
     prelude::*,
     AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health,
-    PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon, WeaponBundle,
+    PlayerArmorChanged, PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon,
+    WeaponBundle,
 };
 
 pub fn check_for_ammo_collisions_with_enemy(
@@ -126,7 +127,7 @@ pub fn check_for_player_collisions_to_enemy(
 pub fn check_for_item_collisions(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut player: Query<(&Transform, &mut Speed), With<Player>>,
+    mut player: Query<(&Transform, &mut Speed, &mut Armor), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
 ) {
     for (item_entity, item_transform, item) in items.iter() {
@@ -136,7 +137,7 @@ pub fn check_for_item_collisions(
         );
 
         if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player_speed) = result;
+            let (player_transform, mut player_speed, mut player_armor) = result;
             // the items are being rendered on top of the base layer
             // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
             // the units must be changed in order to be able to collide them
@@ -149,14 +150,19 @@ pub fn check_for_item_collisions(
                 Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
 
             if player_collider.intersects(&item_collider) {
-                player_speed.0 += item.value;
                 match item.item_type {
                     ItemStatsType::Speed => {
+                        player_speed.0 += item.value;
                         commands.trigger(PlayerSpeedChanged {
                             speed: player_speed.0,
                         });
                     }
-                    ItemStatsType::Armor => todo!(),
+                    ItemStatsType::Armor => {
+                        player_armor.0 += item.value;
+                        commands.trigger(PlayerArmorChanged {
+                            armor: player_armor.0,
+                        });
+                    }
                 }
 
                 // play audio when colliding item

@@ -57,6 +57,6 @@ pub(crate) fn get_item_sprite_based_on_item_type(
 ) -> SpriteInfo<'static> {
     match item_type {
         ItemStatsType::Speed => sprites.0.speed_potion.clone(),
-        ItemStatsType::Armor => todo!("create armor sprite"),
+        ItemStatsType::Armor => sprites.0.shield.clone(),
     }
 }

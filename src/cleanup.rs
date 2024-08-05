@@ -1,6 +1,7 @@
 use crate::{
     prelude::*, CurrentScore, CurrentTime, CurrentTimeChanged, CurrentTimeUI, CurrentWave,
-    CurrentWaveChanged, CurrentWaveUI, PlayerHealthChanged, PlayerSpeedChanged, ScoreChanged,
+    CurrentWaveChanged, CurrentWaveUI, PlayerArmorChanged, PlayerHealthChanged, PlayerSpeedChanged,
+    ScoreChanged,
 };
 
 #[derive(Component, Clone)]
@@ -32,6 +33,7 @@ pub fn reset_initial_state(
     commands.trigger(PlayerSpeedChanged {
         speed: PLAYER_MOVE_SPEED,
     });
+    commands.trigger(PlayerArmorChanged { armor: 0.0 });
     commands.trigger(PlayerHealthChanged {
         health: PLAYER_HEALTH,
     });
