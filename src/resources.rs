@@ -1,7 +1,12 @@
+use std::time::Duration;
+
 use crate::{
     prelude::*, AnimationIndices, AnimationInfo, AnimationTimer, RectangularDimensions, SpriteInfo,
     Sprites,
 };
+
+#[derive(Resource)]
+pub struct PlayerHitAudioTimeout(pub Timer);
 
 #[derive(Resource)]
 pub struct CurrentWave(pub u16);
@@ -43,11 +48,14 @@ pub fn setup_resources(mut commands: Commands) {
     commands.insert_resource(ItemWaves(ITEMS_PER_WAVE));
     commands.insert_resource(SpritesResources(get_sprites()));
     commands.insert_resource(CurrentScore(0.));
-
     commands.insert_resource(CurrentTime {
         minutes: 0,
         seconds: 30,
     });
+    commands.insert_resource(PlayerHitAudioTimeout(Timer::new(
+        Duration::from_secs(3),
+        TimerMode::Repeating,
+    )));
 }
 
 pub fn get_sprites() -> Sprites<'static> {

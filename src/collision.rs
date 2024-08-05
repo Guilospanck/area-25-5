@@ -1,16 +1,18 @@
 use crate::{
     ammo::Ammo,
+    audio::{hit_enemy_audio, hit_item_audio, hit_weapon_audio, player_hit_audio},
     enemy::Enemy,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health, ScoreChanged,
-    Speed, SpritesResources, Weapon, WeaponBundle,
+    AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health,
+    PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon, WeaponBundle,
 };
 
 pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     ammos_query: Query<(Entity, &Transform), With<Ammo>>,
     mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
@@ -69,6 +71,7 @@ pub fn check_for_ammo_collisions_with_enemy(
                 Aabb2d::new(ammo_transform.translation.truncate(), Vec2::new(16., 16.));
 
             if ammo_collider.intersects(&enemy_collider) {
+                hit_enemy_audio(&asset_server, &mut commands);
                 damage_enemy(
                     &mut commands,
                     ammo_entity,
@@ -85,6 +88,9 @@ pub fn check_for_ammo_collisions_with_enemy(
 
 pub fn check_for_player_collisions_to_enemy(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    time: Res<Time>,
+    mut audio_timeout: ResMut<PlayerHitAudioTimeout>,
     mut enemies: Query<(&Transform, &Damage), With<Enemy>>,
     mut player: Query<(&Transform, &mut Health, &mut Armor), With<Player>>,
 ) {
@@ -103,6 +109,9 @@ pub fn check_for_player_collisions_to_enemy(
                 Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
 
             if player_collider.intersects(&enemy_collider) {
+                // play audio when player was hit
+                player_hit_audio(&asset_server, &time, &mut commands, &mut audio_timeout);
+
                 damage_player(
                     &mut commands,
                     &mut player_health,
@@ -116,6 +125,7 @@ pub fn check_for_player_collisions_to_enemy(
 
 pub fn check_for_item_collisions(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut player: Query<(&Transform, &mut Speed), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
 ) {
@@ -148,6 +158,9 @@ pub fn check_for_item_collisions(
                     }
                     ItemStatsType::Armor => todo!(),
                 }
+
+                // play audio when colliding item
+                hit_item_audio(&asset_server, &mut commands);
                 commands.entity(item_entity).despawn();
             }
         }
@@ -274,6 +287,9 @@ pub fn check_for_weapon_collisions(
                     parent.spawn(ammo_bundle);
                 });
             });
+
+            // play audio when colliding weapon
+            hit_weapon_audio(&asset_server, &mut commands);
 
             // remove collided weapon
             commands.entity(weapon_entity).despawn();
