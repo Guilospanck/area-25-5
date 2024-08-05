@@ -251,7 +251,11 @@ pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     _default_screen(commands, MenuOverlay, vec![one, two]);
 }
 
-pub fn game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn game_over_screen(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_score: Res<CurrentScore>,
+) {
     let title = "GAME OVER";
     let button_title = "Restart game";
     let font_size = 100.;
@@ -266,6 +270,15 @@ pub fn game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) 
         .id();
 
     let two = commands
+        .spawn(_build_custom_text_bundle(
+            &asset_server,
+            &format!("Final score: {:.6}", &current_score.0.to_string()),
+            40.,
+            Color::WHITE,
+        ))
+        .id();
+
+    let three = commands
         .spawn(_build_custom_button(RestartGameButton))
         .with_children(|parent| {
             parent.spawn(_build_custom_text_bundle(
@@ -277,7 +290,7 @@ pub fn game_over_screen(mut commands: Commands, asset_server: Res<AssetServer>) 
         })
         .id();
 
-    _default_screen(commands, GameOverOverlay, vec![one, two]);
+    _default_screen(commands, GameOverOverlay, vec![one, two, three]);
 }
 
 pub fn game_won_screen(
