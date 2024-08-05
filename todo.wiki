@@ -32,8 +32,8 @@ looking for him, therefore we're gonna have panic
 - [x] Check items and weapons spawning position when bg has zoom
 - [x] Add time counter (or time limit)
 - [x] Change score multiplier based on time spent to get rid of wave
+- [x] Despawn items/weapons from one wave to another
 - [ ] Add score when you lose the game
-- [ ] Despawn items/weapons from one wave to another
 - [ ] Audio
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] Randomize spawns

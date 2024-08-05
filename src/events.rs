@@ -1,7 +1,7 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
     spawn_weapon, ui::HealthBar, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
-    CurrentWaveUI, Enemy, EnemyWaves, GameState, ItemWaves, PlayerSpeedBar, ScoreUI,
+    CurrentWaveUI, Enemy, EnemyWaves, GameState, Item, ItemWaves, PlayerSpeedBar, ScoreUI,
     SpritesResources, Weapon, WeaponWaves,
 };
 
@@ -288,7 +288,20 @@ pub fn on_wave_changed(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
+    weapons: Query<(Entity, Option<&Parent>), With<Weapon>>,
+    items: Query<Entity, With<Item>>,
 ) {
+    // Despawn items and weapons that were spawned on the map
+    for item in items.iter() {
+        commands.entity(item).despawn();
+    }
+
+    for weapon in weapons.iter() {
+        if weapon.1.is_none() {
+            commands.entity(weapon.0).despawn();
+        }
+    }
+
     // Spawn more different enemies
     let current_wave_enemy = enemy_waves
         .0
