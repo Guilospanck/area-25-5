@@ -1,8 +1,8 @@
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
     spawn_weapon, ui::HealthBar, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
-    CurrentWaveUI, Enemy, EnemyWaves, GameState, Item, ItemWaves, PlayerSpeedBar, ScoreUI,
-    SpritesResources, Weapon, WeaponWaves,
+    CurrentWaveUI, Enemy, EnemyWaves, GameState, Item, ItemWaves, PlayerArmorBar, PlayerSpeedBar,
+    ScoreUI, SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -18,6 +18,11 @@ pub struct PlayerHealthChanged {
 #[derive(Event)]
 pub struct PlayerSpeedChanged {
     pub speed: f32,
+}
+
+#[derive(Event)]
+pub struct PlayerArmorChanged {
+    pub armor: f32,
 }
 
 #[derive(Event)]
@@ -121,6 +126,18 @@ pub fn on_player_speed_changed(
 
     if let Ok(mut text) = player_speed_bar.get_single_mut() {
         text.sections.first_mut().unwrap().value = speed.to_string();
+    }
+}
+
+pub fn on_player_armor_changed(
+    trigger: Trigger<PlayerArmorChanged>,
+    mut player_armor_bar: Query<&mut Text, With<PlayerArmorBar>>,
+) {
+    let event = trigger.event();
+    let armor = event.armor;
+
+    if let Ok(mut text) = player_armor_bar.get_single_mut() {
+        text.sections.first_mut().unwrap().value = armor.to_string();
     }
 }
 

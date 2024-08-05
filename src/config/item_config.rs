@@ -20,8 +20,8 @@ pub struct ItemType<'a> {
 
 const ITEM_LVL_1: ItemType = ItemType {
     value: 10.0,
-    source: "textures/Effects/speed_potion.png",
-    item_type: ItemStatsType::Speed,
+    source: "textures/Items/shield.png",
+    item_type: ItemStatsType::Armor,
 };
 
 const ITEM_LVL_2: ItemType = ItemType {

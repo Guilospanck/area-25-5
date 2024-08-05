@@ -13,6 +13,9 @@ pub struct HealthBar;
 pub struct PlayerSpeedBar;
 
 #[derive(Component)]
+pub struct PlayerArmorBar;
+
+#[derive(Component)]
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
@@ -112,6 +115,39 @@ fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             ..default()
         },
         PlayerSpeedBar,
+        OVERLAY_LAYER,
+    ));
+}
+
+fn armor_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 30.0,
+        ..default()
+    };
+
+    commands.spawn((
+        Text2dBundle {
+            text: Text {
+                sections: vec![TextSection::new(
+                    format!("{}", PLAYER_ARMOR),
+                    TextStyle {
+                        color: Color::Srgba(YELLOW),
+                        ..text_style.clone()
+                    },
+                )],
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(
+                -200.,
+                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                UI_Z_INDEX,
+            )),
+            text_anchor: Anchor::TopCenter,
+            ..default()
+        },
+        PlayerArmorBar,
         OVERLAY_LAYER,
     ));
 }
@@ -217,6 +253,7 @@ fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServe
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     speed_bar(&mut commands, &asset_server);
+    armor_bar(&mut commands, &asset_server);
     current_wave(&mut commands, &asset_server);
     spawn_score_points_ui(&mut commands, &asset_server);
     spawn_current_timer_ui(&mut commands, &asset_server);
