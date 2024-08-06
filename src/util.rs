@@ -58,5 +58,6 @@ pub(crate) fn get_item_sprite_based_on_item_type(
     match item_type {
         ItemStatsType::Speed => sprites.0.speed_potion.clone(),
         ItemStatsType::Armor => sprites.0.shield.clone(),
+        ItemStatsType::Shield => sprites.0.shield.clone(),
     }
 }

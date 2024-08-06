@@ -26,6 +26,11 @@ pub struct PlayerArmorChanged {
 }
 
 #[derive(Event)]
+pub struct PlayerBuffChanged {
+    pub buff: f32,
+}
+
+#[derive(Event)]
 pub struct PlayerSpawned;
 
 #[derive(Event)]

@@ -37,6 +37,7 @@ looking for him, therefore we're gonna have panic
 - [x] Audio
 - [x] Randomize spawns
 - [x] Spawn shield item
+- [ ] Spawn power shield
 - [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
 

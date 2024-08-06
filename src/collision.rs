@@ -7,8 +7,8 @@ use crate::{
     player::Player,
     prelude::*,
     AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health,
-    PlayerArmorChanged, PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon,
-    WeaponBundle,
+    PlayerArmorChanged, PlayerHitAudioTimeout, ScoreChanged, Shield, Speed, SpritesResources,
+    Weapon, WeaponBundle,
 };
 
 pub fn check_for_ammo_collisions_with_enemy(
@@ -150,18 +150,21 @@ pub fn check_for_item_collisions(
                 Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
 
             if player_collider.intersects(&item_collider) {
-                match item.item_type {
-                    ItemStatsType::Speed => {
-                        player_speed.0 += item.value;
+                match &item.item {
+                    ItemTypeEnum::Speed(speed) => {
+                        player_speed.0 += speed.0;
                         commands.trigger(PlayerSpeedChanged {
                             speed: player_speed.0,
                         });
                     }
-                    ItemStatsType::Armor => {
-                        player_armor.0 += item.value;
+                    ItemTypeEnum::Armor(armor) => {
+                        player_armor.0 += armor.0;
                         commands.trigger(PlayerArmorChanged {
                             armor: player_armor.0,
                         });
+                    }
+                    ItemTypeEnum::Shield(shield) => {
+                        println!("{:?}", shield);
                     }
                 }
 

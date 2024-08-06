@@ -10,7 +10,7 @@ use rand::Rng;
 #[cfg_attr(web, derive(Component, Default, Debug, Clone))]
 pub struct Item {
     pub item_type: ItemStatsType,
-    pub value: f32,
+    pub item: ItemTypeEnum,
 }
 
 #[derive(Bundle, Clone)]
@@ -33,7 +33,7 @@ impl ItemBundle {
         scale: Vec3,
         pos: Vec3,
         item_type: ItemStatsType,
-        value: f32,
+        item: ItemTypeEnum,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -42,7 +42,7 @@ impl ItemBundle {
             scale,
             pos,
             item_type,
-            value,
+            item,
         )
     }
 
@@ -53,7 +53,7 @@ impl ItemBundle {
         scale: Vec3,
         pos: Vec3,
         item_type: ItemStatsType,
-        value: f32,
+        item: ItemTypeEnum,
     ) -> Self {
         let item_sprite = get_item_sprite_based_on_item_type(item_type.clone(), sprites);
         let item_animation = item_sprite.animation.unwrap();
@@ -66,7 +66,7 @@ impl ItemBundle {
 
         ItemBundle {
             name: Name::new("Item"),
-            marker: Item { item_type, value },
+            marker: Item { item_type, item },
             sprite: SpriteBundle {
                 texture: asset_server.load(item_sprite.source),
                 transform: Transform {
@@ -98,7 +98,8 @@ pub fn spawn_item(
     let quantity = &item_by_level.quantity;
     let item_type = &item_by_level.item.item_type;
     let scale = Vec3::splat(2.);
-    let value = &item_by_level.item.value;
+
+    let item = &item_by_level.item.item;
 
     for idx in 1..=*quantity {
         let mut rng = rand::thread_rng();
@@ -112,7 +113,7 @@ pub fn spawn_item(
             scale,
             random_spawning_pos,
             item_type.clone(),
-            *value,
+            item.clone(),
         );
 
         commands.spawn(bundle);
