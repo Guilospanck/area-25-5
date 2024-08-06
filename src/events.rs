@@ -1,8 +1,12 @@
+use std::time::Duration;
+
+use bevy::reflect::List;
+
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
-    spawn_weapon, ui::HealthBar, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
-    CurrentWaveUI, Enemy, EnemyWaves, GameState, Item, ItemWaves, PlayerArmorBar, PlayerSpeedBar,
-    ScoreUI, SpritesResources, Weapon, WeaponWaves,
+    spawn_weapon, ui::HealthBar, Armor, Buffs, CurrentScore, CurrentTime, CurrentTimeUI,
+    CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item, ItemWaves,
+    PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpritesResources, Weapon, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -23,11 +27,6 @@ pub struct PlayerSpeedChanged {
 #[derive(Event)]
 pub struct PlayerArmorChanged {
     pub armor: f32,
-}
-
-#[derive(Event)]
-pub struct PlayerBuffChanged {
-    pub buff: f32,
 }
 
 #[derive(Event)]
@@ -442,6 +441,45 @@ pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>)
 
     *current_time = CurrentTime { minutes, seconds };
     commands.trigger(CurrentTimeChanged);
+}
+
+pub fn remove_outdated_buffs(
+    mut commands: Commands,
+    mut player: Query<(&mut Speed, &mut Armor, &mut Buffs, &Children), With<Player>>,
+    mut weapon_query: Query<(&mut Damage, &Weapon)>,
+) {
+    if let Ok((_, mut player_armor, mut buffs, player_children)) = player.get_single_mut() {
+        buffs.0.retain_mut(|buff| match &buff.item {
+            crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => true,
+            crate::ItemTypeEnum::Shield(shield) => {
+                if shield.duration_seconds.is_none() {
+                    return true;
+                }
+
+                let has_passed = buff.start_time.elapsed()
+                    > Duration::from_secs(shield.duration_seconds.unwrap());
+
+                if has_passed {
+                    // TODO: check for shield type (magical vs physical)
+                    if shield.defensive > 0. {
+                        player_armor.0 -= shield.defensive;
+                        commands.trigger(PlayerArmorChanged {
+                            armor: player_armor.0,
+                        });
+                    }
+                    if shield.offensive > 0. {
+                        for &child in player_children {
+                            if let Ok((mut weapon_damage, _)) = weapon_query.get_mut(child) {
+                                weapon_damage.0 += shield.offensive;
+                            }
+                        }
+                    }
+                }
+
+                !has_passed
+            }
+        });
+    }
 }
 
 pub fn on_current_time_changed(

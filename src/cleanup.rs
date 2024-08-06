@@ -1,7 +1,6 @@
 use crate::{
     prelude::*, CurrentScore, CurrentTime, CurrentTimeChanged, CurrentTimeUI, CurrentWave,
-    CurrentWaveChanged, CurrentWaveUI, PlayerArmorChanged, PlayerHealthChanged, PlayerSpeedChanged,
-    ScoreChanged,
+    CurrentWaveUI, PlayerArmorChanged, PlayerHealthChanged, PlayerSpeedChanged, ScoreChanged,
 };
 
 #[derive(Component, Clone)]

@@ -1,7 +1,7 @@
 use crate::{
     prelude::*,
     util::{get_item_sprite_based_on_item_type, get_random_vec3},
-    AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, SpritesResources,
+    AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, ItemTypeEnum, SpritesResources,
 };
 use rand::Rng;
 

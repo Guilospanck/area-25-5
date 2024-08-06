@@ -115,6 +115,10 @@ fn main() {
             FixedUpdate,
             tick_timer.run_if(on_timer(Duration::from_secs(1))),
         )
+        .add_systems(
+            FixedUpdate,
+            remove_outdated_buffs.run_if(on_timer(Duration::from_secs(1))),
+        )
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)

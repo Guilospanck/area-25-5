@@ -6,8 +6,8 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health,
-    PlayerArmorChanged, PlayerHitAudioTimeout, ScoreChanged, Shield, Speed, SpritesResources,
+    AllEnemiesDied, AmmoBundle, Armor, Buff, Buffs, Damage, EnemyHealthChanged, GameOver, Health,
+    ItemTypeEnum, PlayerArmorChanged, PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources,
     Weapon, WeaponBundle,
 };
 
@@ -127,8 +127,9 @@ pub fn check_for_player_collisions_to_enemy(
 pub fn check_for_item_collisions(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut player: Query<(&Transform, &mut Speed, &mut Armor), With<Player>>,
+    mut player: Query<(&Transform, &mut Speed, &mut Armor, &mut Buffs, &Children), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
+    mut weapon_query: Query<(&mut Damage, &Weapon)>,
 ) {
     for (item_entity, item_transform, item) in items.iter() {
         let item_collider = Aabb2d::new(
@@ -137,7 +138,8 @@ pub fn check_for_item_collisions(
         );
 
         if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player_speed, mut player_armor) = result;
+            let (player_transform, mut player_speed, mut player_armor, mut buffs, player_children) =
+                result;
             // the items are being rendered on top of the base layer
             // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
             // the units must be changed in order to be able to collide them
@@ -164,7 +166,33 @@ pub fn check_for_item_collisions(
                         });
                     }
                     ItemTypeEnum::Shield(shield) => {
-                        println!("{:?}", shield);
+                        use std::time::Instant;
+                        let start_time = Instant::now();
+
+                        // TODO: use a proper uuid
+                        let id = String::from("potato-shield-id");
+                        let buff = Buff {
+                            id: id.clone(),
+                            item: ItemTypeEnum::Shield(shield.clone()),
+                            start_time,
+                        };
+
+                        // TODO: check for shield type (magical vs physical)
+                        if shield.defensive > 0. {
+                            player_armor.0 += shield.defensive;
+                            commands.trigger(PlayerArmorChanged {
+                                armor: player_armor.0,
+                            });
+                        }
+                        if shield.offensive > 0. {
+                            for &child in player_children {
+                                if let Ok((mut weapon_damage, _)) = weapon_query.get_mut(child) {
+                                    weapon_damage.0 += shield.offensive;
+                                }
+                            }
+                        }
+
+                        buffs.0.push(buff);
                     }
                 }
 

@@ -1,4 +1,4 @@
-use crate::{Armor, Shield, Speed};
+use crate::{Armor, ItemTypeEnum, Shield, Speed};
 
 use super::*;
 
@@ -15,20 +15,6 @@ pub enum ItemStatsType {
     Shield,
 }
 
-#[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Debug, Clone))]
-pub enum ItemTypeEnum {
-    Speed(Speed),
-    Armor(Armor),
-    Shield(Shield),
-}
-impl Default for ItemTypeEnum {
-    fn default() -> Self {
-        Self::Speed(Speed::default())
-    }
-}
-
 pub struct ItemType<'a> {
     pub source: &'a str,
     pub item: ItemTypeEnum,
@@ -41,7 +27,7 @@ const ITEM_LVL_1: ItemType = ItemType {
         offensive: 0.0,
         defensive: 10.0,
         shield_type: crate::ShieldType::Physical,
-        duration_seconds: Some(20.0),
+        duration_seconds: Some(20),
     }),
     item_type: ItemStatsType::Shield,
 };
