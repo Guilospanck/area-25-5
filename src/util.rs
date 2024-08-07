@@ -1,4 +1,4 @@
-use crate::{prelude::*, SpriteInfo, SpritesResources};
+use crate::{prelude::*, ItemTypeEnum, SpriteInfo, SpritesResources};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -52,11 +52,12 @@ pub(crate) fn get_weapon_sprite_based_on_weapon_type(
 }
 
 pub(crate) fn get_item_sprite_based_on_item_type(
-    item_type: ItemStatsType,
+    item_type: ItemTypeEnum,
     sprites: &Res<SpritesResources>,
 ) -> SpriteInfo<'static> {
     match item_type {
-        ItemStatsType::Speed => sprites.0.speed_potion.clone(),
-        ItemStatsType::Armor => sprites.0.shield.clone(),
+        ItemTypeEnum::Speed(_) => sprites.0.speed_potion.clone(),
+        ItemTypeEnum::Armor(_) => sprites.0.shield.clone(),
+        ItemTypeEnum::Shield(_) => sprites.0.shield.clone(),
     }
 }

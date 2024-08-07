@@ -6,9 +6,9 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, AmmoBundle, Armor, Damage, EnemyHealthChanged, GameOver, Health,
-    PlayerArmorChanged, PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon,
-    WeaponBundle,
+    AllEnemiesDied, AmmoBundle, Armor, Buff, BuffBundle, Damage, EnemyHealthChanged, GameOver,
+    Health, ItemTypeEnum, PlayerArmorChanged, PlayerHitAudioTimeout, ScoreChanged, Speed,
+    SpritesResources, Weapon, WeaponBundle,
 };
 
 pub fn check_for_ammo_collisions_with_enemy(
@@ -127,8 +127,11 @@ pub fn check_for_player_collisions_to_enemy(
 pub fn check_for_item_collisions(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut player: Query<(&Transform, &mut Speed, &mut Armor), With<Player>>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    sprites: Res<SpritesResources>,
+    mut player: Query<(&Transform, &mut Speed, &mut Armor, &Children, Entity), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
+    mut weapon_query: Query<(&mut Damage, &Weapon)>,
 ) {
     for (item_entity, item_transform, item) in items.iter() {
         let item_collider = Aabb2d::new(
@@ -137,7 +140,13 @@ pub fn check_for_item_collisions(
         );
 
         if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player_speed, mut player_armor) = result;
+            let (
+                player_transform,
+                mut player_speed,
+                mut player_armor,
+                player_children,
+                player_entity,
+            ) = result;
             // the items are being rendered on top of the base layer
             // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
             // the units must be changed in order to be able to collide them
@@ -150,17 +159,62 @@ pub fn check_for_item_collisions(
                 Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
 
             if player_collider.intersects(&item_collider) {
-                match item.item_type {
-                    ItemStatsType::Speed => {
-                        player_speed.0 += item.value;
+                match &item.item_type {
+                    ItemTypeEnum::Speed(speed) => {
+                        player_speed.0 += speed.0;
                         commands.trigger(PlayerSpeedChanged {
                             speed: player_speed.0,
                         });
                     }
-                    ItemStatsType::Armor => {
-                        player_armor.0 += item.value;
+                    ItemTypeEnum::Armor(armor) => {
+                        player_armor.0 += armor.0;
                         commands.trigger(PlayerArmorChanged {
                             armor: player_armor.0,
+                        });
+                    }
+                    ItemTypeEnum::Shield(shield) => {
+                        use std::time::Instant;
+                        let start_time = Instant::now();
+
+                        let buff = Buff {
+                            item: ItemTypeEnum::Shield(shield.clone()),
+                            start_time,
+                        };
+
+                        // TODO: check for shield type (magical vs physical)
+                        if shield.defensive > 0. {
+                            player_armor.0 += shield.defensive;
+                            commands.trigger(PlayerArmorChanged {
+                                armor: player_armor.0,
+                            });
+                        }
+                        // TODO: should allow the collision from this item
+                        // to enemies, dealing damage
+                        if shield.offensive > 0. {
+                            for &child in player_children {
+                                if let Ok((mut weapon_damage, _)) = weapon_query.get_mut(child) {
+                                    weapon_damage.0 += shield.offensive;
+                                }
+                            }
+                        }
+
+                        // Add new buff to player
+                        let layer = PLAYER_LAYER;
+                        let scale = Vec3::splat(0.5);
+                        let pos = Vec3::new(10., 10.0, 0.0);
+
+                        let buff_bundle = BuffBundle::new(
+                            &mut texture_atlas_layout,
+                            &sprites,
+                            &asset_server,
+                            scale,
+                            pos,
+                            item.item_type.clone(),
+                            layer,
+                        );
+
+                        commands.entity(player_entity).with_children(|parent| {
+                            parent.spawn(buff_bundle);
                         });
                     }
                 }

@@ -1,6 +1,7 @@
 pub mod ammo;
 pub mod animation;
 mod audio;
+pub mod buffs;
 pub mod camera;
 pub mod cleanup;
 pub mod collision;
@@ -21,6 +22,7 @@ pub mod weapon;
 
 pub use ammo::*;
 pub use animation::*;
+pub use buffs::*;
 pub use camera::*;
 pub use cleanup::*;
 pub use collision::*;
