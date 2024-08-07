@@ -1,10 +1,8 @@
 use std::time::Duration;
 
-use bevy::reflect::List;
-
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
-    spawn_weapon, ui::HealthBar, Armor, Buffs, CurrentScore, CurrentTime, CurrentTimeUI,
+    spawn_weapon, ui::HealthBar, Armor, Buff, CurrentScore, CurrentTime, CurrentTimeUI,
     CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item, ItemWaves,
     PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpritesResources, Weapon, WeaponWaves,
 };
@@ -445,15 +443,20 @@ pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>)
 
 pub fn remove_outdated_buffs(
     mut commands: Commands,
-    mut player: Query<(&mut Speed, &mut Armor, &mut Buffs, &Children), With<Player>>,
+    mut player: Query<(&mut Speed, &mut Armor, &Children), With<Player>>,
     mut weapon_query: Query<(&mut Damage, &Weapon)>,
+    player_buff_query: Query<(Entity, &Buff)>,
 ) {
-    if let Ok((_, mut player_armor, mut buffs, player_children)) = player.get_single_mut() {
-        buffs.0.retain_mut(|buff| match &buff.item {
-            crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => true,
+    let mut should_be_despawned = |buff: Buff,
+                                   player_armor: &mut Armor,
+                                   player_children: &Children,
+                                   commands: &mut Commands|
+     -> bool {
+        match &buff.item {
+            crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => false,
             crate::ItemTypeEnum::Shield(shield) => {
                 if shield.duration_seconds.is_none() {
-                    return true;
+                    return false;
                 }
 
                 let has_passed = buff.start_time.elapsed()
@@ -467,6 +470,8 @@ pub fn remove_outdated_buffs(
                             armor: player_armor.0,
                         });
                     }
+                    // TODO: this won't be necessary if(when) we say that
+                    // the shield itself deals damage to the enemies
                     if shield.offensive > 0. {
                         for &child in player_children {
                             if let Ok((mut weapon_damage, _)) = weapon_query.get_mut(child) {
@@ -476,9 +481,49 @@ pub fn remove_outdated_buffs(
                     }
                 }
 
-                !has_passed
+                has_passed
             }
-        });
+        }
+    };
+
+    if let Ok((_, mut player_armor, player_children)) = player.get_single_mut() {
+        for &child in player_children {
+            if let Ok((player_buff_entity, player_buff)) = player_buff_query.get(child) {
+                if should_be_despawned(
+                    player_buff.clone(),
+                    &mut player_armor,
+                    player_children,
+                    &mut commands,
+                ) {
+                    commands.entity(player_buff_entity).despawn();
+                }
+            }
+        }
+    }
+}
+
+const NUMBER_OF_POSITIONS: usize = 360; // 2pi
+
+pub fn animate_player_buffs(
+    mut player_query: Query<&Children, With<Player>>,
+    mut player_buff_query: Query<(&mut Transform, &Buff)>,
+    time: Res<Time>,
+) {
+    let elapsed_seconds = time.elapsed_seconds() * 200.;
+    let degrees = elapsed_seconds % NUMBER_OF_POSITIONS as f32;
+
+    let radians = 0.017_453_292 * degrees;
+    let (mut y, mut x) = f32::sin_cos(radians);
+    y *= 15.;
+    x *= 15.;
+
+    if let Ok(player_children) = player_query.get_single_mut() {
+        for &child in player_children {
+            if let Ok((mut player_buff_transform, _player_buff)) = player_buff_query.get_mut(child)
+            {
+                player_buff_transform.translation = Vec3::new(x, y, 1.);
+            }
+        }
     }
 }
 

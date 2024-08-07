@@ -43,6 +43,7 @@ fn main() {
         app.register_type::<Weapon>()
             .register_type::<Ammo>()
             .register_type::<Item>()
+            .register_type::<Buff>()
             .add_plugins(WorldInspectorPlugin::new());
     }
 
@@ -118,6 +119,10 @@ fn main() {
         .add_systems(
             FixedUpdate,
             remove_outdated_buffs.run_if(on_timer(Duration::from_secs(1))),
+        )
+        .add_systems(
+            FixedUpdate,
+            animate_player_buffs.run_if(on_timer(Duration::from_nanos(100))),
         )
         .observe(on_player_spawned)
         .observe(on_mouse_click)

@@ -1,5 +1,5 @@
 use crate::{
-    animation::*, prelude::*, spawn_health_bar, sprites::Sprites, AmmoBundle, Armor, Buffs,
+    animation::*, prelude::*, spawn_health_bar, sprites::Sprites, AmmoBundle, Armor,
     CleanupWhenPlayerDies, Health, PlayerSpawned, Speed, SpritesResources, WeaponBundle,
 };
 
@@ -14,9 +14,6 @@ pub(crate) struct PlayerBundle {
     pub(crate) health: Health,
     pub(crate) armor: Armor,
     pub(crate) speed: Speed,
-
-    // buffs
-    pub(crate) buffs: Buffs,
 
     pub(crate) sprite: SpriteBundle,
     pub(crate) atlas: TextureAtlas,
@@ -56,7 +53,6 @@ impl PlayerBundle {
             health: Health(PLAYER_HEALTH),
             speed: Speed(PLAYER_MOVE_SPEED),
             armor: Armor(PLAYER_ARMOR),
-            buffs: Buffs(vec![]),
             sprite: SpriteBundle {
                 texture: asset_server.load(player_sprite.source),
                 transform: Transform {
