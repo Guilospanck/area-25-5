@@ -40,6 +40,9 @@ looking for him, therefore we're gonna have panic
 - [x] Spawn power shield
 - [x] Add timeouts for buffs
 - [x] Animate power shield
+- [x] Make shield deal damage to enemies
+- [x] Fix enemy collider (the height and width are different, remember)
+- [ ] Fix spawns happening outside screen
 - [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
 
@@ -53,6 +56,7 @@ Backlog:
 - [ ] Spawning of enemies can come from outside the screen
 - Create the concept of enemies throwing magic or bullets as well
 - Some enemies may be fixed at some place and only cast spells
+- [ ] Maybe despawn shields when they hit opponent
  
 Features:
 - HP bar for some boss at some point

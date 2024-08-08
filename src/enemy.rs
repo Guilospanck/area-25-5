@@ -28,6 +28,7 @@ impl EnemyBundle {
         pos: Vec3,
         health: f32,
         damage: f32,
+        scale: Vec3,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -36,6 +37,7 @@ impl EnemyBundle {
             pos,
             health,
             damage,
+            scale,
         )
     }
 
@@ -46,6 +48,7 @@ impl EnemyBundle {
         pos: Vec3,
         health: f32,
         damage: f32,
+        scale: Vec3,
     ) -> Self {
         let enemy_animation = enemy_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(enemy_sprite.layout);
@@ -60,7 +63,7 @@ impl EnemyBundle {
                 transform: Transform {
                     rotation: Quat::default(),
                     translation: pos,
-                    scale: Vec3::splat(3.0),
+                    scale,
                 },
                 ..default()
             },
@@ -87,6 +90,7 @@ pub fn spawn_enemy(
 ) {
     let health = enemy_by_level.enemy.health;
     let damage = enemy_by_level.enemy.damage;
+    let scale = enemy_by_level.enemy.scale;
 
     let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
 
@@ -100,6 +104,7 @@ pub fn spawn_enemy(
             random_spawning_pos,
             health,
             damage,
+            scale,
         );
 
         let health_bar = spawn_health_bar(

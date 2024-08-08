@@ -444,57 +444,39 @@ pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>)
 pub fn remove_outdated_buffs(
     mut commands: Commands,
     mut player: Query<(&mut Speed, &mut Armor, &Children), With<Player>>,
-    mut weapon_query: Query<(&mut Damage, &Weapon)>,
     player_buff_query: Query<(Entity, &Buff)>,
 ) {
-    let mut should_be_despawned = |buff: Buff,
-                                   player_armor: &mut Armor,
-                                   player_children: &Children,
-                                   commands: &mut Commands|
-     -> bool {
-        match &buff.item {
-            crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => false,
-            crate::ItemTypeEnum::Shield(shield) => {
-                if shield.duration_seconds.is_none() {
-                    return false;
-                }
-
-                let has_passed = buff.start_time.elapsed()
-                    > Duration::from_secs(shield.duration_seconds.unwrap());
-
-                if has_passed {
-                    // TODO: check for shield type (magical vs physical)
-                    if shield.defensive > 0. {
-                        player_armor.0 -= shield.defensive;
-                        commands.trigger(PlayerArmorChanged {
-                            armor: player_armor.0,
-                        });
+    let should_be_despawned =
+        |buff: Buff, player_armor: &mut Armor, commands: &mut Commands| -> bool {
+            match &buff.item {
+                crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => false,
+                crate::ItemTypeEnum::Shield(shield) => {
+                    if shield.duration_seconds.is_none() {
+                        return false;
                     }
-                    // TODO: this won't be necessary if(when) we say that
-                    // the shield itself deals damage to the enemies
-                    if shield.offensive > 0. {
-                        for &child in player_children {
-                            if let Ok((mut weapon_damage, _)) = weapon_query.get_mut(child) {
-                                weapon_damage.0 += shield.offensive;
-                            }
+
+                    let has_passed = buff.start_time.elapsed()
+                        > Duration::from_secs(shield.duration_seconds.unwrap());
+
+                    if has_passed {
+                        // TODO: check for shield type (magical vs physical)
+                        if shield.defensive > 0. {
+                            player_armor.0 -= shield.defensive;
+                            commands.trigger(PlayerArmorChanged {
+                                armor: player_armor.0,
+                            });
                         }
                     }
-                }
 
-                has_passed
+                    has_passed
+                }
             }
-        }
-    };
+        };
 
     if let Ok((_, mut player_armor, player_children)) = player.get_single_mut() {
         for &child in player_children {
             if let Ok((player_buff_entity, player_buff)) = player_buff_query.get(child) {
-                if should_be_despawned(
-                    player_buff.clone(),
-                    &mut player_armor,
-                    player_children,
-                    &mut commands,
-                ) {
+                if should_be_despawned(player_buff.clone(), &mut player_armor, &mut commands) {
                     commands.entity(player_buff_entity).despawn();
                 }
             }
@@ -509,18 +491,21 @@ pub fn animate_player_buffs(
     mut player_buff_query: Query<(&mut Transform, &Buff)>,
     time: Res<Time>,
 ) {
-    let elapsed_seconds = time.elapsed_seconds() * 200.;
+    let elapsed_seconds = time.elapsed_seconds();
     let degrees = elapsed_seconds % NUMBER_OF_POSITIONS as f32;
 
-    let radians = 0.017_453_292 * degrees;
-    let (mut y, mut x) = f32::sin_cos(radians);
-    y *= 15.;
-    x *= 15.;
-
     if let Ok(player_children) = player_query.get_single_mut() {
-        for &child in player_children {
+        for (idx, &child) in player_children.iter().enumerate() {
             if let Ok((mut player_buff_transform, _player_buff)) = player_buff_query.get_mut(child)
             {
+                let radians = 0.017_453_292
+                    * degrees
+                    * (idx + 1) as f32
+                    * (NUMBER_OF_POSITIONS / NUMBER_OF_BUFF_ITEMS) as f32;
+                let (mut y, mut x) = f32::sin_cos(radians);
+                y *= RADIUS_FROM_PLAYER;
+                x *= RADIUS_FROM_PLAYER;
+
                 player_buff_transform.translation = Vec3::new(x, y, 1.);
             }
         }

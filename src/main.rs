@@ -98,6 +98,7 @@ fn main() {
                 check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
                 check_for_weapon_collisions,
+                check_for_offensive_buff_collisions_with_enemy,
             )
                 .in_set(CollisionSet),
         )
