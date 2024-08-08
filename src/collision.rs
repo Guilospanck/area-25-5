@@ -11,6 +11,75 @@ use crate::{
     SpritesResources, Weapon, WeaponBundle,
 };
 
+pub fn check_for_offensive_buff_collisions_with_enemy(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
+
+    player_query: Query<(&Transform, &Children), With<Player>>,
+    player_buff_query: Query<(&Transform, &Buff)>,
+) {
+    let number_of_enemies = enemies.iter().len();
+    if number_of_enemies == 0 {
+        return;
+    }
+
+    let player_children = player_query.get_single();
+    if player_children.is_err() {
+        return;
+    }
+    let (player_transform, player_children) = player_children.unwrap();
+
+    for &child in player_children {
+        if player_buff_query.get(child).is_err() {
+            continue;
+        }
+        let (player_buff_transform, player_buff) = player_buff_query.get(child).unwrap();
+
+        match &player_buff.item {
+            ItemTypeEnum::Speed(_) | ItemTypeEnum::Armor(_) => continue,
+            ItemTypeEnum::Shield(shield) => {
+                if shield.offensive == 0. {
+                    continue;
+                }
+
+                let damage = shield.offensive;
+                let transform = player_transform.translation.truncate()
+                    + player_buff_transform.translation.truncate();
+                let buff_collider = Aabb2d::new(
+                    transform,
+                    // TODO: make this a config
+                    Vec2::new(8., 8.),
+                );
+
+                for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in
+                    enemies.iter_mut()
+                {
+                    let enemy_collider = Aabb2d::new(
+                        enemy_transform.translation.truncate(),
+                        Vec2::new(
+                            ENEMY_COLLISION_BOX_WIDTH * enemy_transform.scale.x / 2.,
+                            ENEMY_COLLISION_BOX_HEIGHT * enemy_transform.scale.y / 2.,
+                        ),
+                    );
+
+                    if buff_collider.intersects(&enemy_collider) {
+                        hit_enemy_audio(&asset_server, &mut commands);
+                        damage_enemy(
+                            &mut commands,
+                            enemy_entity,
+                            &mut enemy_health,
+                            damage,
+                            enemy_damage,
+                        );
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -73,7 +142,7 @@ pub fn check_for_ammo_collisions_with_enemy(
 
             if ammo_collider.intersects(&enemy_collider) {
                 hit_enemy_audio(&asset_server, &mut commands);
-                damage_enemy(
+                damage_enemy_from_ammo(
                     &mut commands,
                     ammo_entity,
                     enemy_entity,
@@ -173,48 +242,32 @@ pub fn check_for_item_collisions(
                         });
                     }
                     ItemTypeEnum::Shield(shield) => {
-                        use std::time::Instant;
-                        let start_time = Instant::now();
-
-                        let buff = Buff {
-                            item: ItemTypeEnum::Shield(shield.clone()),
-                            start_time,
-                        };
-
                         // TODO: check for shield type (magical vs physical)
                         if shield.defensive > 0. {
-                            player_armor.0 += shield.defensive;
+                            player_armor.0 += shield.defensive * NUMBER_OF_BUFF_ITEMS as f32;
                             commands.trigger(PlayerArmorChanged {
                                 armor: player_armor.0,
                             });
-                        }
-                        // TODO: should allow the collision from this item
-                        // to enemies, dealing damage
-                        if shield.offensive > 0. {
-                            for &child in player_children {
-                                if let Ok((mut weapon_damage, _)) = weapon_query.get_mut(child) {
-                                    weapon_damage.0 += shield.offensive;
-                                }
-                            }
                         }
 
                         // Add new buff to player
                         let layer = PLAYER_LAYER;
                         let scale = Vec3::splat(0.5);
-                        let pos = Vec3::new(10., 10.0, 0.0);
-
-                        let buff_bundle = BuffBundle::new(
-                            &mut texture_atlas_layout,
-                            &sprites,
-                            &asset_server,
-                            scale,
-                            pos,
-                            item.item_type.clone(),
-                            layer,
-                        );
+                        let pos = Vec3::new(RADIUS_FROM_PLAYER, RADIUS_FROM_PLAYER, 0.0);
 
                         commands.entity(player_entity).with_children(|parent| {
-                            parent.spawn(buff_bundle);
+                            for _ in 0..NUMBER_OF_BUFF_ITEMS {
+                                let buff_bundle = BuffBundle::new(
+                                    &mut texture_atlas_layout,
+                                    &sprites,
+                                    &asset_server,
+                                    scale,
+                                    pos,
+                                    item.item_type.clone(),
+                                    layer.clone(),
+                                );
+                                parent.spawn(buff_bundle);
+                            }
                         });
                     }
                 }
@@ -359,7 +412,7 @@ pub fn check_for_weapon_collisions(
     }
 }
 
-fn damage_enemy(
+fn damage_enemy_from_ammo(
     commands: &mut Commands,
     ammo_entity: Entity,
     enemy_entity: Entity,
@@ -367,10 +420,20 @@ fn damage_enemy(
     damage: f32,
     enemy_damage: &Damage,
 ) {
-    enemy_health.0 -= damage;
-
     // Always despawns ammo
     commands.entity(ammo_entity).despawn();
+
+    damage_enemy(commands, enemy_entity, enemy_health, damage, enemy_damage);
+}
+
+fn damage_enemy(
+    commands: &mut Commands,
+    enemy_entity: Entity,
+    enemy_health: &mut Health,
+    damage: f32,
+    enemy_damage: &Damage,
+) {
+    enemy_health.0 -= damage;
 
     if enemy_health.0 <= 0. {
         commands.entity(enemy_entity).despawn_recursive();

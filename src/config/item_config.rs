@@ -24,7 +24,7 @@ pub struct ItemType<'a> {
 const ITEM_LVL_1: ItemType = ItemType {
     source: "textures/Items/shield.png",
     item: ItemTypeEnum::Shield(Shield {
-        offensive: 0.0,
+        offensive: 0.01,
         defensive: 10.0,
         shield_type: crate::ShieldType::Physical,
         duration_seconds: Some(20),
