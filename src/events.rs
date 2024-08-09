@@ -2,8 +2,9 @@ use std::time::Duration;
 
 use crate::{
     game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
-    spawn_weapon, ui::HealthBar, Armor, Buff, CurrentScore, CurrentTime, CurrentTimeUI,
-    CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item, ItemWaves,
+    spawn_weapon, ui::HealthBar, util::get_item_sprite_based_on_item_type, Armor, Buff, BuffGroup,
+    BuffsUI, ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
+    CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item, ItemTypeEnum, ItemWaves,
     PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpritesResources, Weapon, WeaponWaves,
 };
 
@@ -44,6 +45,11 @@ pub struct CurrentWaveChanged;
 
 #[derive(Event)]
 pub struct CurrentTimeChanged;
+
+#[derive(Event)]
+pub struct BuffAdded {
+    pub item_type: ItemTypeEnum,
+}
 
 #[derive(Event)]
 pub struct GameOver;
@@ -444,41 +450,90 @@ pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>)
 pub fn remove_outdated_buffs(
     mut commands: Commands,
     mut player: Query<(&mut Speed, &mut Armor, &Children), With<Player>>,
-    player_buff_query: Query<(Entity, &Buff)>,
+    player_buff_group_query: Query<(Entity, &BuffGroup)>,
+    mut container_buff_ui: Query<(&Children, &ContainerBuffsUI)>,
+    buff_ui_query: Query<(Entity, &BuffsUI)>,
 ) {
-    let should_be_despawned =
-        |buff: Buff, player_armor: &mut Armor, commands: &mut Commands| -> bool {
-            match &buff.item {
-                crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => false,
-                crate::ItemTypeEnum::Shield(shield) => {
-                    if shield.duration_seconds.is_none() {
-                        return false;
-                    }
+    if player.get_single_mut().is_err() {
+        return;
+    }
+    let (_, mut player_armor, player_children) = player.get_single_mut().unwrap();
 
-                    let has_passed = buff.start_time.elapsed()
-                        > Duration::from_secs(shield.duration_seconds.unwrap());
+    let mut remove_from_ui = |player_buff_item_type: ItemTypeEnum, commands: &mut Commands| {
+        if container_buff_ui.get_single_mut().is_err() {
+            return;
+        }
+        let (children, _) = container_buff_ui.get_single_mut().unwrap();
 
-                    if has_passed {
-                        // TODO: check for shield type (magical vs physical)
-                        if shield.defensive > 0. {
-                            player_armor.0 -= shield.defensive;
-                            commands.trigger(PlayerArmorChanged {
-                                armor: player_armor.0,
-                            });
-                        }
-                    }
-
-                    has_passed
-                }
+        for &child in children {
+            if buff_ui_query.get(child).is_err() {
+                continue;
             }
-        };
+            let (buff_ui_entity, buff_ui) = buff_ui_query.get(child).unwrap();
 
-    if let Ok((_, mut player_armor, player_children)) = player.get_single_mut() {
-        for &child in player_children {
-            if let Ok((player_buff_entity, player_buff)) = player_buff_query.get(child) {
-                if should_be_despawned(player_buff.clone(), &mut player_armor, &mut commands) {
-                    commands.entity(player_buff_entity).despawn();
+            match (&player_buff_item_type, &buff_ui.item_type) {
+                (ItemTypeEnum::Speed(_), ItemTypeEnum::Speed(_))
+                | (ItemTypeEnum::Armor(_), ItemTypeEnum::Armor(_)) => continue,
+                (ItemTypeEnum::Shield(_), ItemTypeEnum::Shield(_)) => {
+                    commands.entity(buff_ui_entity).despawn();
+                    break;
                 }
+                _ => continue,
+            };
+        }
+    };
+
+    let mut should_be_despawned = |buff_group: BuffGroup,
+                                   player_armor: &mut Armor,
+                                   commands: &mut Commands,
+                                   buff_ui_despawned: Option<ItemTypeEnum>|
+     -> bool {
+        match &buff_group.item {
+            crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => false,
+            crate::ItemTypeEnum::Shield(shield) => {
+                if shield.duration_seconds.is_none() {
+                    return false;
+                }
+
+                let has_passed = buff_group.start_time.elapsed()
+                    > Duration::from_secs(shield.duration_seconds.unwrap());
+
+                if has_passed {
+                    // update player armor
+                    // TODO: check for shield type (magical vs physical)
+                    if shield.defensive > 0. {
+                        player_armor.0 -= shield.defensive * NUMBER_OF_BUFF_ITEMS as f32;
+                        commands.trigger(PlayerArmorChanged {
+                            armor: player_armor.0,
+                        });
+                    }
+                    if buff_ui_despawned.is_none() {
+                        remove_from_ui(buff_group.item.clone(), commands);
+                    }
+                }
+
+                has_passed
+            }
+        }
+    };
+
+    let mut buff_group_ui_despawned = None;
+    for &child in player_children {
+        if let Ok((player_buff_group_entity, player_buff_group)) =
+            player_buff_group_query.get(child)
+        {
+            if should_be_despawned(
+                player_buff_group.clone(),
+                &mut player_armor,
+                &mut commands,
+                buff_group_ui_despawned.clone(),
+            ) {
+                if buff_group_ui_despawned.is_none() {
+                    buff_group_ui_despawned = Some(player_buff_group.item.clone());
+                }
+                commands
+                    .entity(player_buff_group_entity)
+                    .despawn_recursive();
             }
         }
     }
@@ -488,15 +543,27 @@ const NUMBER_OF_POSITIONS: usize = 360; // 2pi
 
 pub fn animate_player_buffs(
     mut player_query: Query<&Children, With<Player>>,
+    player_buff_group_query: Query<(&Children, &BuffGroup)>,
     mut player_buff_query: Query<(&mut Transform, &Buff)>,
     time: Res<Time>,
 ) {
     let elapsed_seconds = time.elapsed_seconds();
     let degrees = elapsed_seconds % NUMBER_OF_POSITIONS as f32;
 
-    if let Ok(player_children) = player_query.get_single_mut() {
-        for (idx, &child) in player_children.iter().enumerate() {
-            if let Ok((mut player_buff_transform, _player_buff)) = player_buff_query.get_mut(child)
+    if player_query.get_single_mut().is_err() {
+        return;
+    }
+    let player_children = player_query.get_single_mut().unwrap();
+
+    for &child in player_children.iter() {
+        if player_buff_group_query.get(child).is_err() {
+            continue;
+        }
+        let (player_buff_group_children, _) = player_buff_group_query.get(child).unwrap();
+
+        for (idx, &player_buff_group_child) in player_buff_group_children.iter().enumerate() {
+            if let Ok((mut player_buff_transform, _player_buff)) =
+                player_buff_query.get_mut(player_buff_group_child)
             {
                 let radians = 0.017_453_292
                     * degrees
@@ -520,5 +587,55 @@ pub fn on_current_time_changed(
     if let Ok((mut text, _)) = current_time_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value =
             format!("{:02}:{:02}", current_time.minutes, current_time.seconds);
+    }
+}
+
+pub fn on_buff_added(
+    trigger: Trigger<BuffAdded>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    mut container_buff_ui: Query<(Entity, &ContainerBuffsUI)>,
+) {
+    if container_buff_ui.get_single_mut().is_err() {
+        return;
+    }
+    let (parent, _) = container_buff_ui.get_single_mut().unwrap();
+
+    let event = trigger.event();
+    let item_type = event.item_type.clone();
+
+    let child_node = |sprite: &str, buff_type: ItemTypeEnum| {
+        (
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(30.0),
+                    height: Val::Px(30.0),
+                    ..default()
+                },
+                border_radius: BorderRadius::all(Val::Px(5.)),
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite.to_owned())),
+            OVERLAY_LAYER,
+            BuffsUI {
+                item_type: buff_type,
+            },
+        )
+    };
+
+    match &item_type {
+        ItemTypeEnum::Speed(_) | ItemTypeEnum::Armor(_) => (),
+        ItemTypeEnum::Shield(shield) => {
+            let item_sprite = get_item_sprite_based_on_item_type(
+                ItemTypeEnum::Shield(shield.clone()).clone(),
+                &sprites,
+            );
+            let id = commands
+                .spawn(child_node(item_sprite.source, item_type))
+                .id();
+            commands.entity(parent).push_children(&[id]);
+        }
     }
 }

@@ -42,6 +42,8 @@ looking for him, therefore we're gonna have panic
 - [x] Animate power shield
 - [x] Make shield deal damage to enemies
 - [x] Fix enemy collider (the height and width are different, remember)
+- [ ] Show buffs and current weapon on an UI
+- [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)

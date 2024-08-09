@@ -52,6 +52,23 @@ pub struct Buff {
     pub item: ItemTypeEnum,
 }
 
+#[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
+#[cfg_attr(not(web), reflect(Component))]
+#[cfg_attr(web, derive(Component, Debug, Clone))]
+pub struct BuffGroup {
+    pub start_time: Instant,
+    pub item: ItemTypeEnum,
+}
+
+#[derive(Bundle, Clone)]
+pub(crate) struct BuffGroupBundle {
+    pub(crate) sprite: SpriteBundle,
+    pub(crate) marker: BuffGroup,
+    pub(crate) layer: RenderLayers,
+    pub(crate) cleanup: CleanupWhenPlayerDies,
+    name: Name,
+}
+
 #[derive(Bundle, Clone)]
 pub(crate) struct BuffBundle {
     pub(crate) marker: Buff,
@@ -62,6 +79,35 @@ pub(crate) struct BuffBundle {
     pub(crate) layer: RenderLayers,
     pub(crate) cleanup: CleanupWhenPlayerDies,
     name: Name,
+}
+
+impl BuffGroupBundle {
+    pub(crate) fn new(item_type: ItemTypeEnum, layer: RenderLayers) -> Self {
+        Self::_util(item_type, layer)
+    }
+
+    fn _util(item_type: ItemTypeEnum, layer: RenderLayers) -> Self {
+        use std::time::Instant;
+        let start_time = Instant::now();
+        let buff_group = BuffGroup {
+            item: item_type,
+            start_time,
+        };
+
+        BuffGroupBundle {
+            name: Name::new("BuffGroup"),
+            marker: buff_group,
+            sprite: SpriteBundle {
+                transform: Transform {
+                    translation: Vec3::splat(0.),
+                    ..default()
+                },
+                ..default()
+            },
+            layer,
+            cleanup: CleanupWhenPlayerDies,
+        }
+    }
 }
 
 impl BuffBundle {
