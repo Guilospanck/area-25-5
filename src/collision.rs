@@ -277,12 +277,12 @@ pub fn check_for_item_collisions(
                                 }
                             });
                         });
-
-                        commands.trigger(BuffAdded {
-                            item_type: item.item_type.clone(),
-                        });
                     }
                 }
+
+                commands.trigger(BuffAdded {
+                    item_type: item.item_type.clone(),
+                });
 
                 // play audio when colliding item
                 hit_item_audio(&asset_server, &mut commands);

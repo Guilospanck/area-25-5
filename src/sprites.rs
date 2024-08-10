@@ -1,6 +1,6 @@
 use crate::{animation::AnimationInfo, prelude::*, SpritesResources};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct RectangularDimensions {
     pub width: u32,
     pub height: u32,
@@ -12,6 +12,17 @@ pub struct SpriteInfo<'a> {
     pub source: &'a str,
     pub animation: Option<AnimationInfo>,
     pub layout: TextureAtlasLayout,
+}
+
+impl Default for SpriteInfo<'_> {
+    fn default() -> Self {
+        Self {
+            dimensions: RectangularDimensions::default(),
+            source: "",
+            animation: None,
+            layout: TextureAtlasLayout::new_empty(UVec2::ZERO),
+        }
+    }
 }
 
 #[derive(Component, Debug, Clone)]
@@ -30,6 +41,7 @@ pub struct Sprites<'a> {
     pub lightning: SpriteInfo<'a>,
     pub shield: SpriteInfo<'a>,
     pub profile: SpriteInfo<'a>,
+    pub diamond: SpriteInfo<'a>,
 }
 
 #[derive(Component)]

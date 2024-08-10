@@ -56,8 +56,8 @@ pub(crate) fn get_item_sprite_based_on_item_type(
     sprites: &Res<SpritesResources>,
 ) -> SpriteInfo<'static> {
     match item_type {
-        ItemTypeEnum::Speed(_) => sprites.0.speed_potion.clone(),
+        ItemTypeEnum::Speed(_) => sprites.0.lightning.clone(),
         ItemTypeEnum::Armor(_) => sprites.0.shield.clone(),
-        ItemTypeEnum::Shield(_) => sprites.0.shield.clone(),
+        ItemTypeEnum::Shield(_) => sprites.0.diamond.clone(),
     }
 }

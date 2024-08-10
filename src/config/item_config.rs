@@ -22,7 +22,13 @@ pub struct ItemType<'a> {
 }
 
 const ITEM_LVL_1: ItemType = ItemType {
-    source: "textures/Items/shield.png",
+    source: "textures/Items/lightning.png",
+    item: ItemTypeEnum::Speed(Speed(30.0)),
+    item_type: ItemStatsType::Speed,
+};
+
+const ITEM_LVL_2: ItemType = ItemType {
+    source: "textures/Items/Diamond.png",
     item: ItemTypeEnum::Shield(Shield {
         offensive: 0.01,
         defensive: 10.0,
@@ -32,25 +38,20 @@ const ITEM_LVL_1: ItemType = ItemType {
     item_type: ItemStatsType::Shield,
 };
 
-const ITEM_LVL_2: ItemType = ItemType {
+const ITEM_LVL_3: ItemType = ItemType {
     source: "textures/Items/shield.png",
     item: ItemTypeEnum::Armor(Armor(20.0)),
     item_type: ItemStatsType::Armor,
 };
 
-const ITEM_LVL_3: ItemType = ItemType {
-    source: "textures/Effects/speed_potion.png",
-    item: ItemTypeEnum::Speed(Speed(30.0)),
-    item_type: ItemStatsType::Speed,
-};
 const ITEM_LVL_4: ItemType = ItemType {
-    source: "textures/Effects/speed_potion.png",
+    source: "textures/Items/lightning.png",
     item: ItemTypeEnum::Speed(Speed(30.0)),
     item_type: ItemStatsType::Speed,
 };
 
 const ITEM_LVL_5: ItemType = ItemType {
-    source: "textures/Effects/speed_potion.png",
+    source: "textures/Items/lightning.png",
     item: ItemTypeEnum::Speed(Speed(30.0)),
     item_type: ItemStatsType::Speed,
 };

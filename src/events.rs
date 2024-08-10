@@ -10,8 +10,8 @@ use crate::{
     util::{get_item_sprite_based_on_item_type, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, ContainerBuffsUI, CurrentScore, CurrentTime,
     CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item,
-    ItemTypeEnum, ItemWaves, PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpritesResources,
-    Weapon, WeaponBundle, WeaponUI, WeaponWaves,
+    ItemTypeEnum, ItemWaves, PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpriteInfo,
+    SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -641,19 +641,32 @@ pub fn on_buff_added(
         )
     };
 
+    let mut item_sprite = SpriteInfo::default();
     match &item_type {
-        ItemTypeEnum::Speed(_) | ItemTypeEnum::Armor(_) => (),
+        ItemTypeEnum::Speed(speed) => {
+            item_sprite = get_item_sprite_based_on_item_type(
+                ItemTypeEnum::Speed(speed.clone()).clone(),
+                &sprites,
+            );
+        }
+        ItemTypeEnum::Armor(armor) => {
+            item_sprite = get_item_sprite_based_on_item_type(
+                ItemTypeEnum::Armor(armor.clone()).clone(),
+                &sprites,
+            );
+        }
         ItemTypeEnum::Shield(shield) => {
-            let item_sprite = get_item_sprite_based_on_item_type(
+            item_sprite = get_item_sprite_based_on_item_type(
                 ItemTypeEnum::Shield(shield.clone()).clone(),
                 &sprites,
             );
-            let id = commands
-                .spawn(child_node(item_sprite.source, item_type))
-                .id();
-            commands.entity(parent).push_children(&[id]);
         }
     }
+
+    let id = commands
+        .spawn(child_node(item_sprite.source, item_type))
+        .id();
+    commands.entity(parent).push_children(&[id]);
 }
 
 pub fn on_weapon_found(
