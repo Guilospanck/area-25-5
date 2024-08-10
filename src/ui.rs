@@ -3,7 +3,10 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::{prelude::*, CurrentScore};
+use crate::{
+    prelude::*, util::get_item_sprite_based_on_item_type, Buff, CurrentScore, ItemTypeEnum, Player,
+    SpritesResources,
+};
 
 // ############## UI ####################
 #[derive(Component)]
@@ -23,6 +26,18 @@ pub struct ScoreUI;
 
 #[derive(Component)]
 pub struct CurrentTimeUI;
+
+#[derive(Component)]
+pub struct ContainerBuffsUI;
+
+#[derive(Component)]
+pub struct BuffsUI {
+    pub item_type: ItemTypeEnum,
+    pub counter: u32,
+}
+
+#[derive(Component)]
+pub struct WeaponUI;
 
 // ############## BUTTONS ####################
 #[derive(Component)]
@@ -251,12 +266,125 @@ fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServe
     ));
 }
 
+pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::RowReverse,
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    column_gap: Val::Px(2.),
+                    right: Val::Px(105.),
+                    top: Val::Px(5.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            ContainerBuffsUI,
+        ))
+        .with_children(|parent| {
+            parent.spawn(());
+        });
+}
+
+fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    let parent = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(250.),
+                    height: Val::Px(100.),
+                    position_type: PositionType::Absolute,
+                    justify_content: JustifyContent::FlexStart,
+                    align_items: AlignItems::FlexStart,
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .id();
+
+    let child = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(70.0),
+                    height: Val::Px(70.0),
+                    margin: UiRect {
+                        left: Val::Px(10.),
+                        right: Val::ZERO,
+                        top: Val::Px(10.),
+                        bottom: Val::ZERO,
+                    },
+                    ..default()
+                },
+                ..default()
+            },
+            UiImage::new(asset_server.load("textures/UI/profile.png")),
+            OVERLAY_LAYER,
+        ))
+        .id();
+
+    commands.entity(parent).add_child(child);
+}
+
+pub(crate) fn spawn_weapon_ui(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    sprite_source: &str,
+) {
+    let parent = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(10.),
+                    flex_direction: FlexDirection::Column,
+                    justify_content: JustifyContent::FlexEnd,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            WeaponUI,
+        ))
+        .id();
+
+    let child = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(60.0),
+                    height: Val::Px(60.0),
+                    ..default()
+                },
+                border_radius: BorderRadius::all(Val::Px(5.)),
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite_source.to_owned())),
+            OVERLAY_LAYER,
+        ))
+        .id();
+
+    commands.entity(parent).add_child(child);
+}
+
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     speed_bar(&mut commands, &asset_server);
     armor_bar(&mut commands, &asset_server);
     current_wave(&mut commands, &asset_server);
     spawn_score_points_ui(&mut commands, &asset_server);
     spawn_current_timer_ui(&mut commands, &asset_server);
+    spawn_profile_ui(&mut commands, &asset_server);
+    spawn_container_buffs_ui(&mut commands);
+    spawn_weapon_ui(&mut commands, &asset_server, DEFAULT_WEAPON_SPRITE_SOURCE);
 }
 
 pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {

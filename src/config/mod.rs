@@ -8,6 +8,7 @@ pub mod item_config;
 pub mod weapon_config;
 
 // re-export all config modules
+pub(crate) use buff_config::*;
 pub use enemy_config::*;
 pub use item_config::*;
 pub use weapon_config::*;

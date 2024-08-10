@@ -107,7 +107,7 @@ pub fn handle_click(
     }
 }
 
-pub fn move_char(
+pub fn move_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&mut Transform, &Speed, &Player)>,
     time: Res<Time>,

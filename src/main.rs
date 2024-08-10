@@ -44,6 +44,7 @@ fn main() {
             .register_type::<Ammo>()
             .register_type::<Item>()
             .register_type::<Buff>()
+            .register_type::<BuffGroup>()
             .add_plugins(WorldInspectorPlugin::new());
     }
 
@@ -90,7 +91,7 @@ fn main() {
             FixedUpdate,
             (move_ammo, move_enemies_towards_player, animate_sprite).in_set(MoveSet),
         )
-        .add_systems(FixedUpdate, (move_char, handle_click).in_set(InputSet))
+        .add_systems(FixedUpdate, (move_player, handle_click).in_set(InputSet))
         .add_systems(
             FixedUpdate,
             (
@@ -137,5 +138,9 @@ fn main() {
         .observe(on_score_changed)
         .observe(on_wave_changed)
         .observe(on_current_time_changed)
+        .observe(on_buff_added)
+        .observe(on_buff_add_ui)
+        .observe(on_buff_remove_ui)
+        .observe(on_weapon_found)
         .run();
 }
