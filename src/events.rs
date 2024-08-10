@@ -60,6 +60,16 @@ pub struct BuffAdded {
 }
 
 #[derive(Event)]
+pub struct BuffUIRemove {
+    pub item_type: ItemTypeEnum,
+}
+
+#[derive(Event)]
+pub struct BuffUIAdd {
+    pub item_type: ItemTypeEnum,
+}
+
+#[derive(Event)]
 pub struct WeaponFound {
     pub weapon_entity: Entity,
     pub weapon: Weapon,
@@ -469,61 +479,16 @@ pub fn remove_outdated_buffs(
     mut commands: Commands,
     mut player: Query<(&mut Speed, &mut Armor, &Children), With<Player>>,
     player_buff_group_query: Query<(Entity, &BuffGroup)>,
-    mut container_buff_ui: Query<(&Children, &ContainerBuffsUI)>,
-    mut buff_ui_query: Query<(Entity, &mut BuffsUI, &Children)>,
-    mut buff_ui_text: Query<&mut Text>,
 ) {
     if player.get_single_mut().is_err() {
         return;
     }
     let (_, mut player_armor, player_children) = player.get_single_mut().unwrap();
 
-    let mut remove_from_ui = |player_buff_item_type: ItemTypeEnum, commands: &mut Commands| {
-        if container_buff_ui.get_single_mut().is_err() {
-            return;
-        }
-        let (children, _) = container_buff_ui.get_single_mut().unwrap();
-
-        for &child in children {
-            if buff_ui_query.get_mut(child).is_err() {
-                continue;
-            }
-            let (buff_ui_entity, mut buff_ui, buff_ui_children) =
-                buff_ui_query.get_mut(child).unwrap();
-            let current_buff_counter = buff_ui.counter;
-
-            match (&player_buff_item_type, &buff_ui.item_type) {
-                (ItemTypeEnum::Speed(_), ItemTypeEnum::Speed(_))
-                | (ItemTypeEnum::Armor(_), ItemTypeEnum::Armor(_)) => continue,
-                (ItemTypeEnum::Shield(_), ItemTypeEnum::Shield(_)) => {
-                    if current_buff_counter == 1 {
-                        commands.entity(buff_ui_entity).despawn_recursive();
-                    } else {
-                        // remove one counter from UI and from buff
-                        buff_ui.counter -= 1;
-
-                        for &buff_ui_child in buff_ui_children {
-                            if buff_ui_text.get_mut(buff_ui_child).is_err() {
-                                continue;
-                            }
-                            let mut buff_ui_counter_text =
-                                buff_ui_text.get_mut(buff_ui_child).unwrap();
-                            buff_ui_counter_text.sections.first_mut().unwrap().value =
-                                format!("x{}", current_buff_counter - 1);
-                        }
-                    }
-
-                    break;
-                }
-                _ => continue,
-            };
-        }
-    };
-
-    let mut should_be_despawned = |buff_group: BuffGroup,
-                                   player_armor: &mut Armor,
-                                   commands: &mut Commands,
-                                   buff_ui_despawned: Option<ItemTypeEnum>|
+    let should_be_despawned = |buff_group: BuffGroup,
+                               player_armor: &mut Armor,
+                               commands: &mut Commands,
+                               buff_ui_despawned: Option<ItemTypeEnum>|
      -> bool {
         match &buff_group.item {
             crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => false,
@@ -545,7 +510,9 @@ pub fn remove_outdated_buffs(
                         });
                     }
                     if buff_ui_despawned.is_none() {
-                        remove_from_ui(buff_group.item.clone(), commands);
+                        commands.trigger(BuffUIRemove {
+                            item_type: buff_group.item.clone(),
+                        });
                     }
                 }
 
@@ -630,8 +597,6 @@ pub fn on_current_time_changed(
 pub fn on_buff_added(
     trigger: Trigger<BuffAdded>,
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    sprites: Res<SpritesResources>,
     mut container_buff_ui: Query<(Entity, &Children, &ContainerBuffsUI)>,
     mut buff_ui_query: Query<(&mut BuffsUI, &Children)>,
     mut buff_ui_text: Query<&mut Text>,
@@ -680,82 +645,13 @@ pub fn on_buff_added(
         }
     }
 
+    // INFO: we only want to add new buffs to the UI if they do not exist
+    // there already. If they do, we only increase their counter.
     if buff_counter != 0 {
         return;
     }
-    buff_counter = 1;
 
-    let child_node = |sprite: &str, buff_type: ItemTypeEnum| {
-        (
-            NodeBundle {
-                style: Style {
-                    width: Val::Px(30.0),
-                    height: Val::Px(30.0),
-                    ..default()
-                },
-                border_radius: BorderRadius::all(Val::Px(5.)),
-                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
-                ..default()
-            },
-            UiImage::new(asset_server.load(sprite.to_owned())),
-            OVERLAY_LAYER,
-            BuffsUI {
-                item_type: buff_type,
-                counter: buff_counter,
-            },
-        )
-    };
-
-    let mut item_sprite = SpriteInfo::default();
-    match &item_type {
-        ItemTypeEnum::Speed(speed) => {
-            item_sprite = get_item_sprite_based_on_item_type(
-                ItemTypeEnum::Speed(speed.clone()).clone(),
-                &sprites,
-            );
-        }
-        ItemTypeEnum::Armor(armor) => {
-            item_sprite = get_item_sprite_based_on_item_type(
-                ItemTypeEnum::Armor(armor.clone()).clone(),
-                &sprites,
-            );
-        }
-        ItemTypeEnum::Shield(shield) => {
-            item_sprite = get_item_sprite_based_on_item_type(
-                ItemTypeEnum::Shield(shield.clone()).clone(),
-                &sprites,
-            );
-        }
-    }
-
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-    let text_style = TextStyle {
-        font: font.clone(),
-        font_size: 10.0,
-        ..default()
-    };
-
-    let buff_counter_ui = (
-        TextBundle {
-            text: Text::from_section(format!("x{}", buff_counter), text_style),
-            style: Style {
-                position_type: PositionType::Relative,
-                top: Val::Px(16.),
-                left: Val::Px(18.),
-                ..default()
-            },
-            ..default()
-        },
-        OVERLAY_LAYER,
-    );
-
-    let id = commands
-        .spawn(child_node(item_sprite.source, item_type))
-        .with_children(|parent| {
-            parent.spawn(buff_counter_ui);
-        })
-        .id();
-    commands.entity(parent).push_children(&[id]);
+    commands.trigger(BuffUIAdd { item_type });
 }
 
 pub fn on_weapon_found(
@@ -849,4 +745,147 @@ pub fn on_weapon_found(
         .despawn_recursive();
     let sprite_source = get_weapon_sprite_based_on_weapon_type(weapon_type, &sprites).source;
     spawn_weapon_ui(&mut commands, &asset_server, sprite_source);
+}
+
+pub fn on_buff_remove_ui(
+    trigger: Trigger<BuffUIRemove>,
+    mut commands: Commands,
+
+    mut container_buff_ui: Query<(&Children, &ContainerBuffsUI)>,
+    mut buff_ui_query: Query<(Entity, &mut BuffsUI, &Children)>,
+    mut buff_ui_text: Query<&mut Text>,
+) {
+    let event = trigger.event();
+    let item_type = event.item_type.clone();
+
+    if container_buff_ui.get_single_mut().is_err() {
+        return;
+    }
+    let (children, _) = container_buff_ui.get_single_mut().unwrap();
+
+    for &child in children {
+        if buff_ui_query.get_mut(child).is_err() {
+            continue;
+        }
+        let (buff_ui_entity, mut buff_ui, buff_ui_children) = buff_ui_query.get_mut(child).unwrap();
+        let current_buff_counter = buff_ui.counter;
+
+        match (&item_type, &buff_ui.item_type) {
+            (ItemTypeEnum::Speed(_), ItemTypeEnum::Speed(_))
+            | (ItemTypeEnum::Armor(_), ItemTypeEnum::Armor(_)) => continue,
+            (ItemTypeEnum::Shield(_), ItemTypeEnum::Shield(_)) => {
+                if current_buff_counter == 1 {
+                    commands.entity(buff_ui_entity).despawn_recursive();
+                } else {
+                    // remove one counter from UI and from buff
+                    buff_ui.counter -= 1;
+
+                    for &buff_ui_child in buff_ui_children {
+                        if buff_ui_text.get_mut(buff_ui_child).is_err() {
+                            continue;
+                        }
+                        let mut buff_ui_counter_text = buff_ui_text.get_mut(buff_ui_child).unwrap();
+                        buff_ui_counter_text.sections.first_mut().unwrap().value =
+                            format!("x{}", current_buff_counter - 1);
+                    }
+                }
+
+                break;
+            }
+            _ => continue,
+        };
+    }
+}
+
+pub fn on_buff_add_ui(
+    trigger: Trigger<BuffUIAdd>,
+    mut commands: Commands,
+    sprites: Res<SpritesResources>,
+    asset_server: Res<AssetServer>,
+
+    mut container_buff_ui: Query<(Entity, &ContainerBuffsUI)>,
+) {
+    if let Err(err) = container_buff_ui.get_single_mut() {
+        eprintln!("{err}");
+        return;
+    }
+    let (parent, _) = container_buff_ui.get_single_mut().unwrap();
+
+    let event = trigger.event();
+    let item_type = event.item_type.clone();
+
+    let buff_counter = 1;
+
+    let child_node = |sprite: &str, buff_type: ItemTypeEnum| {
+        (
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(30.0),
+                    height: Val::Px(30.0),
+                    ..default()
+                },
+                border_radius: BorderRadius::all(Val::Px(5.)),
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite.to_owned())),
+            OVERLAY_LAYER,
+            BuffsUI {
+                item_type: buff_type,
+                counter: buff_counter,
+            },
+        )
+    };
+
+    let mut item_sprite = SpriteInfo::default();
+    match &item_type {
+        ItemTypeEnum::Speed(speed) => {
+            item_sprite = get_item_sprite_based_on_item_type(
+                ItemTypeEnum::Speed(speed.clone()).clone(),
+                &sprites,
+            );
+        }
+        ItemTypeEnum::Armor(armor) => {
+            item_sprite = get_item_sprite_based_on_item_type(
+                ItemTypeEnum::Armor(armor.clone()).clone(),
+                &sprites,
+            );
+        }
+        ItemTypeEnum::Shield(shield) => {
+            item_sprite = get_item_sprite_based_on_item_type(
+                ItemTypeEnum::Shield(shield.clone()).clone(),
+                &sprites,
+            );
+        }
+    }
+
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 10.0,
+        ..default()
+    };
+
+    let buff_counter_ui = (
+        TextBundle {
+            text: Text::from_section(format!("x{}", buff_counter), text_style),
+            style: Style {
+                position_type: PositionType::Relative,
+                // TODO: get rid of magic numbers
+                top: Val::Px(16.),
+                left: Val::Px(18.),
+                ..default()
+            },
+            ..default()
+        },
+        OVERLAY_LAYER,
+    );
+
+    let id = commands
+        .spawn(child_node(item_sprite.source, item_type))
+        .with_children(|parent| {
+            parent.spawn(buff_counter_ui);
+        })
+        .id();
+    commands.entity(parent).push_children(&[id]);
 }

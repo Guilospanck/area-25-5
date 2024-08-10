@@ -139,6 +139,8 @@ fn main() {
         .observe(on_wave_changed)
         .observe(on_current_time_changed)
         .observe(on_buff_added)
+        .observe(on_buff_add_ui)
+        .observe(on_buff_remove_ui)
         .observe(on_weapon_found)
         .run();
 }
