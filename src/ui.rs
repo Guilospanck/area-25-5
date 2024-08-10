@@ -294,12 +294,14 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         .spawn((
             NodeBundle {
                 style: Style {
-                    width: Val::Percent(100.0),
+                    width: Val::Px(250.),
+                    height: Val::Px(100.),
                     position_type: PositionType::Absolute,
-                    justify_content: JustifyContent::FlexEnd,
+                    justify_content: JustifyContent::FlexStart,
                     align_items: AlignItems::FlexStart,
                     ..default()
                 },
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
                 ..default()
             },
             OVERLAY_LAYER,
@@ -310,12 +312,12 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         .spawn((
             NodeBundle {
                 style: Style {
-                    width: Val::Px(100.0),
-                    height: Val::Px(100.0),
+                    width: Val::Px(70.0),
+                    height: Val::Px(70.0),
                     margin: UiRect {
-                        left: Val::ZERO,
-                        right: Val::Px(5.),
-                        top: Val::Px(5.),
+                        left: Val::Px(10.),
+                        right: Val::ZERO,
+                        top: Val::Px(10.),
                         bottom: Val::ZERO,
                     },
                     ..default()
