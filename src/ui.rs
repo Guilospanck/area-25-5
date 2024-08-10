@@ -33,6 +33,7 @@ pub struct ContainerBuffsUI;
 #[derive(Component)]
 pub struct BuffsUI {
     pub item_type: ItemTypeEnum,
+    pub counter: u32,
 }
 
 #[derive(Component)]
@@ -266,22 +267,26 @@ fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServe
 }
 
 pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
-    commands.spawn((
-        NodeBundle {
-            style: Style {
-                flex_direction: FlexDirection::RowReverse,
-                width: Val::Percent(100.0),
-                position_type: PositionType::Absolute,
-                column_gap: Val::Px(2.),
-                right: Val::Px(105.),
-                top: Val::Px(5.),
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::RowReverse,
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    column_gap: Val::Px(2.),
+                    right: Val::Px(105.),
+                    top: Val::Px(5.),
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        },
-        OVERLAY_LAYER,
-        ContainerBuffsUI,
-    ));
+            OVERLAY_LAYER,
+            ContainerBuffsUI,
+        ))
+        .with_children(|parent| {
+            parent.spawn(());
+        });
 }
 
 fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {

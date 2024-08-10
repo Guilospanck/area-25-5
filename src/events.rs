@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use bevy::log::tracing_subscriber::fmt::format;
+
 use crate::{
     audio::hit_weapon_audio,
     game_actions::shoot,
@@ -611,15 +613,59 @@ pub fn on_buff_added(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
-    mut container_buff_ui: Query<(Entity, &ContainerBuffsUI)>,
+    mut container_buff_ui: Query<(Entity, &Children, &ContainerBuffsUI)>,
+    mut buff_ui_query: Query<(&mut BuffsUI, &Children)>,
+    mut buff_ui_text: Query<&mut Text>,
 ) {
-    if container_buff_ui.get_single_mut().is_err() {
+    if let Err(err) = container_buff_ui.get_single_mut() {
+        eprintln!("{err}");
         return;
     }
-    let (parent, _) = container_buff_ui.get_single_mut().unwrap();
+    let (parent, container_buff_children, _) = container_buff_ui.get_single_mut().unwrap();
 
     let event = trigger.event();
     let item_type = event.item_type.clone();
+
+    let mut buff_counter = 0;
+
+    for &child in container_buff_children {
+        if buff_ui_query.get_mut(child).is_err() {
+            continue;
+        }
+        let (mut buff_ui, buff_ui_children) = buff_ui_query.get_mut(child).unwrap();
+        let buff_type = buff_ui.item_type.clone();
+        let current_buffer_counter = buff_ui.counter;
+
+        match (&buff_type, &item_type) {
+            (ItemTypeEnum::Speed(_), ItemTypeEnum::Speed(_))
+            | (ItemTypeEnum::Armor(_), ItemTypeEnum::Armor(_))
+            | (ItemTypeEnum::Shield(_), ItemTypeEnum::Shield(_)) => {
+                buff_counter += 1;
+            }
+            _ => continue,
+        };
+
+        if buff_counter != 0 {
+            buff_counter = current_buffer_counter + 1;
+            buff_ui.counter = buff_counter;
+
+            for &buff_ui_child in buff_ui_children {
+                if buff_ui_text.get_mut(buff_ui_child).is_err() {
+                    continue;
+                }
+                let mut buff_ui_counter_text = buff_ui_text.get_mut(buff_ui_child).unwrap();
+                println!("{:?}", buff_ui_counter_text.sections);
+                buff_ui_counter_text.sections.first_mut().unwrap().value =
+                    format!("x{}", buff_counter);
+            }
+            break;
+        }
+    }
+
+    if buff_counter != 0 {
+        return;
+    }
+    buff_counter = 1;
 
     let child_node = |sprite: &str, buff_type: ItemTypeEnum| {
         (
@@ -637,6 +683,7 @@ pub fn on_buff_added(
             OVERLAY_LAYER,
             BuffsUI {
                 item_type: buff_type,
+                counter: buff_counter,
             },
         )
     };
@@ -663,8 +710,32 @@ pub fn on_buff_added(
         }
     }
 
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 10.0,
+        ..default()
+    };
+
+    let buff_counter_ui = (
+        TextBundle {
+            text: Text::from_section(format!("x{}", buff_counter), text_style),
+            style: Style {
+                position_type: PositionType::Relative,
+                top: Val::Px(16.),
+                left: Val::Px(18.),
+                ..default()
+            },
+            ..default()
+        },
+        OVERLAY_LAYER,
+    );
+
     let id = commands
         .spawn(child_node(item_sprite.source, item_type))
+        .with_children(|parent| {
+            parent.spawn(buff_counter_ui);
+        })
         .id();
     commands.entity(parent).push_children(&[id]);
 }
