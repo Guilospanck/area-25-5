@@ -3,14 +3,14 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::{
-    prelude::*, util::get_item_sprite_based_on_item_type, Buff, CurrentScore, ItemTypeEnum, Player,
-    SpritesResources,
-};
+use crate::{prelude::*, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
 
 // ############## UI ####################
 #[derive(Component)]
 pub struct HealthBar;
+
+#[derive(Component)]
+pub struct HealthBarUI;
 
 #[derive(Component)]
 pub struct PlayerSpeedBar;
@@ -39,6 +39,9 @@ pub struct BuffsUI {
 #[derive(Component)]
 pub struct WeaponUI;
 
+#[derive(Component)]
+pub struct PlayerProfileUI;
+
 // ############## BUTTONS ####################
 #[derive(Component)]
 pub struct PlayAgainButton;
@@ -61,6 +64,7 @@ pub struct GameWonOverlay;
 
 const MAX_HEALTH_BAR: f32 = 100.0;
 const HEALTH_BAR_SCALE: f32 = 0.2;
+const HEALTH_BAR_UI_SCALE: f32 = 1.5;
 
 pub(crate) fn spawn_health_bar(
     commands: &mut Commands,
@@ -69,6 +73,7 @@ pub(crate) fn spawn_health_bar(
     health: f32,
     max_health: f32,
     translation: Vec3,
+    layer: RenderLayers,
 ) -> Entity {
     let parent_shape =
         Mesh2dHandle(meshes.add(Rectangle::new(MAX_HEALTH_BAR * HEALTH_BAR_SCALE, 2.5)));
@@ -94,11 +99,74 @@ pub(crate) fn spawn_health_bar(
     };
 
     commands
-        .spawn((parent, PLAYER_LAYER, HealthBar))
+        .spawn((parent, layer.clone(), HealthBar))
         .with_children(|parent| {
-            parent.spawn((child, PLAYER_LAYER));
+            parent.spawn((child, layer));
         })
         .id()
+}
+
+pub(crate) fn spawn_health_ui_bar(
+    commands: &mut Commands,
+    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+    health: f32,
+    max_health: f32,
+) {
+    let player_profile_ui = player_profile_ui_query.get_single();
+    if player_profile_ui.is_err() {
+        return;
+    }
+    let player_profile_ui = player_profile_ui.unwrap();
+    let player_profile_ui_entity = player_profile_ui.0;
+    let player_profile_ui_children = player_profile_ui.1;
+
+    // Despawn current player health ui bars
+    for &child in player_profile_ui_children {
+        if let Ok((player_health_ui_entity, _)) = player_health_ui_query.get(child) {
+            commands.entity(player_health_ui_entity).despawn_recursive();
+            break;
+        }
+    }
+
+    const HEIGHT: f32 = 15.;
+
+    let parent = NodeBundle {
+        style: Style {
+            width: Val::Px(MAX_HEALTH_BAR * HEALTH_BAR_UI_SCALE),
+            height: Val::Px(HEIGHT),
+            top: Val::Px(50.),
+            left: Val::Px(5.),
+            ..default()
+        },
+        background_color: BackgroundColor(Color::srgba(255., 255., 255., 0.1)),
+        ..default()
+    };
+
+    let proportional = MAX_HEALTH_BAR * health / max_health;
+    let width: f32 = proportional * HEALTH_BAR_UI_SCALE;
+
+    let child = NodeBundle {
+        style: Style {
+            width: Val::Px(width),
+            height: Val::Px(HEIGHT),
+            position_type: PositionType::Relative,
+            top: Val::Px(0.),
+            ..default()
+        },
+        background_color: BackgroundColor(Color::srgb(0., 255., 0.)),
+        ..default()
+    };
+
+    let id = commands
+        .spawn((parent, OVERLAY_LAYER, HealthBarUI))
+        .with_children(|parent| {
+            parent.spawn((child, OVERLAY_LAYER));
+        })
+        .id();
+    commands
+        .entity(player_profile_ui_entity)
+        .push_children(&[id]);
 }
 
 fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
@@ -305,6 +373,7 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 ..default()
             },
             OVERLAY_LAYER,
+            PlayerProfileUI,
         ))
         .id();
 
@@ -329,7 +398,9 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         ))
         .id();
 
-    commands.entity(parent).add_child(child);
+    commands.entity(parent).push_children(&[child]);
+
+    commands.trigger(PlayerProfileUISet);
 }
 
 pub(crate) fn spawn_weapon_ui(

@@ -142,5 +142,6 @@ fn main() {
         .observe(on_buff_add_ui)
         .observe(on_buff_remove_ui)
         .observe(on_weapon_found)
+        .observe(on_player_profile_ui_set)
         .run();
 }

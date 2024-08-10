@@ -1,18 +1,16 @@
 use std::time::Duration;
 
-use bevy::log::tracing_subscriber::fmt::format;
-
 use crate::{
     audio::hit_weapon_audio,
     game_actions::shoot,
     player::Player,
     prelude::*,
-    spawn_enemy, spawn_health_bar, spawn_item, spawn_weapon, spawn_weapon_ui,
+    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{get_item_sprite_based_on_item_type, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, ContainerBuffsUI, CurrentScore, CurrentTime,
-    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item,
-    ItemTypeEnum, ItemWaves, PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpriteInfo,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, HealthBarUI,
+    Item, ItemTypeEnum, ItemWaves, PlayerArmorBar, PlayerProfileUI, PlayerSpeedBar, ScoreUI, Speed,
     SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
 };
 
@@ -53,6 +51,9 @@ pub struct CurrentWaveChanged;
 
 #[derive(Event)]
 pub struct CurrentTimeChanged;
+
+#[derive(Event)]
+pub struct PlayerProfileUISet;
 
 #[derive(Event)]
 pub struct BuffAdded {
@@ -119,8 +120,12 @@ pub fn on_player_health_changed(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+
     player_query: Query<(Entity, &Children), With<Player>>,
     player_health_bar_query: Query<Entity, With<HealthBar>>,
+
+    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
 ) {
     let event = trigger.event();
     let health = event.health;
@@ -143,11 +148,22 @@ pub fn on_player_health_changed(
                 health,
                 PLAYER_HEALTH,
                 health_bar_translation,
+                PLAYER_LAYER,
             );
             commands
                 .entity(player_entity)
                 .remove_children(&[health_bar_entity]);
             commands.entity(player_entity).add_child(health_bar);
+
+            // Player profile health bar UI
+            spawn_health_ui_bar(
+                &mut commands,
+                player_profile_ui_query,
+                player_health_ui_query,
+                health,
+                PLAYER_HEALTH,
+            );
+
             break;
         }
     }
@@ -277,6 +293,7 @@ pub fn on_enemy_health_changed(
                         health,
                         ENEMY_HEALTH,
                         health_bar_translation,
+                        PLAYER_LAYER,
                     );
                     commands
                         .entity(enemy_entity)
@@ -597,7 +614,7 @@ pub fn on_current_time_changed(
 pub fn on_buff_added(
     trigger: Trigger<BuffAdded>,
     mut commands: Commands,
-    mut container_buff_ui: Query<(Entity, &Children, &ContainerBuffsUI)>,
+    mut container_buff_ui: Query<(&Children, &ContainerBuffsUI)>,
     mut buff_ui_query: Query<(&mut BuffsUI, &Children)>,
     mut buff_ui_text: Query<&mut Text>,
 ) {
@@ -605,7 +622,7 @@ pub fn on_buff_added(
         eprintln!("{err}");
         return;
     }
-    let (parent, container_buff_children, _) = container_buff_ui.get_single_mut().unwrap();
+    let (container_buff_children, _) = container_buff_ui.get_single_mut().unwrap();
 
     let event = trigger.event();
     let item_type = event.item_type.clone();
@@ -837,27 +854,18 @@ pub fn on_buff_add_ui(
         )
     };
 
-    let mut item_sprite = SpriteInfo::default();
-    match &item_type {
+    let item_sprite = match &item_type {
         ItemTypeEnum::Speed(speed) => {
-            item_sprite = get_item_sprite_based_on_item_type(
-                ItemTypeEnum::Speed(speed.clone()).clone(),
-                &sprites,
-            );
+            get_item_sprite_based_on_item_type(ItemTypeEnum::Speed(speed.clone()).clone(), &sprites)
         }
         ItemTypeEnum::Armor(armor) => {
-            item_sprite = get_item_sprite_based_on_item_type(
-                ItemTypeEnum::Armor(armor.clone()).clone(),
-                &sprites,
-            );
+            get_item_sprite_based_on_item_type(ItemTypeEnum::Armor(armor.clone()).clone(), &sprites)
         }
-        ItemTypeEnum::Shield(shield) => {
-            item_sprite = get_item_sprite_based_on_item_type(
-                ItemTypeEnum::Shield(shield.clone()).clone(),
-                &sprites,
-            );
-        }
-    }
+        ItemTypeEnum::Shield(shield) => get_item_sprite_based_on_item_type(
+            ItemTypeEnum::Shield(shield.clone()).clone(),
+            &sprites,
+        ),
+    };
 
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
@@ -888,4 +896,19 @@ pub fn on_buff_add_ui(
         })
         .id();
     commands.entity(parent).push_children(&[id]);
+}
+
+pub fn on_player_profile_ui_set(
+    _trigger: Trigger<PlayerProfileUISet>,
+    mut commands: Commands,
+    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+) {
+    spawn_health_ui_bar(
+        &mut commands,
+        player_profile_ui_query,
+        player_health_ui_query,
+        PLAYER_HEALTH,
+        PLAYER_HEALTH,
+    );
 }
