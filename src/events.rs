@@ -470,7 +470,8 @@ pub fn remove_outdated_buffs(
     mut player: Query<(&mut Speed, &mut Armor, &Children), With<Player>>,
     player_buff_group_query: Query<(Entity, &BuffGroup)>,
     mut container_buff_ui: Query<(&Children, &ContainerBuffsUI)>,
-    buff_ui_query: Query<(Entity, &BuffsUI)>,
+    mut buff_ui_query: Query<(Entity, &mut BuffsUI, &Children)>,
+    mut buff_ui_text: Query<&mut Text>,
 ) {
     if player.get_single_mut().is_err() {
         return;
@@ -484,16 +485,34 @@ pub fn remove_outdated_buffs(
         let (children, _) = container_buff_ui.get_single_mut().unwrap();
 
         for &child in children {
-            if buff_ui_query.get(child).is_err() {
+            if buff_ui_query.get_mut(child).is_err() {
                 continue;
             }
-            let (buff_ui_entity, buff_ui) = buff_ui_query.get(child).unwrap();
+            let (buff_ui_entity, mut buff_ui, buff_ui_children) =
+                buff_ui_query.get_mut(child).unwrap();
+            let current_buff_counter = buff_ui.counter;
 
             match (&player_buff_item_type, &buff_ui.item_type) {
                 (ItemTypeEnum::Speed(_), ItemTypeEnum::Speed(_))
                 | (ItemTypeEnum::Armor(_), ItemTypeEnum::Armor(_)) => continue,
                 (ItemTypeEnum::Shield(_), ItemTypeEnum::Shield(_)) => {
-                    commands.entity(buff_ui_entity).despawn();
+                    if current_buff_counter == 1 {
+                        commands.entity(buff_ui_entity).despawn_recursive();
+                    } else {
+                        // remove one counter from UI and from buff
+                        buff_ui.counter -= 1;
+
+                        for &buff_ui_child in buff_ui_children {
+                            if buff_ui_text.get_mut(buff_ui_child).is_err() {
+                                continue;
+                            }
+                            let mut buff_ui_counter_text =
+                                buff_ui_text.get_mut(buff_ui_child).unwrap();
+                            buff_ui_counter_text.sections.first_mut().unwrap().value =
+                                format!("x{}", current_buff_counter - 1);
+                        }
+                    }
+
                     break;
                 }
                 _ => continue,
@@ -654,7 +673,6 @@ pub fn on_buff_added(
                     continue;
                 }
                 let mut buff_ui_counter_text = buff_ui_text.get_mut(buff_ui_child).unwrap();
-                println!("{:?}", buff_ui_counter_text.sections);
                 buff_ui_counter_text.sections.first_mut().unwrap().value =
                     format!("x{}", buff_counter);
             }
