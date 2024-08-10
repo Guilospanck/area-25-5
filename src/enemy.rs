@@ -114,6 +114,7 @@ pub fn spawn_enemy(
             health,
             health,
             health_bar_translation,
+            PLAYER_LAYER,
         );
         commands.spawn(bundle).push_children(&[health_bar]);
     }

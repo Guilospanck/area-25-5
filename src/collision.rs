@@ -1,14 +1,14 @@
 use crate::{
     ammo::Ammo,
-    audio::{hit_enemy_audio, hit_item_audio, hit_weapon_audio, player_hit_audio},
+    audio::{hit_enemy_audio, hit_item_audio, player_hit_audio},
     enemy::Enemy,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, AmmoBundle, Armor, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
+    AllEnemiesDied, Armor, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
-    PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon, WeaponBundle,
+    PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon,
     WeaponFound,
 };
 

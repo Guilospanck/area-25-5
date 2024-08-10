@@ -152,6 +152,7 @@ pub(crate) fn spawn_player(
         PLAYER_HEALTH,
         PLAYER_HEALTH,
         health_bar_translation,
+        PLAYER_LAYER,
     );
 
     commands
