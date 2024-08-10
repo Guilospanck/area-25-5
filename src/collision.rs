@@ -9,6 +9,7 @@ use crate::{
     AllEnemiesDied, AmmoBundle, Armor, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
     PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon, WeaponBundle,
+    WeaponFound,
 };
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
@@ -294,9 +295,6 @@ pub fn check_for_item_collisions(
 /// Player with weapon
 pub fn check_for_weapon_collisions(
     mut commands: Commands,
-    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    sprites: Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
 
     player_query: Query<(Entity, &Transform, &Children), With<Player>>,
     player_weapon_query: Query<(&Children, Entity, &Weapon)>,
@@ -336,19 +334,21 @@ pub fn check_for_weapon_collisions(
     }
 
     // Check for collision of the player entity with the weapons on the map
-    let direction = Vec3::ZERO;
-    let pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
-    let weapon_scale = Vec3::new(0.5, 0.5, 1.);
-    let ammo_scale = Vec3::ONE;
-    let rotation = Quat::default();
     for (weapon_entity, weapon, weapon_damage, weapon_transform) in
         weapons_not_from_player_query.iter()
     {
         // if the weapon belongs to the player, do not check for collision
-        if let Some(player_weapon_unwrapped) = player_weapon {
-            if weapon_entity == player_weapon_unwrapped.1 {
+        let mut player_weapon_entity = None;
+        if player_weapon.is_some() {
+            player_weapon_entity = Some(player_weapon.unwrap().1);
+            if weapon_entity == player_weapon_entity.unwrap() {
                 continue;
             }
+        }
+
+        let mut player_ammo_entity = None;
+        if player_ammo.is_some() {
+            player_ammo_entity = Some(player_ammo.unwrap().0);
         }
 
         let weapon_collider = Aabb2d::new(
@@ -359,65 +359,14 @@ pub fn check_for_weapon_collisions(
         // if we interact with a weapon on the map,
         // we despawn it and swap our current weapon by the new one
         if player_collider.intersects(&weapon_collider) {
-            let weapon_type = weapon.0.clone();
-            let damage = weapon_damage.0;
-            let layer = PLAYER_LAYER;
-
-            let scale = ammo_scale;
-            let ammo_bundle = AmmoBundle::new(
-                &mut texture_atlas_layout,
-                &sprites,
-                &asset_server,
-                scale,
-                pos,
-                weapon_type.clone(),
-                direction,
-                damage,
-                rotation,
-                layer.clone(),
-            );
-
-            let scale = weapon_scale;
-            let weapon_bundle = WeaponBundle::new(
-                &mut texture_atlas_layout,
-                &sprites,
-                &asset_server,
-                scale,
-                pos,
-                direction,
-                damage,
-                weapon_type,
-                layer.clone(),
-            );
-
-            // despawn current player's weapon
-            // (otherwise it will only remove the link
-            // to the parent entity and will look like it
-            // was spawned on the center of the screen)
-            if let Some(player_weapon_unwrapped) = player_weapon {
-                commands
-                    .entity(player_entity)
-                    .remove_children(&[player_weapon_unwrapped.1]);
-                commands.entity(player_weapon_unwrapped.1).clear_children();
-                commands.entity(player_weapon_unwrapped.1).despawn();
-            }
-            if let Some(player_ammo_unwrapped) = player_ammo {
-                commands.entity(player_ammo_unwrapped.0).despawn();
-            }
-
-            // Add new weapon and ammo to player's entity
-            commands.entity(player_entity).with_children(|parent| {
-                parent.spawn(weapon_bundle).with_children(|parent| {
-                    parent.spawn(ammo_bundle);
-                });
+            commands.trigger(WeaponFound {
+                weapon_entity,
+                weapon: weapon.clone(),
+                weapon_damage: weapon_damage.clone(),
+                player_entity,
+                player_weapon_entity,
+                player_ammo_entity,
             });
-
-            // play audio when colliding weapon
-            hit_weapon_audio(&asset_server, &mut commands);
-
-            // remove collided weapon
-            commands.entity(weapon_entity).despawn();
-
             return;
         }
     }

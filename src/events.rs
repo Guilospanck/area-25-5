@@ -1,11 +1,17 @@
 use std::time::Duration;
 
 use crate::{
-    game_actions::shoot, player::Player, prelude::*, spawn_enemy, spawn_health_bar, spawn_item,
-    spawn_weapon, ui::HealthBar, util::get_item_sprite_based_on_item_type, Armor, Buff, BuffGroup,
-    BuffsUI, ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
-    CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item, ItemTypeEnum, ItemWaves,
-    PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpritesResources, Weapon, WeaponWaves,
+    audio::hit_weapon_audio,
+    game_actions::shoot,
+    player::Player,
+    prelude::*,
+    spawn_enemy, spawn_health_bar, spawn_item, spawn_weapon, spawn_weapon_ui,
+    ui::HealthBar,
+    util::{get_item_sprite_based_on_item_type, get_weapon_sprite_based_on_weapon_type},
+    AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, ContainerBuffsUI, CurrentScore, CurrentTime,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, Item,
+    ItemTypeEnum, ItemWaves, PlayerArmorBar, PlayerSpeedBar, ScoreUI, Speed, SpritesResources,
+    Weapon, WeaponBundle, WeaponUI, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -49,6 +55,16 @@ pub struct CurrentTimeChanged;
 #[derive(Event)]
 pub struct BuffAdded {
     pub item_type: ItemTypeEnum,
+}
+
+#[derive(Event)]
+pub struct WeaponFound {
+    pub weapon_entity: Entity,
+    pub weapon: Weapon,
+    pub weapon_damage: Damage,
+    pub player_entity: Entity,
+    pub player_weapon_entity: Option<Entity>,
+    pub player_ammo_entity: Option<Entity>,
 }
 
 #[derive(Event)]
@@ -638,4 +654,97 @@ pub fn on_buff_added(
             commands.entity(parent).push_children(&[id]);
         }
     }
+}
+
+pub fn on_weapon_found(
+    trigger: Trigger<WeaponFound>,
+    mut commands: Commands,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    sprites: Res<SpritesResources>,
+    asset_server: Res<AssetServer>,
+    weapon_ui: Query<(Entity, &WeaponUI)>,
+) {
+    let event = trigger.event();
+    let WeaponFound {
+        weapon_entity,
+        weapon,
+        weapon_damage,
+        player_entity,
+        player_weapon_entity,
+        player_ammo_entity,
+    } = event;
+
+    let direction = Vec3::ZERO;
+    let pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
+    let weapon_scale = Vec3::new(0.5, 0.5, 1.);
+    let ammo_scale = Vec3::ONE;
+    let rotation = Quat::default();
+
+    let weapon_type = weapon.0.clone();
+    let damage = weapon_damage.0;
+    let layer = PLAYER_LAYER;
+
+    let scale = ammo_scale;
+    let ammo_bundle = AmmoBundle::new(
+        &mut texture_atlas_layout,
+        &sprites,
+        &asset_server,
+        scale,
+        pos,
+        weapon_type.clone(),
+        direction,
+        damage,
+        rotation,
+        layer.clone(),
+    );
+
+    let scale = weapon_scale;
+    let weapon_bundle = WeaponBundle::new(
+        &mut texture_atlas_layout,
+        &sprites,
+        &asset_server,
+        scale,
+        pos,
+        direction,
+        damage,
+        weapon_type.clone(),
+        layer.clone(),
+    );
+
+    // despawn current player's weapon
+    // (otherwise it will only remove the link
+    // to the parent entity and will look like it
+    // was spawned on the center of the screen)
+    if let Some(player_weapon_entity_unwrapped) = player_weapon_entity {
+        commands
+            .entity(*player_entity)
+            .remove_children(&[*player_weapon_entity_unwrapped]);
+        commands
+            .entity(*player_weapon_entity_unwrapped)
+            .clear_children();
+        commands.entity(*player_weapon_entity_unwrapped).despawn();
+    }
+    if let Some(player_ammo_entity_unwrapped) = player_ammo_entity {
+        commands.entity(*player_ammo_entity_unwrapped).despawn();
+    }
+
+    // Add new weapon and ammo to player's entity
+    commands.entity(*player_entity).with_children(|parent| {
+        parent.spawn(weapon_bundle).with_children(|parent| {
+            parent.spawn(ammo_bundle);
+        });
+    });
+
+    // play audio when colliding weapon
+    hit_weapon_audio(&asset_server, &mut commands);
+
+    // remove collided weapon
+    commands.entity(*weapon_entity).despawn();
+
+    // update UI
+    commands
+        .entity(weapon_ui.get_single().unwrap().0)
+        .despawn_recursive();
+    let sprite_source = get_weapon_sprite_based_on_weapon_type(weapon_type, &sprites).source;
+    spawn_weapon_ui(&mut commands, &asset_server, sprite_source);
 }

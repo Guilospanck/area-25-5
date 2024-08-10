@@ -1,6 +1,7 @@
 use super::*;
 
 pub(crate) const WEAPON_RANDOM_SEED: u64 = 1936836746771;
+pub(crate) const DEFAULT_WEAPON_SPRITE_SOURCE: &str = "textures/Weapon/Bow.png";
 
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
