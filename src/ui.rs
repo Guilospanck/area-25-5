@@ -13,6 +13,9 @@ pub struct HealthBar;
 pub struct HealthBarUI;
 
 #[derive(Component)]
+pub struct ManaBarUI;
+
+#[derive(Component)]
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
@@ -59,9 +62,9 @@ pub struct GameOverOverlay;
 #[derive(Component)]
 pub struct GameWonOverlay;
 
-const MAX_HEALTH_BAR: f32 = 100.0;
-const HEALTH_BAR_SCALE: f32 = 0.2;
-const HEALTH_BAR_UI_SCALE: f32 = 1.5;
+const MAX_VALUE_BAR: f32 = 100.0;
+const BAR_SCALE: f32 = 0.2;
+const BAR_UI_SCALE: f32 = 1.5;
 
 pub(crate) fn spawn_health_bar(
     commands: &mut Commands,
@@ -72,8 +75,7 @@ pub(crate) fn spawn_health_bar(
     translation: Vec3,
     layer: RenderLayers,
 ) -> Entity {
-    let parent_shape =
-        Mesh2dHandle(meshes.add(Rectangle::new(MAX_HEALTH_BAR * HEALTH_BAR_SCALE, 2.5)));
+    let parent_shape = Mesh2dHandle(meshes.add(Rectangle::new(MAX_VALUE_BAR * BAR_SCALE, 2.5)));
     let parent = MaterialMesh2dBundle {
         mesh: parent_shape,
         material: materials.add(Color::srgba(255., 255., 255., 0.1)),
@@ -81,14 +83,14 @@ pub(crate) fn spawn_health_bar(
         ..default()
     };
 
-    let proportional = MAX_HEALTH_BAR * health / max_health;
-    let width: f32 = proportional * HEALTH_BAR_SCALE;
+    let proportional = MAX_VALUE_BAR * health / max_health;
+    let width: f32 = proportional * BAR_SCALE;
     let child_shape = Mesh2dHandle(meshes.add(Rectangle::new(width, 2.5)));
     let child = MaterialMesh2dBundle {
         mesh: child_shape,
         material: materials.add(Color::srgb(0., 255., 0.)),
         transform: Transform::from_xyz(
-            -(MAX_HEALTH_BAR * HEALTH_BAR_SCALE / 2. - width / 2.),
+            -(MAX_VALUE_BAR * BAR_SCALE / 2. - width / 2.),
             0.0,
             UI_Z_INDEX,
         ),
@@ -110,6 +112,27 @@ pub(crate) fn spawn_health_ui_bar(
     health: f32,
     max_health: f32,
 ) {
+    spawn_ui_bar(
+        commands,
+        player_profile_ui_query,
+        player_health_ui_query,
+        health,
+        max_health,
+        Color::srgba(0.0, 255., 0.0, 1.),
+        HealthBarUI,
+    );
+}
+
+/// Util to create health/mana bar inside the profile picture UI (top-left)
+fn spawn_ui_bar<T: Component>(
+    commands: &mut Commands,
+    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_query: Query<(Entity, &T)>,
+    value: f32,
+    max_value: f32,
+    color: Color,
+    marker: T,
+) {
     let player_profile_ui = player_profile_ui_query.get_single();
     if player_profile_ui.is_err() {
         return;
@@ -118,10 +141,10 @@ pub(crate) fn spawn_health_ui_bar(
     let player_profile_ui_entity = player_profile_ui.0;
     let player_profile_ui_children = player_profile_ui.1;
 
-    // Despawn current player health ui bars
+    // Despawn current player bar ui bars
     for &child in player_profile_ui_children {
-        if let Ok((player_health_ui_entity, _)) = player_health_ui_query.get(child) {
-            commands.entity(player_health_ui_entity).despawn_recursive();
+        if let Ok((player_bar_ui_entity, _)) = player_bar_ui_query.get(child) {
+            commands.entity(player_bar_ui_entity).despawn_recursive();
             break;
         }
     }
@@ -130,7 +153,7 @@ pub(crate) fn spawn_health_ui_bar(
 
     let parent = NodeBundle {
         style: Style {
-            width: Val::Px(MAX_HEALTH_BAR * HEALTH_BAR_UI_SCALE),
+            width: Val::Px(MAX_VALUE_BAR * BAR_UI_SCALE),
             height: Val::Px(HEIGHT),
             top: Val::Px(50.),
             left: Val::Px(5.),
@@ -140,8 +163,8 @@ pub(crate) fn spawn_health_ui_bar(
         ..default()
     };
 
-    let proportional = MAX_HEALTH_BAR * health / max_health;
-    let width: f32 = proportional * HEALTH_BAR_UI_SCALE;
+    let proportional = MAX_VALUE_BAR * value / max_value;
+    let width: f32 = proportional * BAR_UI_SCALE;
 
     let child = NodeBundle {
         style: Style {
@@ -151,12 +174,12 @@ pub(crate) fn spawn_health_ui_bar(
             top: Val::Px(0.),
             ..default()
         },
-        background_color: BackgroundColor(Color::srgb(0., 255., 0.)),
+        background_color: BackgroundColor(color),
         ..default()
     };
 
     let id = commands
-        .spawn((parent, OVERLAY_LAYER, HealthBarUI))
+        .spawn((parent, OVERLAY_LAYER, marker))
         .with_children(|parent| {
             parent.spawn((child, OVERLAY_LAYER));
         })
