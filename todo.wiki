@@ -47,7 +47,7 @@ looking for him, therefore we're gonna have panic
 - [x] Add new UI that on key press will show current stats of player (like 
 speed, armor, damage and so on)
 - [x] (BUG) Change the stats UI when some of them change
-- [ ] (BUG) Reset buff on restart
+- [x] (BUG) Reset buff on restart
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Add powers
