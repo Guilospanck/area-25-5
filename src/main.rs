@@ -91,7 +91,10 @@ fn main() {
             FixedUpdate,
             (move_ammo, move_enemies_towards_player, animate_sprite).in_set(MoveSet),
         )
-        .add_systems(FixedUpdate, (move_player, handle_click).in_set(InputSet))
+        .add_systems(
+            FixedUpdate,
+            (move_player, handle_click, handle_show_player_stats_ui).in_set(InputSet),
+        )
         .add_systems(
             FixedUpdate,
             (
@@ -129,8 +132,6 @@ fn main() {
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
-        .observe(on_player_speed_changed)
-        .observe(on_player_armor_changed)
         .observe(on_enemy_health_changed)
         .observe(on_all_enemies_died)
         .observe(on_game_over)

@@ -1,6 +1,11 @@
 use crate::{
-    enemy::Enemy, events::ShootBullets, player::Player, prelude::*,
-    util::get_unit_direction_vector, AmmoBundle, BaseCamera, PlayAgainButton, PlayerCamera,
+    enemy::Enemy,
+    events::ShootBullets,
+    player::Player,
+    prelude::*,
+    spawn_player_stats_ui,
+    util::{get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
+    AmmoBundle, Armor, BaseCamera, Damage, Health, PlayAgainButton, PlayerCamera, PlayerStatsUI,
     RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
 };
 
@@ -174,6 +179,60 @@ pub fn move_player(
     // translate player
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
+}
+
+pub fn handle_show_player_stats_ui(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    player_assets_ui_query: Query<Entity, With<PlayerStatsUI>>,
+    mut player_query: Query<(&Speed, &Armor, &Children, &Health, &Player)>,
+    player_weapon_query: Query<(&Damage, &Weapon)>,
+) {
+    if player_query.get_single_mut().is_err() {
+        return;
+    }
+
+    if keyboard_input.pressed(KeyCode::KeyK) {
+        let number_of_spawned_stats_ui = player_assets_ui_query.iter().len();
+
+        // only spawns a new ui if it does not already exist
+        if number_of_spawned_stats_ui == 0 {
+            let (player_speed, player_armor, player_children, player_health, _) =
+                player_query.get_single_mut().unwrap();
+            for &child in player_children {
+                if player_weapon_query.get(child).is_err() {
+                    continue;
+                }
+
+                let player_weapon_unwrapped = player_weapon_query.get(child).unwrap();
+                let player_weapon_damage = player_weapon_unwrapped.0;
+                let player_weapon_type = player_weapon_unwrapped.1 .0.clone();
+                let weapon_sprite =
+                    get_weapon_sprite_based_on_weapon_type(player_weapon_type, &sprites);
+
+                spawn_player_stats_ui(
+                    &mut commands,
+                    &asset_server,
+                    player_health.0,
+                    weapon_sprite.source,
+                    player_weapon_damage.0,
+                    player_armor.0,
+                    player_speed.0,
+                );
+
+                break;
+            }
+        }
+        return;
+    }
+
+    if player_assets_ui_query.get_single().is_err() {
+        return;
+    }
+    let player_stats_ui = player_assets_ui_query.get_single().unwrap();
+    commands.entity(player_stats_ui).despawn_recursive();
 }
 
 // Won

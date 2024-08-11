@@ -43,33 +43,41 @@ looking for him, therefore we're gonna have panic
 - [x] Make shield deal damage to enemies
 - [x] Fix enemy collider (the height and width are different, remember)
 - [x] Show buffs and current weapon on an UI
-- [ ] Spawn Health bar to player on the top-left side of the screen
+- [x] Spawn Health bar to player on the top-left side of the screen
+- [x] Add new UI that on key press will show current stats of player (like 
+speed, armor, damage and so on)
+- [x] (BUG) Change the stats UI when some of them change
+- [x] (BUG) Reset buff on restart
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
+- [ ] Add powers
 - [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
 
-Backlog:
+Ongoing:
 - [-] Spawn different weapons (Still need more)
-- [ ] Spawn different enemies
-- [ ] Spawn different potions
-- [ ] Add effects (sparkles, explosions)
+- [-] Spawn different enemies
+- [-] Spawn different potions
+- [-] Add effects (sparkles, explosions)
+- [-] Spawn more waves
+
+Backlog:
 - [ ] Create a way of enemies not getting too much together
-- [ ] Spawn more waves
 - [ ] Spawning of enemies can come from outside the screen
-- Create the concept of enemies throwing magic or bullets as well
-- Some enemies may be fixed at some place and only cast spells
-- [ ] Maybe despawn shields when they hit opponent
+- [ ] Create the concept of enemies throwing magic or bullets as well
+- [ ] Some enemies may be fixed at some place and only cast spells
+- [ ] Add proper audio and game sound
  
 Features:
 - HP bar for some boss at some point
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
-- Limit spawn of bullets to not be too close
+- [ ] Limit spawn of bullets to not be too close
 - [ ] (Maybe) Remove source and ammo_source from WeaponType struct
 - [ ] (Maybe) Change collision from capsule to Ammo and Weapon sizes
 - [ ] Add information about next wave (and some pause maybe)
+- [ ] (Maybe) Maybe despawn shields when they hit opponent
 
 HISTORY:
 When you finish, it says: "You're half done"

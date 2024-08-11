@@ -13,12 +13,6 @@ pub struct HealthBar;
 pub struct HealthBarUI;
 
 #[derive(Component)]
-pub struct PlayerSpeedBar;
-
-#[derive(Component)]
-pub struct PlayerArmorBar;
-
-#[derive(Component)]
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
@@ -41,6 +35,9 @@ pub struct WeaponUI;
 
 #[derive(Component)]
 pub struct PlayerProfileUI;
+
+#[derive(Component)]
+pub struct PlayerStatsUI;
 
 // ############## BUTTONS ####################
 #[derive(Component)]
@@ -169,72 +166,6 @@ pub(crate) fn spawn_health_ui_bar(
         .push_children(&[id]);
 }
 
-fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-    let text_style = TextStyle {
-        font: font.clone(),
-        font_size: 30.0,
-        ..default()
-    };
-
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    format!("{}", PLAYER_MOVE_SPEED),
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                WINDOW_RESOLUTION.x_px / 2. - 30.,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
-            ..default()
-        },
-        PlayerSpeedBar,
-        OVERLAY_LAYER,
-    ));
-}
-
-fn armor_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-    let text_style = TextStyle {
-        font: font.clone(),
-        font_size: 30.0,
-        ..default()
-    };
-
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    format!("{}", PLAYER_ARMOR),
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                -200.,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
-            ..default()
-        },
-        PlayerArmorBar,
-        OVERLAY_LAYER,
-    ));
-}
-
 fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
@@ -343,7 +274,7 @@ pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
                     width: Val::Percent(100.0),
                     position_type: PositionType::Absolute,
                     column_gap: Val::Px(2.),
-                    right: Val::Px(105.),
+                    right: Val::Px(10.),
                     top: Val::Px(5.),
                     ..default()
                 },
@@ -364,6 +295,8 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 style: Style {
                     width: Val::Px(250.),
                     height: Val::Px(100.),
+                    top: Val::Px(10.),
+                    left: Val::Px(10.),
                     position_type: PositionType::Absolute,
                     justify_content: JustifyContent::FlexStart,
                     align_items: AlignItems::FlexStart,
@@ -447,9 +380,148 @@ pub(crate) fn spawn_weapon_ui(
     commands.entity(parent).add_child(child);
 }
 
+pub fn spawn_player_stats_ui(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+
+    current_health: f32,
+
+    current_weapon_sprite: &str,
+    current_weapon_damage_value: f32,
+
+    current_armor_value: f32,
+    current_speed_value: f32,
+) {
+    let parent = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    display: Display::Flex,
+                    width: Val::Px(400.),
+                    height: Val::Px(400.),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(120.),
+                    left: Val::Px(10.),
+                    align_items: AlignItems::Stretch,
+                    justify_content: JustifyContent::SpaceAround,
+                    padding: UiRect {
+                        left: Val::Px(10.),
+                        right: Val::ZERO,
+                        top: Val::ZERO,
+                        bottom: Val::ZERO,
+                    },
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PlayerStatsUI,
+        ))
+        .id();
+
+    let root_node = (
+        NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                width: Val::Percent(100.),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::SpaceEvenly,
+                column_gap: Val::Px(30.),
+                ..default()
+            },
+            ..default()
+        },
+        OVERLAY_LAYER,
+    );
+
+    let icon_node = |sprite: &str| {
+        (
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(70.0),
+                    height: Val::Px(70.0),
+                    ..default()
+                },
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite.to_owned())),
+        )
+    };
+
+    let text_node = |key: &str, value: &str, commands: &mut Commands| {
+        commands
+            .spawn(NodeBundle {
+                style: Style {
+                    width: Val::Px(200.0),
+                    height: Val::Px(70.0),
+                    align_items: AlignItems::Center,
+                    flex_wrap: FlexWrap::NoWrap,
+                    ..default()
+                },
+                ..default()
+            })
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    format!("{key}: {value}"),
+                    TextStyle {
+                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font_size: 25.0,
+                        ..default()
+                    },
+                ));
+            })
+            .id()
+    };
+
+    let player_text_node = text_node("Health", &format!("{current_health}"), commands);
+    let player = commands
+        .spawn(root_node.clone())
+        .with_children(|parent| {
+            parent.spawn(icon_node("textures/UI/profile.png"));
+        })
+        .add_child(player_text_node)
+        .id();
+
+    let weapon_text_node = text_node(
+        "Damage",
+        &format!("{current_weapon_damage_value}"),
+        commands,
+    );
+    let weapon = commands
+        .spawn(root_node.clone())
+        .with_children(|parent| {
+            parent.spawn(icon_node(current_weapon_sprite));
+        })
+        .add_child(weapon_text_node)
+        .id();
+
+    let armor_text_node = text_node("Armor", &format!("{current_armor_value}"), commands);
+    let armor = commands
+        .spawn(root_node.clone())
+        .with_children(|parent| {
+            parent.spawn(icon_node("textures/Items/shield.png"));
+        })
+        .add_child(armor_text_node)
+        .id();
+
+    let speed_text_node = text_node("Speed", &format!("{current_speed_value}"), commands);
+    let speed = commands
+        .spawn(root_node)
+        .with_children(|parent| {
+            parent.spawn(icon_node("textures/Items/lightning.png"));
+        })
+        .add_child(speed_text_node)
+        .id();
+
+    commands
+        .entity(parent)
+        .push_children(&[player, weapon, armor, speed]);
+}
+
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    speed_bar(&mut commands, &asset_server);
-    armor_bar(&mut commands, &asset_server);
     current_wave(&mut commands, &asset_server);
     spawn_score_points_ui(&mut commands, &asset_server);
     spawn_current_timer_ui(&mut commands, &asset_server);
