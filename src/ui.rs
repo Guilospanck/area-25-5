@@ -42,6 +42,9 @@ pub struct WeaponUI;
 #[derive(Component)]
 pub struct PlayerProfileUI;
 
+#[derive(Component)]
+pub struct PlayerStatsUI;
+
 // ############## BUTTONS ####################
 #[derive(Component)]
 pub struct PlayAgainButton;
@@ -364,6 +367,8 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 style: Style {
                     width: Val::Px(250.),
                     height: Val::Px(100.),
+                    top: Val::Px(10.),
+                    left: Val::Px(10.),
                     position_type: PositionType::Absolute,
                     justify_content: JustifyContent::FlexStart,
                     align_items: AlignItems::FlexStart,
@@ -445,6 +450,127 @@ pub(crate) fn spawn_weapon_ui(
         .id();
 
     commands.entity(parent).add_child(child);
+}
+
+pub fn spawn_player_stats_ui(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+
+    current_health: f32,
+
+    current_weapon_sprite: &str,
+    current_weapon_damage_value: f32,
+
+    current_armor_value: f32,
+    current_speed_value: f32,
+) {
+    let parent = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    display: Display::Flex,
+                    width: Val::Px(400.),
+                    height: Val::Px(400.),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(120.),
+                    left: Val::Px(10.),
+                    align_items: AlignItems::Stretch,
+                    justify_content: JustifyContent::SpaceEvenly,
+                    padding: UiRect {
+                        left: Val::Px(10.),
+                        right: Val::ZERO,
+                        top: Val::ZERO,
+                        bottom: Val::ZERO,
+                    },
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PlayerStatsUI,
+        ))
+        .id();
+
+    let root_node = (
+        NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Row,
+                width: Val::Percent(100.),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::SpaceEvenly,
+                ..default()
+            },
+            ..default()
+        },
+        OVERLAY_LAYER,
+    );
+
+    let icon_node = |sprite: &str| {
+        (
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(70.0),
+                    height: Val::Px(70.0),
+                    ..default()
+                },
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite.to_owned())),
+        )
+    };
+
+    let text_node = |key: &str, value: &str| {
+        TextBundle::from_section(
+            format!("{key}: {value}"),
+            TextStyle {
+                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                font_size: 25.0,
+                ..default()
+            },
+        )
+    };
+
+    let player = commands
+        .spawn(root_node.clone())
+        .with_children(|parent| {
+            parent.spawn(icon_node("textures/UI/profile.png"));
+            parent.spawn(text_node("Health", &format!("{current_health}")));
+        })
+        .id();
+
+    let weapon = commands
+        .spawn(root_node.clone())
+        .with_children(|parent| {
+            parent.spawn(icon_node(current_weapon_sprite));
+            parent.spawn(text_node(
+                "Damage",
+                &format!("{current_weapon_damage_value}"),
+            ));
+        })
+        .id();
+
+    let armor = commands
+        .spawn(root_node.clone())
+        .with_children(|parent| {
+            parent.spawn(icon_node("textures/Items/shield.png"));
+            parent.spawn(text_node("Armor", &format!("{current_armor_value}")));
+        })
+        .id();
+
+    let speed = commands
+        .spawn(root_node)
+        .with_children(|parent| {
+            parent.spawn(icon_node("textures/Items/lightning.png"));
+            parent.spawn(text_node("Speed", &format!("{current_speed_value}")));
+        })
+        .id();
+
+    commands
+        .entity(parent)
+        .push_children(&[player, weapon, armor, speed]);
 }
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
