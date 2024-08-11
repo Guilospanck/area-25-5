@@ -274,7 +274,7 @@ pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
                     width: Val::Percent(100.0),
                     position_type: PositionType::Absolute,
                     column_gap: Val::Px(2.),
-                    right: Val::Px(105.),
+                    right: Val::Px(10.),
                     top: Val::Px(5.),
                     ..default()
                 },
