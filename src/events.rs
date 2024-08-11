@@ -5,13 +5,15 @@ use crate::{
     game_actions::shoot,
     player::Player,
     prelude::*,
-    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_weapon, spawn_weapon_ui,
+    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
+    spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{get_item_sprite_based_on_item_type, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CleanupWhenPlayerDies, ContainerBuffsUI,
     CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy,
-    EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, PlayerProfileUI, ScoreUI,
-    Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
+    EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, ManaBarUI, PlayerProfileUI,
+    PlayerProfileUIBarsRootNode, ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI,
+    WeaponWaves,
 };
 
 #[derive(Event)]
@@ -115,51 +117,85 @@ pub fn on_mouse_click(
     );
 }
 
-pub fn on_player_health_changed(
-    trigger: Trigger<PlayerHealthChanged>,
-    mut commands: Commands,
+fn modify_above_player_health(
+    commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 
     player_query: Query<(Entity, &Children), With<Player>>,
     player_health_bar_query: Query<Entity, With<HealthBar>>,
 
-    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+    health: f32,
 ) {
-    let event = trigger.event();
-    let health = event.health;
-
-    let player = player_query.get_single();
-    if player.is_err() {
-        return;
-    }
-    let player = player.unwrap();
-    let player_entity = player.0;
     let health_bar_translation = Vec3::new(2.0, 12.0, 0.0);
 
-    for &child in player.1.iter() {
-        if let Ok(health_bar_entity) = player_health_bar_query.get(child) {
+    if player_query.get_single().is_err() {
+        return;
+    }
+    let (player_entity, player_children) = player_query.get_single().unwrap();
+
+    for &child in player_children.iter() {
+        if player_health_bar_query.get(child).is_err() {
+            continue;
+        }
+        let player_health_bar_entity = player_health_bar_query.get(child).unwrap();
+
+        commands
+            .entity(player_health_bar_entity)
+            .despawn_recursive();
+
+        let health_bar = spawn_health_bar(
+            commands,
+            &mut meshes,
+            &mut materials,
+            health,
+            PLAYER_HEALTH,
+            health_bar_translation,
+            PLAYER_LAYER,
+        );
+        commands
+            .entity(player_entity)
+            .remove_children(&[player_health_bar_entity]);
+        commands.entity(player_entity).add_child(health_bar);
+
+        break;
+    }
+}
+
+fn modify_player_profile_ui_health(
+    commands: &mut Commands,
+
+    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+
+    health: f32,
+) {
+    if player_profile_ui_query.get_single().is_err() {
+        return;
+    }
+    let (_, player_profile_children, _) = player_profile_ui_query.get_single().unwrap();
+
+    for &child in player_profile_children.iter() {
+        if player_bar_ui_root_node_query.get(child).is_err() {
+            continue;
+        }
+        let (_, root_node_bar_children, _) = player_bar_ui_root_node_query.get(child).unwrap();
+
+        for &root_node_child in root_node_bar_children.iter() {
+            if player_health_ui_query.get(root_node_child).is_err() {
+                continue;
+            }
+            let (health_bar_entity, _) = player_health_ui_query.get(root_node_child).unwrap();
+
             commands.entity(health_bar_entity).despawn_recursive();
-            let health_bar = spawn_health_bar(
-                &mut commands,
-                &mut meshes,
-                &mut materials,
-                health,
-                PLAYER_HEALTH,
-                health_bar_translation,
-                PLAYER_LAYER,
-            );
-            commands
-                .entity(player_entity)
-                .remove_children(&[health_bar_entity]);
-            commands.entity(player_entity).add_child(health_bar);
 
             // Player profile health bar UI
             spawn_health_ui_bar(
-                &mut commands,
-                player_profile_ui_query,
-                player_health_ui_query,
+                commands,
+                &player_profile_ui_query,
+                &player_bar_ui_root_node_query,
+                &player_health_ui_query,
                 health,
                 PLAYER_HEALTH,
             );
@@ -167,6 +203,42 @@ pub fn on_player_health_changed(
             break;
         }
     }
+}
+
+pub fn on_player_health_changed(
+    trigger: Trigger<PlayerHealthChanged>,
+    mut commands: Commands,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
+
+    // Just above player bar
+    player_query: Query<(Entity, &Children), With<Player>>,
+    player_health_bar_query: Query<Entity, With<HealthBar>>,
+
+    // Top-left UI
+    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+) {
+    let event = trigger.event();
+    let health = event.health;
+
+    modify_above_player_health(
+        &mut commands,
+        meshes,
+        materials,
+        player_query,
+        player_health_bar_query,
+        health,
+    );
+
+    modify_player_profile_ui_health(
+        &mut commands,
+        player_profile_ui_query,
+        player_bar_ui_root_node_query,
+        player_health_ui_query,
+        health,
+    );
 }
 
 pub fn on_player_spawned(
@@ -879,13 +951,25 @@ pub fn on_player_profile_ui_set(
     _trigger: Trigger<PlayerProfileUISet>,
     mut commands: Commands,
     player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+    player_mana_ui_query: Query<(Entity, &ManaBarUI)>,
 ) {
     spawn_health_ui_bar(
         &mut commands,
-        player_profile_ui_query,
-        player_health_ui_query,
+        &player_profile_ui_query,
+        &player_bar_ui_root_node_query,
+        &player_health_ui_query,
         PLAYER_HEALTH,
         PLAYER_HEALTH,
+    );
+
+    spawn_mana_ui_bar(
+        &mut commands,
+        &player_profile_ui_query,
+        &player_bar_ui_root_node_query,
+        &player_mana_ui_query,
+        PLAYER_MANA,
+        PLAYER_MANA,
     );
 }

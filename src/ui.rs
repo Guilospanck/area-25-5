@@ -40,6 +40,9 @@ pub struct WeaponUI;
 pub struct PlayerProfileUI;
 
 #[derive(Component)]
+pub struct PlayerProfileUIBarsRootNode;
+
+#[derive(Component)]
 pub struct PlayerStatsUI;
 
 // ############## BUTTONS ####################
@@ -107,14 +110,16 @@ pub(crate) fn spawn_health_bar(
 
 pub(crate) fn spawn_health_ui_bar(
     commands: &mut Commands,
-    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+    player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: &Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_health_ui_query: &Query<(Entity, &HealthBarUI)>,
     health: f32,
     max_health: f32,
 ) {
     spawn_ui_bar(
         commands,
         player_profile_ui_query,
+        player_bar_ui_root_node_query,
         player_health_ui_query,
         health,
         max_health,
@@ -123,11 +128,32 @@ pub(crate) fn spawn_health_ui_bar(
     );
 }
 
+pub(crate) fn spawn_mana_ui_bar(
+    commands: &mut Commands,
+    player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: &Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_mana_ui_query: &Query<(Entity, &ManaBarUI)>,
+    mana: f32,
+    max_mana: f32,
+) {
+    spawn_ui_bar(
+        commands,
+        player_profile_ui_query,
+        player_bar_ui_root_node_query,
+        player_mana_ui_query,
+        mana,
+        max_mana,
+        Color::srgba(0.0, 0.0, 255., 1.),
+        ManaBarUI,
+    );
+}
+
 /// Util to create health/mana bar inside the profile picture UI (top-left)
 fn spawn_ui_bar<T: Component>(
     commands: &mut Commands,
-    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_query: Query<(Entity, &T)>,
+    player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: &Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_bar_ui_query: &Query<(Entity, &T)>,
     value: f32,
     max_value: f32,
     color: Color,
@@ -137,13 +163,22 @@ fn spawn_ui_bar<T: Component>(
     if player_profile_ui.is_err() {
         return;
     }
-    let player_profile_ui = player_profile_ui.unwrap();
-    let player_profile_ui_entity = player_profile_ui.0;
-    let player_profile_ui_children = player_profile_ui.1;
+    let (_, player_profile_ui_children, _) = player_profile_ui.unwrap();
 
     // Despawn current player bar ui bars
-    for &child in player_profile_ui_children {
-        if let Ok((player_bar_ui_entity, _)) = player_bar_ui_query.get(child) {
+    for &child in player_profile_ui_children.iter() {
+        if player_bar_ui_root_node_query.get(child).is_err() {
+            continue;
+        }
+        let (_, player_bar_ui_root_node_children, _) =
+            player_bar_ui_root_node_query.get(child).unwrap();
+
+        for &root_node_child in player_bar_ui_root_node_children.iter() {
+            if player_bar_ui_query.get(root_node_child).is_err() {
+                continue;
+            }
+            let (player_bar_ui_entity, _) = player_bar_ui_query.get(root_node_child).unwrap();
+
             commands.entity(player_bar_ui_entity).despawn_recursive();
             break;
         }
@@ -166,7 +201,7 @@ fn spawn_ui_bar<T: Component>(
     let proportional = MAX_VALUE_BAR * value / max_value;
     let width: f32 = proportional * BAR_UI_SCALE;
 
-    let child = NodeBundle {
+    let child_bundle = NodeBundle {
         style: Style {
             width: Val::Px(width),
             height: Val::Px(HEIGHT),
@@ -178,15 +213,29 @@ fn spawn_ui_bar<T: Component>(
         ..default()
     };
 
-    let id = commands
-        .spawn((parent, OVERLAY_LAYER, marker))
-        .with_children(|parent| {
-            parent.spawn((child, OVERLAY_LAYER));
-        })
-        .id();
-    commands
-        .entity(player_profile_ui_entity)
-        .push_children(&[id]);
+    for &child in player_profile_ui_children.iter() {
+        if let Err(err) = player_bar_ui_root_node_query.get(child) {
+            eprintln!("{err}");
+            continue;
+        }
+        println!("found");
+
+        let (player_bar_ui_root_node_entity, _, _) =
+            player_bar_ui_root_node_query.get(child).unwrap();
+
+        let id = commands
+            .spawn((parent, OVERLAY_LAYER, marker))
+            .with_children(|parent| {
+                parent.spawn((child_bundle, OVERLAY_LAYER));
+            })
+            .id();
+
+        commands
+            .entity(player_bar_ui_root_node_entity)
+            .add_child(id);
+
+        break;
+    }
 }
 
 fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
@@ -333,7 +382,7 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         ))
         .id();
 
-    let child = commands
+    let profile_picture = commands
         .spawn((
             NodeBundle {
                 style: Style {
@@ -354,7 +403,29 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         ))
         .id();
 
-    commands.entity(parent).push_children(&[child]);
+    let root_node_bars = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(10.0),
+                    width: Val::Px(180.0),
+                    height: Val::Px(300.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PlayerProfileUIBarsRootNode,
+        ))
+        .with_children(|parent| {
+            parent.spawn(());
+        })
+        .id();
+
+    commands
+        .entity(parent)
+        .push_children(&[profile_picture, root_node_bars]);
 
     commands.trigger(PlayerProfileUISet);
 }
