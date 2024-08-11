@@ -48,11 +48,12 @@ looking for him, therefore we're gonna have panic
 speed, armor, damage and so on)
 - [x] (BUG) Change the stats UI when some of them change
 - [x] (BUG) Reset buff on restart
+- [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
+as the time passes (cooldown)
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Add powers
-- [ ] Add a mana stuff that allows you to use powers. This mana will be filled 
-as the time passes (cooldown)
+- [ ] Change all spawns of empty entities to `.spawn_empty()`
 
 Ongoing:
 - [-] Spawn different weapons (Still need more)

@@ -1,5 +1,6 @@
 use bevy::{
     color::palettes::css::YELLOW,
+    reflect::List,
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
@@ -111,7 +112,12 @@ pub(crate) fn spawn_health_bar(
 pub(crate) fn spawn_health_ui_bar(
     commands: &mut Commands,
     player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_root_node_query: &Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_bar_ui_root_node_query: &mut Query<(
+        Entity,
+        &mut Style,
+        &Children,
+        &PlayerProfileUIBarsRootNode,
+    )>,
     player_health_ui_query: &Query<(Entity, &HealthBarUI)>,
     health: f32,
     max_health: f32,
@@ -131,7 +137,12 @@ pub(crate) fn spawn_health_ui_bar(
 pub(crate) fn spawn_mana_ui_bar(
     commands: &mut Commands,
     player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_root_node_query: &Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_bar_ui_root_node_query: &mut Query<(
+        Entity,
+        &mut Style,
+        &Children,
+        &PlayerProfileUIBarsRootNode,
+    )>,
     player_mana_ui_query: &Query<(Entity, &ManaBarUI)>,
     mana: f32,
     max_mana: f32,
@@ -152,7 +163,12 @@ pub(crate) fn spawn_mana_ui_bar(
 fn spawn_ui_bar<T: Component>(
     commands: &mut Commands,
     player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_root_node_query: &Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_bar_ui_root_node_query: &mut Query<(
+        Entity,
+        &mut Style,
+        &Children,
+        &PlayerProfileUIBarsRootNode,
+    )>,
     player_bar_ui_query: &Query<(Entity, &T)>,
     value: f32,
     max_value: f32,
@@ -165,21 +181,27 @@ fn spawn_ui_bar<T: Component>(
     }
     let (_, player_profile_ui_children, _) = player_profile_ui.unwrap();
 
+    let mut entity_despawned = None;
+    let mut list_of_entities = vec![];
+
     // Despawn current player bar ui bars
     for &child in player_profile_ui_children.iter() {
         if player_bar_ui_root_node_query.get(child).is_err() {
             continue;
         }
-        let (_, player_bar_ui_root_node_children, _) =
+        let (_, _, player_bar_ui_root_node_children, _) =
             player_bar_ui_root_node_query.get(child).unwrap();
 
-        for &root_node_child in player_bar_ui_root_node_children.iter() {
+        for (index, &root_node_child) in player_bar_ui_root_node_children.iter().enumerate() {
+            list_of_entities.push(root_node_child);
+
             if player_bar_ui_query.get(root_node_child).is_err() {
                 continue;
             }
             let (player_bar_ui_entity, _) = player_bar_ui_query.get(root_node_child).unwrap();
 
             commands.entity(player_bar_ui_entity).despawn_recursive();
+            entity_despawned = Some(index);
             break;
         }
     }
@@ -214,14 +236,12 @@ fn spawn_ui_bar<T: Component>(
     };
 
     for &child in player_profile_ui_children.iter() {
-        if let Err(err) = player_bar_ui_root_node_query.get(child) {
-            eprintln!("{err}");
+        if player_bar_ui_root_node_query.get_mut(child).is_err() {
             continue;
         }
-        println!("found");
 
-        let (player_bar_ui_root_node_entity, _, _) =
-            player_bar_ui_root_node_query.get(child).unwrap();
+        let (player_bar_ui_root_node_entity, mut player_bar_ui_style, _, _) =
+            player_bar_ui_root_node_query.get_mut(child).unwrap();
 
         let id = commands
             .spawn((parent, OVERLAY_LAYER, marker))
@@ -230,9 +250,31 @@ fn spawn_ui_bar<T: Component>(
             })
             .id();
 
-        commands
-            .entity(player_bar_ui_root_node_entity)
-            .add_child(id);
+        // if was_entity_despawned {
+        //     player_bar_ui_style.flex_direction = FlexDirection::ColumnReverse;
+        // } else {
+        //     player_bar_ui_style.flex_direction = FlexDirection::Column;
+        // }
+
+        if let Some(entity_despawned_id) = entity_despawned {
+            // println!("BEFORE: {:?}", list_of_entities);
+            // list_of_entities.retain(|value| *value != entity_despawned_id);
+            // list_of_entities.push(id);
+            // println!("{:?}", entity_despawned_id);
+            // println!("{:?}", list_of_entities);
+            //
+            // commands
+            //     .entity(player_bar_ui_root_node_entity)
+            //     .replace_children(&list_of_entities);
+
+            commands
+                .entity(player_bar_ui_root_node_entity)
+                .insert_children(entity_despawned_id, &[id]);
+        } else {
+            commands
+                .entity(player_bar_ui_root_node_entity)
+                .add_child(id);
+        }
 
         break;
     }
@@ -419,7 +461,7 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
             PlayerProfileUIBarsRootNode,
         ))
         .with_children(|parent| {
-            parent.spawn(());
+            parent.spawn_empty();
         })
         .id();
 
