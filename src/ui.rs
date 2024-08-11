@@ -13,12 +13,6 @@ pub struct HealthBar;
 pub struct HealthBarUI;
 
 #[derive(Component)]
-pub struct PlayerSpeedBar;
-
-#[derive(Component)]
-pub struct PlayerArmorBar;
-
-#[derive(Component)]
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
@@ -170,72 +164,6 @@ pub(crate) fn spawn_health_ui_bar(
     commands
         .entity(player_profile_ui_entity)
         .push_children(&[id]);
-}
-
-fn speed_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-    let text_style = TextStyle {
-        font: font.clone(),
-        font_size: 30.0,
-        ..default()
-    };
-
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    format!("{}", PLAYER_MOVE_SPEED),
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                WINDOW_RESOLUTION.x_px / 2. - 30.,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
-            ..default()
-        },
-        PlayerSpeedBar,
-        OVERLAY_LAYER,
-    ));
-}
-
-fn armor_bar(commands: &mut Commands, asset_server: &Res<AssetServer>) {
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
-    let text_style = TextStyle {
-        font: font.clone(),
-        font_size: 30.0,
-        ..default()
-    };
-
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    format!("{}", PLAYER_ARMOR),
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                -200.,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
-            ..default()
-        },
-        PlayerArmorBar,
-        OVERLAY_LAYER,
-    ));
 }
 
 fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
@@ -594,8 +522,6 @@ pub fn spawn_player_stats_ui(
 }
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    speed_bar(&mut commands, &asset_server);
-    armor_bar(&mut commands, &asset_server);
     current_wave(&mut commands, &asset_server);
     spawn_score_points_ui(&mut commands, &asset_server);
     spawn_current_timer_ui(&mut commands, &asset_server);

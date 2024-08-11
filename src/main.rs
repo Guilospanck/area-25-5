@@ -132,8 +132,6 @@ fn main() {
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
-        .observe(on_player_speed_changed)
-        .observe(on_player_armor_changed)
         .observe(on_enemy_health_changed)
         .observe(on_all_enemies_died)
         .observe(on_game_over)

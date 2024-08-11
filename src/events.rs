@@ -10,9 +10,8 @@ use crate::{
     util::{get_item_sprite_based_on_item_type, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CleanupWhenPlayerDies, ContainerBuffsUI,
     CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy,
-    EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, PlayerArmorBar,
-    PlayerProfileUI, PlayerSpeedBar, ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle,
-    WeaponUI, WeaponWaves,
+    EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, PlayerProfileUI, ScoreUI,
+    Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -167,30 +166,6 @@ pub fn on_player_health_changed(
 
             break;
         }
-    }
-}
-
-pub fn on_player_speed_changed(
-    trigger: Trigger<PlayerSpeedChanged>,
-    mut player_speed_bar: Query<&mut Text, With<PlayerSpeedBar>>,
-) {
-    let event = trigger.event();
-    let speed = event.speed;
-
-    if let Ok(mut text) = player_speed_bar.get_single_mut() {
-        text.sections.first_mut().unwrap().value = speed.to_string();
-    }
-}
-
-pub fn on_player_armor_changed(
-    trigger: Trigger<PlayerArmorChanged>,
-    mut player_armor_bar: Query<&mut Text, With<PlayerArmorBar>>,
-) {
-    let event = trigger.event();
-    let armor = event.armor;
-
-    if let Ok(mut text) = player_armor_bar.get_single_mut() {
-        text.sections.first_mut().unwrap().value = armor.to_string();
     }
 }
 
