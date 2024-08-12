@@ -29,7 +29,10 @@ pub fn reset_initial_state(
     current_time.seconds = 30u16;
     current_score.0 = 0.0;
 
+    commands.trigger(ScoreChanged { score: 0.0 });
     commands.trigger(CurrentTimeChanged);
+    commands.trigger(PlayerProfileUISet);
+
     commands.trigger(PlayerSpeedChanged {
         speed: PLAYER_MOVE_SPEED,
     });
@@ -37,6 +40,4 @@ pub fn reset_initial_state(
     commands.trigger(PlayerHealthChanged {
         health: PLAYER_HEALTH,
     });
-    commands.trigger(PlayerProfileUISet);
-    commands.trigger(ScoreChanged { score: 0.0 });
 }

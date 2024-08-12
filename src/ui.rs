@@ -1,5 +1,6 @@
 use bevy::{
     color::palettes::css::YELLOW,
+    reflect::List,
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
@@ -11,6 +12,9 @@ pub struct HealthBar;
 
 #[derive(Component)]
 pub struct HealthBarUI;
+
+#[derive(Component)]
+pub struct ManaBarUI;
 
 #[derive(Component)]
 pub struct CurrentWaveUI;
@@ -37,6 +41,9 @@ pub struct WeaponUI;
 pub struct PlayerProfileUI;
 
 #[derive(Component)]
+pub struct PlayerProfileUIBarsRootNode;
+
+#[derive(Component)]
 pub struct PlayerStatsUI;
 
 // ############## BUTTONS ####################
@@ -59,9 +66,9 @@ pub struct GameOverOverlay;
 #[derive(Component)]
 pub struct GameWonOverlay;
 
-const MAX_HEALTH_BAR: f32 = 100.0;
-const HEALTH_BAR_SCALE: f32 = 0.2;
-const HEALTH_BAR_UI_SCALE: f32 = 1.5;
+const MAX_VALUE_BAR: f32 = 100.0;
+const BAR_SCALE: f32 = 0.2;
+const BAR_UI_SCALE: f32 = 1.5;
 
 pub(crate) fn spawn_health_bar(
     commands: &mut Commands,
@@ -72,8 +79,7 @@ pub(crate) fn spawn_health_bar(
     translation: Vec3,
     layer: RenderLayers,
 ) -> Entity {
-    let parent_shape =
-        Mesh2dHandle(meshes.add(Rectangle::new(MAX_HEALTH_BAR * HEALTH_BAR_SCALE, 2.5)));
+    let parent_shape = Mesh2dHandle(meshes.add(Rectangle::new(MAX_VALUE_BAR * BAR_SCALE, 2.5)));
     let parent = MaterialMesh2dBundle {
         mesh: parent_shape,
         material: materials.add(Color::srgba(255., 255., 255., 0.1)),
@@ -81,14 +87,14 @@ pub(crate) fn spawn_health_bar(
         ..default()
     };
 
-    let proportional = MAX_HEALTH_BAR * health / max_health;
-    let width: f32 = proportional * HEALTH_BAR_SCALE;
+    let proportional = MAX_VALUE_BAR * health / max_health;
+    let width: f32 = proportional * BAR_SCALE;
     let child_shape = Mesh2dHandle(meshes.add(Rectangle::new(width, 2.5)));
     let child = MaterialMesh2dBundle {
         mesh: child_shape,
         material: materials.add(Color::srgb(0., 255., 0.)),
         transform: Transform::from_xyz(
-            -(MAX_HEALTH_BAR * HEALTH_BAR_SCALE / 2. - width / 2.),
+            -(MAX_VALUE_BAR * BAR_SCALE / 2. - width / 2.),
             0.0,
             UI_Z_INDEX,
         ),
@@ -105,23 +111,82 @@ pub(crate) fn spawn_health_bar(
 
 pub(crate) fn spawn_health_ui_bar(
     commands: &mut Commands,
-    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_health_ui_query: Query<(Entity, &HealthBarUI)>,
+    player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: &mut Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_health_ui_query: &Query<(Entity, &HealthBarUI)>,
     health: f32,
     max_health: f32,
+) {
+    spawn_ui_bar(
+        commands,
+        player_profile_ui_query,
+        player_bar_ui_root_node_query,
+        player_health_ui_query,
+        health,
+        max_health,
+        Color::srgba(0.0, 255., 0.0, 1.),
+        HealthBarUI,
+    );
+}
+
+pub(crate) fn spawn_mana_ui_bar(
+    commands: &mut Commands,
+    player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: &mut Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_mana_ui_query: &Query<(Entity, &ManaBarUI)>,
+    mana: f32,
+    max_mana: f32,
+) {
+    spawn_ui_bar(
+        commands,
+        player_profile_ui_query,
+        player_bar_ui_root_node_query,
+        player_mana_ui_query,
+        mana,
+        max_mana,
+        Color::srgba(0.0, 0.0, 255., 1.),
+        ManaBarUI,
+    );
+}
+
+/// Util to create health/mana bar inside the profile picture UI (top-left)
+fn spawn_ui_bar<T: Component>(
+    commands: &mut Commands,
+    player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
+    player_bar_ui_root_node_query: &mut Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_bar_ui_query: &Query<(Entity, &T)>,
+    value: f32,
+    max_value: f32,
+    color: Color,
+    marker: T,
 ) {
     let player_profile_ui = player_profile_ui_query.get_single();
     if player_profile_ui.is_err() {
         return;
     }
-    let player_profile_ui = player_profile_ui.unwrap();
-    let player_profile_ui_entity = player_profile_ui.0;
-    let player_profile_ui_children = player_profile_ui.1;
+    let (_, player_profile_ui_children, _) = player_profile_ui.unwrap();
 
-    // Despawn current player health ui bars
-    for &child in player_profile_ui_children {
-        if let Ok((player_health_ui_entity, _)) = player_health_ui_query.get(child) {
-            commands.entity(player_health_ui_entity).despawn_recursive();
+    let mut entity_despawned = None;
+    let mut list_of_entities = vec![];
+
+    // Despawn current player bar ui bars
+    for &child in player_profile_ui_children.iter() {
+        if player_bar_ui_root_node_query.get(child).is_err() {
+            continue;
+        }
+        let (_, player_bar_ui_root_node_children, _) =
+            player_bar_ui_root_node_query.get(child).unwrap();
+
+        for (index, &root_node_child) in player_bar_ui_root_node_children.iter().enumerate() {
+            list_of_entities.push(root_node_child);
+
+            if player_bar_ui_query.get(root_node_child).is_err() {
+                continue;
+            }
+            let (player_bar_ui_entity, _) = player_bar_ui_query.get(root_node_child).unwrap();
+
+            commands.entity(player_bar_ui_entity).despawn_recursive();
+            entity_despawned = Some(index);
             break;
         }
     }
@@ -130,7 +195,7 @@ pub(crate) fn spawn_health_ui_bar(
 
     let parent = NodeBundle {
         style: Style {
-            width: Val::Px(MAX_HEALTH_BAR * HEALTH_BAR_UI_SCALE),
+            width: Val::Px(MAX_VALUE_BAR * BAR_UI_SCALE),
             height: Val::Px(HEIGHT),
             top: Val::Px(50.),
             left: Val::Px(5.),
@@ -140,10 +205,10 @@ pub(crate) fn spawn_health_ui_bar(
         ..default()
     };
 
-    let proportional = MAX_HEALTH_BAR * health / max_health;
-    let width: f32 = proportional * HEALTH_BAR_UI_SCALE;
+    let proportional = MAX_VALUE_BAR * value / max_value;
+    let width: f32 = proportional * BAR_UI_SCALE;
 
-    let child = NodeBundle {
+    let child_bundle = NodeBundle {
         style: Style {
             width: Val::Px(width),
             height: Val::Px(HEIGHT),
@@ -151,19 +216,37 @@ pub(crate) fn spawn_health_ui_bar(
             top: Val::Px(0.),
             ..default()
         },
-        background_color: BackgroundColor(Color::srgb(0., 255., 0.)),
+        background_color: BackgroundColor(color),
         ..default()
     };
 
-    let id = commands
-        .spawn((parent, OVERLAY_LAYER, HealthBarUI))
-        .with_children(|parent| {
-            parent.spawn((child, OVERLAY_LAYER));
-        })
-        .id();
-    commands
-        .entity(player_profile_ui_entity)
-        .push_children(&[id]);
+    for &child in player_profile_ui_children.iter() {
+        if player_bar_ui_root_node_query.get_mut(child).is_err() {
+            continue;
+        }
+
+        let (player_bar_ui_root_node_entity, _, _) =
+            player_bar_ui_root_node_query.get_mut(child).unwrap();
+
+        let id = commands
+            .spawn((parent, OVERLAY_LAYER, marker))
+            .with_children(|parent| {
+                parent.spawn((child_bundle, OVERLAY_LAYER));
+            })
+            .id();
+
+        if let Some(entity_despawned_id) = entity_despawned {
+            commands
+                .entity(player_bar_ui_root_node_entity)
+                .insert_children(entity_despawned_id, &[id]);
+        } else {
+            commands
+                .entity(player_bar_ui_root_node_entity)
+                .add_child(id);
+        }
+
+        break;
+    }
 }
 
 fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
@@ -310,7 +393,7 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         ))
         .id();
 
-    let child = commands
+    let profile_picture = commands
         .spawn((
             NodeBundle {
                 style: Style {
@@ -331,7 +414,29 @@ fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         ))
         .id();
 
-    commands.entity(parent).push_children(&[child]);
+    let root_node_bars = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(10.0),
+                    width: Val::Px(180.0),
+                    height: Val::Px(300.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PlayerProfileUIBarsRootNode,
+        ))
+        .with_children(|parent| {
+            parent.spawn_empty();
+        })
+        .id();
+
+    commands
+        .entity(parent)
+        .push_children(&[profile_picture, root_node_bars]);
 
     commands.trigger(PlayerProfileUISet);
 }
@@ -385,6 +490,7 @@ pub fn spawn_player_stats_ui(
     asset_server: &Res<AssetServer>,
 
     current_health: f32,
+    current_mana: f32,
 
     current_weapon_sprite: &str,
     current_weapon_damage_value: f32,
@@ -451,12 +557,12 @@ pub fn spawn_player_stats_ui(
         )
     };
 
-    let text_node = |key: &str, value: &str, commands: &mut Commands| {
+    let text_node = |key: &str, value: &str, commands: &mut Commands, height: Option<f32>| {
         commands
             .spawn(NodeBundle {
                 style: Style {
                     width: Val::Px(200.0),
-                    height: Val::Px(70.0),
+                    height: Val::Px(height.unwrap_or(70.)),
                     align_items: AlignItems::Center,
                     flex_wrap: FlexWrap::NoWrap,
                     ..default()
@@ -476,7 +582,24 @@ pub fn spawn_player_stats_ui(
             .id()
     };
 
-    let player_text_node = text_node("Health", &format!("{current_health}"), commands);
+    let player_health_node = text_node("Health", &format!("{current_health}"), commands, Some(35.));
+    let player_mana_node = text_node("Mana", &format!("{current_mana}"), commands, Some(35.));
+    let player_text_node = commands
+        .spawn(NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Column,
+                width: Val::Px(200.0),
+                height: Val::Px(70.0),
+                align_items: AlignItems::FlexStart,
+                justify_content: JustifyContent::Center,
+                row_gap: Val::Px(2.0),
+                ..default()
+            },
+            ..default()
+        })
+        .push_children(&[player_health_node, player_mana_node])
+        .id();
+
     let player = commands
         .spawn(root_node.clone())
         .with_children(|parent| {
@@ -489,6 +612,7 @@ pub fn spawn_player_stats_ui(
         "Damage",
         &format!("{current_weapon_damage_value}"),
         commands,
+        None,
     );
     let weapon = commands
         .spawn(root_node.clone())
@@ -498,7 +622,7 @@ pub fn spawn_player_stats_ui(
         .add_child(weapon_text_node)
         .id();
 
-    let armor_text_node = text_node("Armor", &format!("{current_armor_value}"), commands);
+    let armor_text_node = text_node("Armor", &format!("{current_armor_value}"), commands, None);
     let armor = commands
         .spawn(root_node.clone())
         .with_children(|parent| {
@@ -507,7 +631,7 @@ pub fn spawn_player_stats_ui(
         .add_child(armor_text_node)
         .id();
 
-    let speed_text_node = text_node("Speed", &format!("{current_speed_value}"), commands);
+    let speed_text_node = text_node("Speed", &format!("{current_speed_value}"), commands, None);
     let speed = commands
         .spawn(root_node)
         .with_children(|parent| {
