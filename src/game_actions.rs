@@ -2,12 +2,13 @@ use crate::{
     enemy::Enemy,
     events::ShootBullets,
     player::Player,
+    powers::spawn_power,
     prelude::*,
     spawn_player_stats_ui,
     util::{get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, BaseCamera, Damage, Health, Mana, PlayAgainButton, PlayerCamera,
-    PlayerStatsUI, RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton,
-    Weapon,
+    PlayerManaChanged, PlayerStatsUI, RestartGame, RestartGameButton, Speed, SpritesResources,
+    StartGameButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -235,6 +236,30 @@ pub fn handle_show_player_stats_ui(
     }
     let player_stats_ui = player_assets_ui_query.get_single().unwrap();
     commands.entity(player_stats_ui).despawn_recursive();
+}
+
+pub fn power_up(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    mut player_query: Query<(&mut Mana, &Player)>,
+) {
+    if player_query.get_single_mut().is_err() {
+        return;
+    }
+    let (mut player_mana, _) = player_query.get_single_mut().unwrap();
+    let mana_needed = 50.;
+    if player_mana.0 < mana_needed {
+        return;
+    }
+
+    spawn_power(&mut commands, texture_atlas_layout, &sprites, asset_server);
+    player_mana.0 -= mana_needed;
+
+    commands.trigger(PlayerManaChanged {
+        mana: player_mana.0,
+    });
 }
 
 // Won

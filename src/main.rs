@@ -3,8 +3,8 @@ use std::time::Duration;
 use area_25_5::*;
 
 use bevy::{
-    prelude::*, sprite::Wireframe2dPlugin, time::common_conditions::on_timer,
-    window::WindowResolution,
+    input::common_conditions::*, prelude::*, sprite::Wireframe2dPlugin,
+    time::common_conditions::on_timer, window::WindowResolution,
 };
 
 fn main() {
@@ -133,6 +133,7 @@ fn main() {
             FixedUpdate,
             refill_mana.run_if(on_timer(Duration::from_secs(1))),
         )
+        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyL)))
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
