@@ -1,6 +1,6 @@
 use crate::{
     animation::*, prelude::*, spawn_health_bar, sprites::Sprites, AmmoBundle, Armor,
-    CleanupWhenPlayerDies, Health, PlayerSpawned, Speed, SpritesResources, WeaponBundle,
+    CleanupWhenPlayerDies, Health, Mana, PlayerSpawned, Speed, SpritesResources, WeaponBundle,
 };
 
 #[derive(Component, Debug, Clone)]
@@ -12,6 +12,7 @@ pub(crate) struct PlayerBundle {
 
     // stats
     pub(crate) health: Health,
+    pub(crate) mana: Mana,
     pub(crate) armor: Armor,
     pub(crate) speed: Speed,
 
@@ -51,6 +52,7 @@ impl PlayerBundle {
             name: Name::new("Player"),
             marker: Player,
             health: Health(PLAYER_HEALTH),
+            mana: Mana(PLAYER_MANA),
             speed: Speed(PLAYER_MOVE_SPEED),
             armor: Armor(PLAYER_ARMOR),
             sprite: SpriteBundle {

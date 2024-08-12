@@ -129,9 +129,14 @@ fn main() {
             FixedUpdate,
             animate_player_buffs.run_if(on_timer(Duration::from_nanos(100))),
         )
+        .add_systems(
+            FixedUpdate,
+            refill_mana.run_if(on_timer(Duration::from_secs(1))),
+        )
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
+        .observe(on_player_mana_changed)
         .observe(on_enemy_health_changed)
         .observe(on_all_enemies_died)
         .observe(on_game_over)

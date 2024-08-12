@@ -11,9 +11,9 @@ use crate::{
     util::{get_item_sprite_based_on_item_type, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CleanupWhenPlayerDies, ContainerBuffsUI,
     CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy,
-    EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, ManaBarUI, PlayerProfileUI,
-    PlayerProfileUIBarsRootNode, ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI,
-    WeaponWaves,
+    EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
+    PlayerProfileUI, PlayerProfileUIBarsRootNode, ScoreUI, Speed, SpritesResources, Weapon,
+    WeaponBundle, WeaponUI, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -24,6 +24,11 @@ pub struct ShootBullets {
 #[derive(Event)]
 pub struct PlayerHealthChanged {
     pub health: f32,
+}
+
+#[derive(Event)]
+pub struct PlayerManaChanged {
+    pub mana: f32,
 }
 
 #[derive(Event)]
@@ -239,6 +244,51 @@ pub fn on_player_health_changed(
         player_health_ui_query,
         health,
     );
+}
+
+pub fn on_player_mana_changed(
+    trigger: Trigger<PlayerManaChanged>,
+    mut commands: Commands,
+
+    player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    mut player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
+    player_mana_ui_query: Query<(Entity, &ManaBarUI)>,
+) {
+    if player_profile_ui_query.get_single().is_err() {
+        return;
+    }
+    let (_, player_profile_children, _) = player_profile_ui_query.get_single().unwrap();
+
+    let event = trigger.event();
+    let mana = event.mana;
+
+    for &child in player_profile_children.iter() {
+        if player_bar_ui_root_node_query.get(child).is_err() {
+            continue;
+        }
+        let (_, root_node_bar_children, _) = player_bar_ui_root_node_query.get(child).unwrap();
+
+        for &root_node_child in root_node_bar_children.iter() {
+            if player_mana_ui_query.get(root_node_child).is_err() {
+                continue;
+            }
+            let (mana_bar_entity, _) = player_mana_ui_query.get(root_node_child).unwrap();
+
+            commands.entity(mana_bar_entity).despawn_recursive();
+
+            // Player profile mana bar UI
+            spawn_mana_ui_bar(
+                &mut commands,
+                &player_profile_ui_query,
+                &mut player_bar_ui_root_node_query,
+                &player_mana_ui_query,
+                mana,
+                PLAYER_MANA,
+            );
+
+            break;
+        }
+    }
 }
 
 pub fn on_player_spawned(
@@ -608,6 +658,21 @@ pub fn remove_outdated_buffs(
     }
 }
 
+pub fn refill_mana(mut commands: Commands, mut player: Query<&mut Mana, With<Player>>) {
+    if player.get_single_mut().is_err() {
+        return;
+    }
+    let mut player_mana = player.get_single_mut().unwrap();
+
+    if player_mana.0 < PLAYER_MANA {
+        player_mana.0 += 1.0;
+    }
+
+    commands.trigger(PlayerManaChanged {
+        mana: player_mana.0,
+    });
+}
+
 const NUMBER_OF_POSITIONS: usize = 360; // 2pi
 
 pub fn animate_player_buffs(
@@ -969,7 +1034,7 @@ pub fn on_player_profile_ui_set(
         &player_profile_ui_query,
         &mut player_bar_ui_root_node_query,
         &player_mana_ui_query,
-        PLAYER_MANA,
+        10.0,
         PLAYER_MANA,
     );
 }
