@@ -490,6 +490,7 @@ pub fn spawn_player_stats_ui(
     asset_server: &Res<AssetServer>,
 
     current_health: f32,
+    current_mana: f32,
 
     current_weapon_sprite: &str,
     current_weapon_damage_value: f32,
@@ -556,12 +557,12 @@ pub fn spawn_player_stats_ui(
         )
     };
 
-    let text_node = |key: &str, value: &str, commands: &mut Commands| {
+    let text_node = |key: &str, value: &str, commands: &mut Commands, height: Option<f32>| {
         commands
             .spawn(NodeBundle {
                 style: Style {
                     width: Val::Px(200.0),
-                    height: Val::Px(70.0),
+                    height: Val::Px(height.unwrap_or(70.)),
                     align_items: AlignItems::Center,
                     flex_wrap: FlexWrap::NoWrap,
                     ..default()
@@ -581,7 +582,24 @@ pub fn spawn_player_stats_ui(
             .id()
     };
 
-    let player_text_node = text_node("Health", &format!("{current_health}"), commands);
+    let player_health_node = text_node("Health", &format!("{current_health}"), commands, Some(35.));
+    let player_mana_node = text_node("Mana", &format!("{current_mana}"), commands, Some(35.));
+    let player_text_node = commands
+        .spawn(NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Column,
+                width: Val::Px(200.0),
+                height: Val::Px(70.0),
+                align_items: AlignItems::FlexStart,
+                justify_content: JustifyContent::Center,
+                row_gap: Val::Px(2.0),
+                ..default()
+            },
+            ..default()
+        })
+        .push_children(&[player_health_node, player_mana_node])
+        .id();
+
     let player = commands
         .spawn(root_node.clone())
         .with_children(|parent| {
@@ -594,6 +612,7 @@ pub fn spawn_player_stats_ui(
         "Damage",
         &format!("{current_weapon_damage_value}"),
         commands,
+        None,
     );
     let weapon = commands
         .spawn(root_node.clone())
@@ -603,7 +622,7 @@ pub fn spawn_player_stats_ui(
         .add_child(weapon_text_node)
         .id();
 
-    let armor_text_node = text_node("Armor", &format!("{current_armor_value}"), commands);
+    let armor_text_node = text_node("Armor", &format!("{current_armor_value}"), commands, None);
     let armor = commands
         .spawn(root_node.clone())
         .with_children(|parent| {
@@ -612,7 +631,7 @@ pub fn spawn_player_stats_ui(
         .add_child(armor_text_node)
         .id();
 
-    let speed_text_node = text_node("Speed", &format!("{current_speed_value}"), commands);
+    let speed_text_node = text_node("Speed", &format!("{current_speed_value}"), commands, None);
     let speed = commands
         .spawn(root_node)
         .with_children(|parent| {

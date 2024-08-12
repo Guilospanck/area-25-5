@@ -1034,7 +1034,7 @@ pub fn on_player_profile_ui_set(
         &player_profile_ui_query,
         &mut player_bar_ui_root_node_query,
         &player_mana_ui_query,
-        10.0,
+        PLAYER_MANA,
         PLAYER_MANA,
     );
 }

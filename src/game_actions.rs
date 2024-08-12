@@ -5,8 +5,9 @@ use crate::{
     prelude::*,
     spawn_player_stats_ui,
     util::{get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
-    AmmoBundle, Armor, BaseCamera, Damage, Health, PlayAgainButton, PlayerCamera, PlayerStatsUI,
-    RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
+    AmmoBundle, Armor, BaseCamera, Damage, Health, Mana, PlayAgainButton, PlayerCamera,
+    PlayerStatsUI, RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton,
+    Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -187,7 +188,7 @@ pub fn handle_show_player_stats_ui(
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
     player_assets_ui_query: Query<Entity, With<PlayerStatsUI>>,
-    mut player_query: Query<(&Speed, &Armor, &Children, &Health, &Player)>,
+    mut player_query: Query<(&Speed, &Armor, &Children, &Health, &Mana, &Player)>,
     player_weapon_query: Query<(&Damage, &Weapon)>,
 ) {
     if player_query.get_single_mut().is_err() {
@@ -199,7 +200,7 @@ pub fn handle_show_player_stats_ui(
 
         // only spawns a new ui if it does not already exist
         if number_of_spawned_stats_ui == 0 {
-            let (player_speed, player_armor, player_children, player_health, _) =
+            let (player_speed, player_armor, player_children, player_health, player_mana, _) =
                 player_query.get_single_mut().unwrap();
             for &child in player_children {
                 if player_weapon_query.get(child).is_err() {
@@ -216,6 +217,7 @@ pub fn handle_show_player_stats_ui(
                     &mut commands,
                     &asset_server,
                     player_health.0,
+                    player_mana.0,
                     weapon_sprite.source,
                     player_weapon_damage.0,
                     player_armor.0,
