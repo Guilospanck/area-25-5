@@ -112,12 +112,7 @@ pub(crate) fn spawn_health_bar(
 pub(crate) fn spawn_health_ui_bar(
     commands: &mut Commands,
     player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_root_node_query: &mut Query<(
-        Entity,
-        &mut Style,
-        &Children,
-        &PlayerProfileUIBarsRootNode,
-    )>,
+    player_bar_ui_root_node_query: &mut Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_health_ui_query: &Query<(Entity, &HealthBarUI)>,
     health: f32,
     max_health: f32,
@@ -137,12 +132,7 @@ pub(crate) fn spawn_health_ui_bar(
 pub(crate) fn spawn_mana_ui_bar(
     commands: &mut Commands,
     player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_root_node_query: &mut Query<(
-        Entity,
-        &mut Style,
-        &Children,
-        &PlayerProfileUIBarsRootNode,
-    )>,
+    player_bar_ui_root_node_query: &mut Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_mana_ui_query: &Query<(Entity, &ManaBarUI)>,
     mana: f32,
     max_mana: f32,
@@ -163,12 +153,7 @@ pub(crate) fn spawn_mana_ui_bar(
 fn spawn_ui_bar<T: Component>(
     commands: &mut Commands,
     player_profile_ui_query: &Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_root_node_query: &mut Query<(
-        Entity,
-        &mut Style,
-        &Children,
-        &PlayerProfileUIBarsRootNode,
-    )>,
+    player_bar_ui_root_node_query: &mut Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_bar_ui_query: &Query<(Entity, &T)>,
     value: f32,
     max_value: f32,
@@ -189,7 +174,7 @@ fn spawn_ui_bar<T: Component>(
         if player_bar_ui_root_node_query.get(child).is_err() {
             continue;
         }
-        let (_, _, player_bar_ui_root_node_children, _) =
+        let (_, player_bar_ui_root_node_children, _) =
             player_bar_ui_root_node_query.get(child).unwrap();
 
         for (index, &root_node_child) in player_bar_ui_root_node_children.iter().enumerate() {
@@ -240,7 +225,7 @@ fn spawn_ui_bar<T: Component>(
             continue;
         }
 
-        let (player_bar_ui_root_node_entity, mut player_bar_ui_style, _, _) =
+        let (player_bar_ui_root_node_entity, _, _) =
             player_bar_ui_root_node_query.get_mut(child).unwrap();
 
         let id = commands
@@ -250,23 +235,7 @@ fn spawn_ui_bar<T: Component>(
             })
             .id();
 
-        // if was_entity_despawned {
-        //     player_bar_ui_style.flex_direction = FlexDirection::ColumnReverse;
-        // } else {
-        //     player_bar_ui_style.flex_direction = FlexDirection::Column;
-        // }
-
         if let Some(entity_despawned_id) = entity_despawned {
-            // println!("BEFORE: {:?}", list_of_entities);
-            // list_of_entities.retain(|value| *value != entity_despawned_id);
-            // list_of_entities.push(id);
-            // println!("{:?}", entity_despawned_id);
-            // println!("{:?}", list_of_entities);
-            //
-            // commands
-            //     .entity(player_bar_ui_root_node_entity)
-            //     .replace_children(&list_of_entities);
-
             commands
                 .entity(player_bar_ui_root_node_entity)
                 .insert_children(entity_despawned_id, &[id]);

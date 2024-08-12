@@ -166,12 +166,7 @@ fn modify_player_profile_ui_health(
     commands: &mut Commands,
 
     player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
-    mut player_bar_ui_root_node_query: Query<(
-        Entity,
-        &mut Style,
-        &Children,
-        &PlayerProfileUIBarsRootNode,
-    )>,
+    mut player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_health_ui_query: Query<(Entity, &HealthBarUI)>,
 
     health: f32,
@@ -185,7 +180,7 @@ fn modify_player_profile_ui_health(
         if player_bar_ui_root_node_query.get(child).is_err() {
             continue;
         }
-        let (_, _, root_node_bar_children, _) = player_bar_ui_root_node_query.get(child).unwrap();
+        let (_, root_node_bar_children, _) = player_bar_ui_root_node_query.get(child).unwrap();
 
         for &root_node_child in root_node_bar_children.iter() {
             if player_health_ui_query.get(root_node_child).is_err() {
@@ -222,12 +217,7 @@ pub fn on_player_health_changed(
 
     // Top-left UI
     player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
-    player_bar_ui_root_node_query: Query<(
-        Entity,
-        &mut Style,
-        &Children,
-        &PlayerProfileUIBarsRootNode,
-    )>,
+    player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_health_ui_query: Query<(Entity, &HealthBarUI)>,
 ) {
     let event = trigger.event();
@@ -961,12 +951,7 @@ pub fn on_player_profile_ui_set(
     _trigger: Trigger<PlayerProfileUISet>,
     mut commands: Commands,
     player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
-    mut player_bar_ui_root_node_query: Query<(
-        Entity,
-        &mut Style,
-        &Children,
-        &PlayerProfileUIBarsRootNode,
-    )>,
+    mut player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_health_ui_query: Query<(Entity, &HealthBarUI)>,
     player_mana_ui_query: Query<(Entity, &ManaBarUI)>,
 ) {
