@@ -6,10 +6,9 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, Armor, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
+    AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
-    PlayerHitAudioTimeout, ScoreChanged, Speed, SpritesResources, Weapon,
-    WeaponFound,
+    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
 };
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
@@ -152,7 +151,7 @@ pub fn check_for_ammo_collisions_with_enemy(
 
             if ammo_collider.intersects(&enemy_collider) {
                 hit_enemy_audio(&asset_server, &mut commands);
-                damage_enemy_from_ammo(
+                damage_enemy_from_ammo_or_power(
                     &mut commands,
                     ammo_entity,
                     enemy_entity,
@@ -309,6 +308,8 @@ pub fn check_for_weapon_collisions(
     let player_entity = player.0;
     let player_transform = player.1;
     let player_children = player.2;
+
+    // !!!!!!!!!!!! INFO:
     // the items are being rendered on top of the base layer
     // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
     // the units must be changed in order to be able to collide them
@@ -372,17 +373,73 @@ pub fn check_for_weapon_collisions(
     }
 }
 
-fn damage_enemy_from_ammo(
+pub fn check_for_power_collisions_with_enemy(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
+
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
+    power_query: Query<(Entity, &Transform, &Damage), With<Power>>,
+) {
+    let number_of_enemies = enemies.iter().len();
+    if number_of_enemies == 0 {
+        commands.trigger(AllEnemiesDied);
+        return;
+    }
+
+    if base_camera.get_single().is_err() {
+        return;
+    }
+    let (base_camera_transform, _) = base_camera.get_single().unwrap();
+
+    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
+        // INFO: we need to re-center the coordinate system to be able to collide.
+        // This is in fact actually updating the origin point to which we will
+        // collide (the base camera, BASE_LAYER) with the `power`.
+        let enemy_center = Vec2::new(
+            enemy_transform.translation.x + base_camera_transform.translation.x,
+            enemy_transform.translation.y + base_camera_transform.translation.y,
+        );
+        let enemy_collider = Aabb2d::new(
+            enemy_center,
+            Vec2::new(
+                ENEMY_COLLISION_BOX_WIDTH / 2.,
+                ENEMY_COLLISION_BOX_HEIGHT / 2.,
+            ),
+        );
+
+        for (power_entity, power_transform, power_damage) in power_query.iter() {
+            // TODO: turn this half size into config
+            let power_collider = Aabb2d::new(
+                power_transform.translation.truncate(),
+                Vec2::new(16.0, 16.0),
+            );
+
+            if power_collider.intersects(&enemy_collider) {
+                hit_enemy_audio(&asset_server, &mut commands);
+                damage_enemy_from_ammo_or_power(
+                    &mut commands,
+                    power_entity,
+                    enemy_entity,
+                    &mut enemy_health,
+                    power_damage.0,
+                    enemy_damage,
+                );
+            }
+        }
+    }
+}
+
+fn damage_enemy_from_ammo_or_power(
     commands: &mut Commands,
-    ammo_entity: Entity,
+    ammo_or_power_entity: Entity,
     enemy_entity: Entity,
     enemy_health: &mut Health,
     damage: f32,
     enemy_damage: &Damage,
 ) {
-    // Always despawns ammo
-    commands.entity(ammo_entity).despawn();
-
+    // Always despawns ammo or power
+    commands.entity(ammo_or_power_entity).despawn();
     damage_enemy(commands, enemy_entity, enemy_health, damage, enemy_damage);
 }
 

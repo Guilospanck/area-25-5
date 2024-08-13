@@ -99,6 +99,7 @@ fn main() {
             FixedUpdate,
             (
                 check_for_ammo_collisions_with_enemy,
+                check_for_power_collisions_with_enemy,
                 check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
                 check_for_weapon_collisions,
