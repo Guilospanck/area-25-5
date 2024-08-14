@@ -3,7 +3,7 @@ use std::time::Duration;
 use area_25_5::*;
 
 use bevy::{
-    input::common_conditions::*, prelude::*, sprite::Wireframe2dPlugin,
+    input::common_conditions::*, log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin,
     time::common_conditions::on_timer, window::WindowResolution,
 };
 
@@ -22,6 +22,10 @@ fn main() {
                     .with_scale_factor_override(1.0),
                     ..default()
                 }),
+                ..default()
+            })
+            .set(LogPlugin {
+                level: bevy::log::Level::ERROR,
                 ..default()
             }),
         // INFO: this is used to generate meta files for the assets.
@@ -134,6 +138,8 @@ fn main() {
             FixedUpdate,
             refill_mana.run_if(on_timer(Duration::from_secs(1))),
         )
+        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyH)))
+        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyJ)))
         .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyL)))
         .observe(on_player_spawned)
         .observe(on_mouse_click)
