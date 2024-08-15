@@ -3,8 +3,8 @@ use std::time::Duration;
 use area_25_5::*;
 
 use bevy::{
-    prelude::*, sprite::Wireframe2dPlugin, time::common_conditions::on_timer,
-    window::WindowResolution,
+    input::common_conditions::*, log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin,
+    time::common_conditions::on_timer, window::WindowResolution,
 };
 
 fn main() {
@@ -22,6 +22,10 @@ fn main() {
                     .with_scale_factor_override(1.0),
                     ..default()
                 }),
+                ..default()
+            })
+            .set(LogPlugin {
+                level: bevy::log::Level::ERROR,
                 ..default()
             }),
         // INFO: this is used to generate meta files for the assets.
@@ -99,6 +103,7 @@ fn main() {
             FixedUpdate,
             (
                 check_for_ammo_collisions_with_enemy,
+                check_for_power_collisions_with_enemy,
                 check_for_player_collisions_to_enemy,
                 check_for_item_collisions,
                 check_for_weapon_collisions,
@@ -133,6 +138,10 @@ fn main() {
             FixedUpdate,
             refill_mana.run_if(on_timer(Duration::from_secs(1))),
         )
+        // power key codes
+        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyH)))
+        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyJ)))
+        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyL)))
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
@@ -149,5 +158,6 @@ fn main() {
         .observe(on_buff_remove_ui)
         .observe(on_weapon_found)
         .observe(on_player_profile_ui_set)
+        .observe(on_power_found)
         .run();
 }

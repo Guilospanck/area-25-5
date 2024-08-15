@@ -5,12 +5,14 @@ pub use bevy::render::view::RenderLayers;
 pub mod buff_config;
 pub mod enemy_config;
 pub mod item_config;
+pub mod power_config;
 pub mod weapon_config;
 
 // re-export all config modules
 pub(crate) use buff_config::*;
 pub use enemy_config::*;
 pub use item_config::*;
+pub use power_config::*;
 pub use weapon_config::*;
 
 // Layers control which entities should be rendered by cameras

@@ -1,13 +1,16 @@
+use bevy::{reflect::List, render::view::visibility};
+
 use crate::{
     enemy::Enemy,
+    equip_player_with_power,
     events::ShootBullets,
     player::Player,
     prelude::*,
-    spawn_player_stats_ui,
+    spawn_player_stats_ui, spawn_power,
     util::{get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, BaseCamera, Damage, Health, Mana, PlayAgainButton, PlayerCamera,
-    PlayerStatsUI, RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton,
-    Weapon,
+    PlayerManaChanged, PlayerStatsUI, Power, PowerBundle, PowerTypeEnum, RestartGame,
+    RestartGameButton, Speed, SpritesResources, StartGameButton, StoppingCondition, Weapon,
 };
 
 pub fn move_enemies_towards_player(
@@ -235,6 +238,75 @@ pub fn handle_show_player_stats_ui(
     }
     let player_stats_ui = player_assets_ui_query.get_single().unwrap();
     commands.entity(player_stats_ui).despawn_recursive();
+}
+
+pub fn power_up(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+
+    mut player_query: Query<(Entity, &mut Mana, &Children, &Player)>,
+    power_query: Query<(&Damage, &Power)>,
+) {
+    let Ok((_, mut player_mana, player_children, _)) = player_query.get_single_mut() else {
+        return;
+    };
+
+    let mut current_player_powers = vec![];
+    for &child in player_children {
+        if let Ok(player_powers) = power_query.get(child) {
+            current_player_powers.push(player_powers);
+        }
+    }
+
+    if current_player_powers.is_empty() {
+        return;
+    }
+
+    let get_player_power_based_on_the_keycode = |key_code: KeyCode| -> Option<(&Damage, &Power)> {
+        for player_power in current_player_powers {
+            let power = player_power.1;
+
+            if matches!(power.trigger_key, key_code) {
+                return Some(player_power);
+            }
+        }
+
+        None
+    };
+
+    let spawn_power_based_on_keypress = |key: KeyCode| -> Option<f32> {
+        let (power_damage, power) = get_player_power_based_on_the_keycode(key)?;
+
+        if player_mana.0 < power.mana_needed {
+            return None;
+        }
+
+        spawn_power(
+            &mut commands,
+            texture_atlas_layout,
+            &sprites,
+            asset_server,
+            power.clone(),
+            power_damage.clone(),
+        );
+        Some(power.mana_needed)
+    };
+
+    let key_pressed = keyboard_input.get_pressed().next().unwrap();
+
+    let optional_mana = spawn_power_based_on_keypress(*key_pressed);
+
+    let Some(mana_needed) = optional_mana else {
+        return;
+    };
+
+    player_mana.0 -= mana_needed;
+    commands.trigger(PlayerManaChanged {
+        mana: player_mana.0,
+    });
 }
 
 // Won

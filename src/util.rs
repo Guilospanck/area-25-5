@@ -1,4 +1,4 @@
-use crate::{prelude::*, ItemTypeEnum, SpriteInfo, SpritesResources};
+use crate::{prelude::*, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -59,5 +59,20 @@ pub(crate) fn get_item_sprite_based_on_item_type(
         ItemTypeEnum::Speed(_) => sprites.0.lightning.clone(),
         ItemTypeEnum::Armor(_) => sprites.0.shield.clone(),
         ItemTypeEnum::Shield(_) => sprites.0.diamond.clone(),
+    }
+}
+
+pub(crate) fn get_power_sprite_based_on_power_type(
+    power_type: PowerTypeEnum,
+    sprites: &Res<SpritesResources>,
+) -> SpriteInfo<'static> {
+    match power_type {
+        PowerTypeEnum::Explosions => sprites.0.diamond.clone(),
+    }
+}
+
+pub(crate) fn get_key_code_based_on_power_type(power_type: PowerTypeEnum) -> KeyCode {
+    match power_type {
+        PowerTypeEnum::Explosions => KeyCode::KeyL,
     }
 }
