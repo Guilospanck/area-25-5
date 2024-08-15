@@ -2,18 +2,22 @@ use std::time::Duration;
 
 use crate::{
     audio::hit_weapon_audio,
+    equip_player_with_power,
     game_actions::shoot,
     player::Player,
     prelude::*,
-    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
+    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar, spawn_power,
     spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
-    util::{get_item_sprite_based_on_item_type, get_weapon_sprite_based_on_weapon_type},
+    util::{
+        get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
+        get_weapon_sprite_based_on_weapon_type,
+    },
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CleanupWhenPlayerDies, ContainerBuffsUI,
     CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy,
     EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
-    PlayerProfileUI, PlayerProfileUIBarsRootNode, ScoreUI, Speed, SpritesResources, Weapon,
-    WeaponBundle, WeaponUI, WeaponWaves,
+    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerWaves, ScoreUI, Speed,
+    SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -86,6 +90,8 @@ pub struct WeaponFound {
     pub player_weapon_entity: Option<Entity>,
     pub player_ammo_entity: Option<Entity>,
 }
+#[derive(Event)]
+pub struct PowerFound;
 
 #[derive(Event)]
 pub struct GameOver;
@@ -360,9 +366,9 @@ pub fn on_player_spawned(
     spawn_item(
         &mut commands,
         item_by_level,
-        texture_atlas_layout,
+        &mut texture_atlas_layout,
         &sprites,
-        asset_server,
+        &asset_server,
     );
 }
 
@@ -449,6 +455,7 @@ pub fn on_wave_changed(
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
     item_waves: Res<ItemWaves>,
+    power_waves: Res<PowerWaves>,
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -521,10 +528,13 @@ pub fn on_wave_changed(
     spawn_item(
         &mut commands,
         item_by_level,
-        texture_atlas_layout,
+        &mut texture_atlas_layout,
         &sprites,
-        asset_server,
+        &asset_server,
     );
+
+    // Add new power to the player
+    commands.trigger(PowerFound);
 
     // Update UI
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
@@ -1036,5 +1046,60 @@ pub fn on_player_profile_ui_set(
         &player_mana_ui_query,
         PLAYER_MANA,
         PLAYER_MANA,
+    );
+}
+
+pub fn on_power_found(
+    _trigger: Trigger<PowerFound>,
+    mut commands: Commands,
+    texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    sprites: Res<SpritesResources>,
+    asset_server: Res<AssetServer>,
+
+    current_wave: Res<CurrentWave>,
+    power_waves: Res<PowerWaves>,
+
+    player_query: Query<(Entity, &Children, &Player)>,
+    player_powers_query: Query<(Entity, &Power)>,
+) {
+    let Ok((player_entity, player_children, _)) = player_query.get_single() else {
+        return;
+    };
+
+    let current_wave_power = power_waves
+        .0
+        .iter()
+        .find(|power| power.level == current_wave.0 as usize);
+    if current_wave_power.is_none() {
+        println!("NO POWER MATCHING WAVE FOUND!!!");
+        return;
+    }
+    let power_by_level = current_wave_power.unwrap();
+
+    let power_type = power_by_level.power.power_type.clone();
+    let keycode = get_key_code_based_on_power_type(power_type);
+
+    // Remove power from player if it has the same keycode - therefore
+    // it is the same type.
+    // The reason is because we want to replace it, not to add a `duplicate`
+    // one.
+    for &child in player_children {
+        if let Ok(player_powers) = player_powers_query.get(child) {
+            if player_powers.1.trigger_key == keycode {
+                commands
+                    .entity(player_entity)
+                    .remove_children(&[player_powers.0]);
+                break;
+            }
+        }
+    }
+
+    equip_player_with_power(
+        &mut commands,
+        texture_atlas_layout,
+        &sprites,
+        asset_server,
+        power_by_level,
+        player_entity,
     );
 }

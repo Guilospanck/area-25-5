@@ -2,13 +2,15 @@ use crate::{
     ammo::Ammo,
     audio::{hit_enemy_audio, hit_item_audio, player_hit_audio},
     enemy::Enemy,
+    equip_player_with_power,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::Item,
     player::Player,
     prelude::*,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
-    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
+    PlayerHitAudioTimeout, Power, PowerBundle, PowerFound, ScoreChanged, Speed, SpritesResources,
+    Weapon, WeaponFound,
 };
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
@@ -379,7 +381,11 @@ pub fn check_for_power_collisions_with_enemy(
     mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
-    power_query: Query<(Entity, &Transform, &Damage), With<Power>>,
+
+    player_query: Query<(&Children, &Player)>,
+    player_powers_query: Query<(Entity, &Power)>,
+
+    powers_query: Query<(Entity, &Transform, &Damage), With<Power>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -391,6 +397,17 @@ pub fn check_for_power_collisions_with_enemy(
         return;
     }
     let (base_camera_transform, _) = base_camera.get_single().unwrap();
+
+    let Ok((player_children, _)) = player_query.get_single() else {
+        return;
+    };
+
+    let mut current_player_powers_entity: Vec<Entity> = vec![];
+    for &child in player_children {
+        if let Ok(player_powers) = player_powers_query.get(child) {
+            current_player_powers_entity.push(player_powers.0);
+        }
+    }
 
     for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
         // INFO: we need to re-center the coordinate system to be able to collide.
@@ -408,7 +425,12 @@ pub fn check_for_power_collisions_with_enemy(
             ),
         );
 
-        for (power_entity, power_transform, power_damage) in power_query.iter() {
+        for (power_entity, power_transform, power_damage) in powers_query.iter() {
+            // if current power is from player, do not collide it
+            if current_player_powers_entity.contains(&power_entity) {
+                continue;
+            }
+
             // TODO: turn this half size into config
             let power_collider = Aabb2d::new(
                 power_transform.translation.truncate(),

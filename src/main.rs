@@ -138,6 +138,7 @@ fn main() {
             FixedUpdate,
             refill_mana.run_if(on_timer(Duration::from_secs(1))),
         )
+        // power key codes
         .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyH)))
         .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyJ)))
         .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyL)))
@@ -157,5 +158,6 @@ fn main() {
         .observe(on_buff_remove_ui)
         .observe(on_weapon_found)
         .observe(on_player_profile_ui_set)
+        .observe(on_power_found)
         .run();
 }
