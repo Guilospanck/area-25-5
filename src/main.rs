@@ -138,6 +138,10 @@ fn main() {
             FixedUpdate,
             refill_mana.run_if(on_timer(Duration::from_secs(1))),
         )
+        .add_systems(
+            FixedUpdate,
+            expand_circle_of_death.run_if(on_timer(Duration::from_millis(100))),
+        )
         // power key codes
         .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyH)))
         .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyJ)))
@@ -159,5 +163,6 @@ fn main() {
         .observe(on_weapon_found)
         .observe(on_player_profile_ui_set)
         .observe(on_power_found)
+        .observe(despawn_powers)
         .run();
 }

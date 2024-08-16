@@ -5,8 +5,16 @@ use crate::{
     },
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Direction, SpritesResources,
 };
-use bevy::math::VectorSpace;
+use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use rand::Rng;
+
+#[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
+#[cfg_attr(not(web), reflect(Component))]
+#[cfg_attr(web, derive(Component, Debug, Clone))]
+pub struct CircleOfDeath {
+    pub inner_circle_radius: f32,
+    pub outer_circle_radius: f32,
+}
 
 #[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
@@ -159,7 +167,6 @@ pub fn equip_player_with_power(
     let PowerType {
         damage,
         mana_needed,
-        source: _,
         power_type,
         stopping_condition,
         max_value,
@@ -198,6 +205,8 @@ pub fn spawn_power(
     texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
     asset_server: Res<AssetServer>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
     power: Power,
     power_damage: Damage,
 ) {
@@ -220,6 +229,9 @@ pub fn spawn_power(
         PowerTypeEnum::Explosions => {
             spawn_explosion_power(commands, power_bundle, max_value, quantity)
         }
+        PowerTypeEnum::CircleOfDeath => {
+            spawn_circle_of_death_power(commands, meshes, materials, power_bundle, quantity)
+        }
     }
 }
 
@@ -234,13 +246,45 @@ fn spawn_explosion_power(
             let mut rng = rand::thread_rng();
             let n1: u8 = rng.gen();
             let random_spawning_pos =
-                get_random_vec3(idx as u64, Some(n1 as u64 * ITEM_RANDOM_SEED));
+                get_random_vec3(idx as u64, Some(n1 as u64 * POWER_RANDOM_SEED));
 
             let mut new_bundle = power_bundle.clone();
             new_bundle.sprite.transform.translation = random_spawning_pos;
 
             commands.spawn(new_bundle);
         }
+    }
+}
+
+fn spawn_circle_of_death_power(
+    commands: &mut Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+
+    power_bundle: PowerBundle,
+    quantity: u32,
+) {
+    let circle = Mesh2dHandle(meshes.add(Annulus::new(40., 50.)));
+    let color = Color::srgba(255., 0., 0., 0.8);
+
+    commands.spawn((
+        MaterialMesh2dBundle {
+            mesh: circle,
+            material: materials.add(color),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            ..default()
+        },
+        CircleOfDeath {
+            inner_circle_radius: 40.,
+            outer_circle_radius: 50.,
+        },
+        BASE_LAYER,
+    ));
+
+    for _ in 1..=quantity {
+        let mut new_bundle = power_bundle.clone();
+        new_bundle.sprite.visibility = Visibility::Hidden;
+        commands.spawn(new_bundle);
     }
 }
 

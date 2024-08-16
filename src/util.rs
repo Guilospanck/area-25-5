@@ -68,11 +68,13 @@ pub(crate) fn get_power_sprite_based_on_power_type(
 ) -> SpriteInfo<'static> {
     match power_type {
         PowerTypeEnum::Explosions => sprites.0.diamond.clone(),
+        PowerTypeEnum::CircleOfDeath => sprites.0.magic_ball.clone(),
     }
 }
 
 pub(crate) fn get_key_code_based_on_power_type(power_type: PowerTypeEnum) -> KeyCode {
     match power_type {
         PowerTypeEnum::Explosions => KeyCode::KeyL,
+        PowerTypeEnum::CircleOfDeath => KeyCode::KeyJ,
     }
 }

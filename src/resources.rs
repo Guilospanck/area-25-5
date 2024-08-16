@@ -30,7 +30,7 @@ pub struct WeaponWaves(pub [WeaponByLevel<'static>; NUMBER_OF_WAVES]);
 pub struct ItemWaves(pub [ItemByLevel<'static>; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
-pub struct PowerWaves(pub [PowerByLevel<'static>; NUMBER_OF_WAVES]);
+pub struct PowerWaves(pub [PowerByLevel; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
 pub struct SpritesResources(pub Sprites<'static>);

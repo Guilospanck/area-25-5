@@ -434,7 +434,10 @@ pub fn check_for_power_collisions_with_enemy(
             // TODO: turn this half size into config
             let power_collider = Aabb2d::new(
                 power_transform.translation.truncate(),
-                Vec2::new(16.0, 16.0),
+                Vec2::new(
+                    (POWER_SPRITE_SIZE / 2) as f32,
+                    (POWER_SPRITE_SIZE / 2) as f32,
+                ),
             );
 
             if power_collider.intersects(&enemy_collider) {
