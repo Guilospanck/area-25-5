@@ -6,8 +6,9 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
+    util::check_if_collides_with_power_based_on_power_type,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
-    Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
+    CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
     PlayerHitAudioTimeout, Power, PowerBundle, PowerFound, ScoreChanged, Speed, SpritesResources,
     Weapon, WeaponFound,
 };
@@ -384,7 +385,8 @@ pub fn check_for_power_collisions_with_enemy(
     player_query: Query<(&Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
 
-    powers_query: Query<(Entity, &Transform, &Damage), With<Power>>,
+    powers_query: Query<(Entity, &Transform, &Damage, &Power), With<Power>>,
+    circle_of_death_query: Query<&CircleOfDeath, With<CircleOfDeath>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -423,13 +425,12 @@ pub fn check_for_power_collisions_with_enemy(
             ),
         );
 
-        for (power_entity, power_transform, power_damage) in powers_query.iter() {
+        for (power_entity, power_transform, power_damage, power) in powers_query.iter() {
             // if current power is from player, do not collide it
             if current_player_powers_entity.contains(&power_entity) {
                 continue;
             }
 
-            // TODO: turn this half size into config
             let power_collider = Aabb2d::new(
                 power_transform.translation.truncate(),
                 Vec2::new(
@@ -438,7 +439,14 @@ pub fn check_for_power_collisions_with_enemy(
                 ),
             );
 
-            if power_collider.intersects(&enemy_collider) {
+            let collides = check_if_collides_with_power_based_on_power_type(
+                power.power_type.clone(),
+                enemy_collider,
+                power_collider,
+                &circle_of_death_query,
+            );
+
+            if collides {
                 hit_enemy_audio(&asset_server, &mut commands);
                 damage_enemy_from_ammo_or_power(
                     &mut commands,

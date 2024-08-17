@@ -1,4 +1,4 @@
-use crate::{prelude::*, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources};
+use crate::{prelude::*, CircleOfDeath, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -76,5 +76,37 @@ pub(crate) fn get_key_code_based_on_power_type(power_type: PowerTypeEnum) -> Key
     match power_type {
         PowerTypeEnum::Explosions => KeyCode::KeyL,
         PowerTypeEnum::CircleOfDeath => KeyCode::KeyJ,
+    }
+}
+
+pub(crate) fn check_if_collides_with_power_based_on_power_type(
+    power_type: PowerTypeEnum,
+    collider: Aabb2d,
+    power_collider: Aabb2d,
+    circle_of_death_query: &Query<&CircleOfDeath, With<CircleOfDeath>>,
+) -> bool {
+    match power_type {
+        PowerTypeEnum::Explosions => power_collider.intersects(&collider),
+        PowerTypeEnum::CircleOfDeath => {
+            for circle_of_death in circle_of_death_query.iter() {
+                let CircleOfDeath {
+                    inner_circle_radius,
+                    outer_circle_radius,
+                } = circle_of_death;
+
+                if (collider.min.x >= *inner_circle_radius
+                    || -collider.min.x >= *inner_circle_radius)
+                    && (collider.max.x <= *outer_circle_radius
+                        || -collider.max.x <= *outer_circle_radius)
+                    && (collider.min.y >= *inner_circle_radius
+                        || -collider.min.y >= *inner_circle_radius)
+                    && (collider.max.y <= *outer_circle_radius
+                        || -collider.max.y <= *outer_circle_radius)
+                {
+                    return true;
+                }
+            }
+            false
+        }
     }
 }

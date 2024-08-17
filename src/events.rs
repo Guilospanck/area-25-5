@@ -703,8 +703,9 @@ pub fn expand_circle_of_death(
         let new_outer_radius = circle.outer_circle_radius * 0.2 + circle.outer_circle_radius;
         let new_inner_radius = new_outer_radius - 10.0;
 
-        if new_inner_radius > 2. * WINDOW_RESOLUTION.x_px {
+        if new_inner_radius > WINDOW_RESOLUTION.x_px {
             commands.entity(circle_entity).despawn();
+            commands.trigger(DespawnPower(PowerTypeEnum::CircleOfDeath));
             continue;
         }
 
@@ -714,8 +715,6 @@ pub fn expand_circle_of_death(
         circle.outer_circle_radius = new_outer_radius;
 
         *mesh2d_handle = Mesh2dHandle(new_mesh);
-
-        commands.trigger(DespawnPower(PowerTypeEnum::CircleOfDeath));
     }
 }
 
@@ -746,7 +745,6 @@ fn despawn_circle_of_death_power(
 
     powers_query: Query<(Entity, &Power), With<Power>>,
 ) {
-    return;
     let Ok((player_children, _)) = player_query.get_single() else {
         return;
     };

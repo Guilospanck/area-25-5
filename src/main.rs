@@ -48,6 +48,8 @@ fn main() {
             .register_type::<Ammo>()
             .register_type::<Item>()
             .register_type::<Buff>()
+            .register_type::<Power>()
+            .register_type::<CircleOfDeath>()
             .register_type::<BuffGroup>()
             .add_plugins(WorldInspectorPlugin::new());
     }
@@ -143,9 +145,18 @@ fn main() {
             expand_circle_of_death.run_if(on_timer(Duration::from_millis(100))),
         )
         // power key codes
-        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyH)))
-        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyJ)))
-        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyL)))
+        .add_systems(
+            FixedUpdate,
+            power_up.run_if(input_just_pressed(KeyCode::KeyH)),
+        )
+        .add_systems(
+            FixedUpdate,
+            power_up.run_if(input_just_pressed(KeyCode::KeyJ)),
+        )
+        .add_systems(
+            FixedUpdate,
+            power_up.run_if(input_just_pressed(KeyCode::KeyL)),
+        )
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
