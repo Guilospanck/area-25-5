@@ -746,6 +746,7 @@ fn despawn_circle_of_death_power(
 
     powers_query: Query<(Entity, &Power), With<Power>>,
 ) {
+    return;
     let Ok((player_children, _)) = player_query.get_single() else {
         return;
     };
@@ -760,7 +761,7 @@ fn despawn_circle_of_death_power(
     let circle_of_death_key_code = get_key_code_based_on_power_type(PowerTypeEnum::CircleOfDeath);
 
     for (power_entity, power) in powers_query.iter() {
-        // if current power is from player, do not collide it
+        // if current power is from player, do not despawn it
         if current_player_powers_entity.contains(&power_entity) {
             continue;
         }

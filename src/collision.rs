@@ -2,7 +2,6 @@ use crate::{
     ammo::Ammo,
     audio::{hit_enemy_audio, hit_item_audio, player_hit_audio},
     enemy::Enemy,
-    equip_player_with_power,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::Item,
     player::Player,
@@ -389,7 +388,6 @@ pub fn check_for_power_collisions_with_enemy(
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
-        commands.trigger(AllEnemiesDied);
         return;
     }
 

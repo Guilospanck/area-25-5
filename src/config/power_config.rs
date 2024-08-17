@@ -59,7 +59,7 @@ pub const POWERS_PER_WAVE: [PowerByLevel; NUMBER_OF_WAVES] = [
     },
     PowerByLevel {
         level: 3,
-        power: POWER_LVL_1,
+        power: POWER_LVL_2,
         quantity: 1,
     },
     PowerByLevel {
