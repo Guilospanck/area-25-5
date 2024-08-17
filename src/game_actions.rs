@@ -296,9 +296,15 @@ pub fn power_up(
         Some(power.mana_needed)
     };
 
-    let key_pressed = keyboard_input.get_pressed().next().unwrap();
-
-    let optional_mana = spawn_power_based_on_keypress(*key_pressed);
+    let optional_mana = if keyboard_input.any_just_pressed([KeyCode::KeyH].into_iter()) {
+        spawn_power_based_on_keypress(KeyCode::KeyH)
+    } else if keyboard_input.any_just_pressed([KeyCode::KeyJ].into_iter()) {
+        spawn_power_based_on_keypress(KeyCode::KeyJ)
+    } else if keyboard_input.any_just_pressed([KeyCode::KeyL].into_iter()) {
+        spawn_power_based_on_keypress(KeyCode::KeyL)
+    } else {
+        return;
+    };
 
     let Some(mana_needed) = optional_mana else {
         return;

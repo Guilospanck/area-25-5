@@ -51,6 +51,8 @@ speed, armor, damage and so on)
 - [x] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
 - [-] Add powers
+	- [x] Missing collision from circle to enemies 
+	- Circle should be spawned at player's location
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Change all spawns of empty entities to `.spawn_empty()`
