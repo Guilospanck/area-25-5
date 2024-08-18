@@ -247,12 +247,15 @@ fn spawn_explosion_power(
     max_value: u32,
     quantity: u32,
 ) {
+    let base_camera_scale = Vec2::splat(BASE_CAMERA_PROJECTION_SCALE).extend(1.);
+
     for _ in 1..=quantity {
         for idx in 1..=max_value {
             let mut rng = rand::thread_rng();
             let n1: u8 = rng.gen();
             let random_spawning_pos =
-                get_random_vec3(idx as u64, Some(n1 as u64 * POWER_RANDOM_SEED));
+                get_random_vec3(idx as u64, Some(n1 as u64 * POWER_RANDOM_SEED))
+                    / base_camera_scale;
 
             let mut new_bundle = power_bundle.clone();
             new_bundle.sprite.transform.translation = random_spawning_pos;
