@@ -2,6 +2,7 @@ use super::*;
 
 pub(crate) const POWER_RANDOM_SEED: u64 = 1242436746771;
 pub(crate) const POWER_SPRITE_SIZE: u8 = 32;
+pub(crate) const POWER_MOVE_SPEED: f32 = 100.0;
 
 #[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
 #[cfg_attr(not(web), reflect(Component))]
@@ -9,6 +10,7 @@ pub(crate) const POWER_SPRITE_SIZE: u8 = 32;
 pub enum PowerTypeEnum {
     Explosions,
     CircleOfDeath,
+    Laser,
 }
 
 #[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
@@ -18,7 +20,7 @@ pub enum StoppingCondition {
     #[default]
     Instances,
     Limit,
-    // ScreenBounces,
+    ScreenBounces,
 }
 
 pub struct PowerType {
@@ -32,12 +34,20 @@ pub struct PowerType {
 const POWER_LVL_1: PowerType = PowerType {
     damage: 10.0,
     mana_needed: 10.0,
+    power_type: PowerTypeEnum::Laser,
+    stopping_condition: StoppingCondition::ScreenBounces,
+    max_value: 5,
+};
+
+const POWER_LVL_2: PowerType = PowerType {
+    damage: 10.0,
+    mana_needed: 10.0,
     power_type: PowerTypeEnum::CircleOfDeath,
     stopping_condition: StoppingCondition::Limit,
     max_value: 0,
 };
 
-const POWER_LVL_2: PowerType = PowerType {
+const POWER_LVL_3: PowerType = PowerType {
     damage: 10.0,
     mana_needed: 10.0,
     power_type: PowerTypeEnum::Explosions,
