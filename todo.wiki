@@ -52,7 +52,10 @@ speed, armor, damage and so on)
 as the time passes (cooldown)
 - [-] Add powers
 	- [x] Missing collision from circle to enemies 
-	- Circle should be spawned at player's location
+	- [x] Circle should be spawned at player's location
+	- [ ] Explosions are being spawned only on the visible screen (probably needs
+	to be multiplied by 2 due to the BASE LAYER scale)
+	- [ ] Implement laser power
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Change all spawns of empty entities to `.spawn_empty()`

@@ -209,6 +209,7 @@ pub fn spawn_power(
     materials: ResMut<Assets<ColorMaterial>>,
     power: Power,
     power_damage: Damage,
+    player_translation: Vec3,
 ) {
     let visibility = Visibility::Visible;
 
@@ -229,9 +230,14 @@ pub fn spawn_power(
         PowerTypeEnum::Explosions => {
             spawn_explosion_power(commands, power_bundle, max_value, quantity)
         }
-        PowerTypeEnum::CircleOfDeath => {
-            spawn_circle_of_death_power(commands, meshes, materials, power_bundle, quantity)
-        }
+        PowerTypeEnum::CircleOfDeath => spawn_circle_of_death_power(
+            commands,
+            meshes,
+            materials,
+            power_bundle,
+            quantity,
+            player_translation,
+        ),
     }
 }
 
@@ -263,15 +269,18 @@ fn spawn_circle_of_death_power(
 
     power_bundle: PowerBundle,
     quantity: u32,
+    player_translation: Vec3,
 ) {
     let circle = Mesh2dHandle(meshes.add(Annulus::new(40., 50.)));
     let color = Color::srgba(255., 0., 0., 0.8);
+
+    let base_camera_scale = Vec2::splat(BASE_CAMERA_PROJECTION_SCALE).extend(1.);
 
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: circle,
             material: materials.add(color),
-            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            transform: Transform::from_translation(player_translation / base_camera_scale),
             ..default()
         },
         CircleOfDeath {

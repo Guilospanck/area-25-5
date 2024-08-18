@@ -246,10 +246,12 @@ pub fn power_up(
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
 
-    mut player_query: Query<(Entity, &mut Mana, &Children, &Player)>,
+    mut player_query: Query<(Entity, &Transform, &mut Mana, &Children, &Player)>,
     power_query: Query<(&Damage, &Power)>,
 ) {
-    let Ok((_, mut player_mana, player_children, _)) = player_query.get_single_mut() else {
+    let Ok((_, player_transform, mut player_mana, player_children, _)) =
+        player_query.get_single_mut()
+    else {
         return;
     };
 
@@ -292,6 +294,7 @@ pub fn power_up(
             materials,
             power.clone(),
             power_damage.clone(),
+            player_transform.translation,
         );
         Some(power.mana_needed)
     };
