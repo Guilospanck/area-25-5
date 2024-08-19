@@ -164,7 +164,7 @@ pub fn equip_player_with_power(
     commands: &mut Commands,
     texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
+    asset_server: &Res<AssetServer>,
 
     power_by_level: &PowerByLevel,
     player_entity: Entity,
@@ -228,7 +228,7 @@ pub fn spawn_power(
     let power_bundle = _get_power_bundle(
         texture_atlas_layout,
         sprites,
-        asset_server,
+        &asset_server,
         power.clone(),
         power_damage.0,
         visibility,
@@ -433,7 +433,7 @@ pub fn move_laser_power(
 fn _get_power_bundle(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
+    asset_server: &Res<AssetServer>,
 
     power: Power,
     damage: f32,

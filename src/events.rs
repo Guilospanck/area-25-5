@@ -9,17 +9,17 @@ use crate::{
     player::Player,
     prelude::*,
     spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar, spawn_power,
-    spawn_weapon, spawn_weapon_ui,
+    spawn_power_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
-        get_weapon_sprite_based_on_weapon_type,
+        get_power_sprite_based_on_power_type, get_weapon_sprite_based_on_weapon_type,
     },
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage,
     Enemy, EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
-    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerWaves, ScoreUI, Speed,
-    SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
+    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerUI, PowerUIRootNode, PowerWaves,
+    ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
 };
 
 #[derive(Event)]
@@ -1148,6 +1148,8 @@ pub fn on_power_found(
 
     player_query: Query<(Entity, &Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
+
+    power_ui_root_node: Query<(Entity, &PowerUIRootNode)>,
 ) {
     let Ok((player_entity, player_children, _)) = player_query.get_single() else {
         return;
@@ -1164,7 +1166,7 @@ pub fn on_power_found(
     let power_by_level = current_wave_power.unwrap();
 
     let power_type = power_by_level.power.power_type.clone();
-    let keycode = get_key_code_based_on_power_type(power_type);
+    let keycode = get_key_code_based_on_power_type(power_type.clone());
 
     // Remove power from player if it has the same keycode - therefore
     // it is the same type.
@@ -1185,8 +1187,21 @@ pub fn on_power_found(
         &mut commands,
         texture_atlas_layout,
         &sprites,
-        asset_server,
+        &asset_server,
         power_by_level,
         player_entity,
     );
+
+    // TODO: push new power, not replace it
+    // TODO: Add legend to which keycode it is configured
+    let sprite_source = get_power_sprite_based_on_power_type(power_type, &sprites).source;
+
+    let Ok((power_ui_root_node_entity, _)) = power_ui_root_node.get_single() else {
+        return;
+    };
+
+    let child_id = spawn_power_ui(&mut commands, &asset_server, sprite_source);
+    commands
+        .entity(power_ui_root_node_entity)
+        .add_child(child_id);
 }
