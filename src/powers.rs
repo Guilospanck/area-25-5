@@ -8,6 +8,7 @@ use crate::{
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Direction, SpritesResources,
 };
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+use bevy_inspector_egui::egui::emath::Rot2;
 use rand::Rng;
 
 #[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
@@ -24,6 +25,7 @@ pub struct CircleOfDeath {
 pub struct Laser {
     max_bounces: u32,
     current_bounces: u32,
+    pub center_position: Vec3,
 }
 
 #[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
@@ -327,7 +329,7 @@ fn spawn_laser_power(
     quantity: u32,
     player_translation: Vec3,
 ) {
-    let rectangle = Mesh2dHandle(meshes.add(Rectangle::new(300., 2.)));
+    let rectangle = Mesh2dHandle(meshes.add(Rectangle::new(LASER_POWER_WIDTH, LASER_POWER_HEIGHT)));
     let color = Color::srgba(255., 0., 0., 0.8);
 
     let base_camera_scale = Vec2::splat(BASE_CAMERA_PROJECTION_SCALE).extend(1.);
@@ -351,6 +353,7 @@ fn spawn_laser_power(
         Laser {
             current_bounces,
             max_bounces,
+            center_position: translation,
         },
         Direction(direction),
         BASE_LAYER,
@@ -368,16 +371,17 @@ pub fn move_laser_power(
     mut laser_power_query: Query<(Entity, &mut Transform, &mut Direction, &mut Laser), With<Laser>>,
     timer: Res<Time>,
 ) {
-    for (entity, mut transform, mut laser_direction, mut laser) in &mut laser_power_query {
+    for (entity, mut transform, mut laser_direction, mut laser) in &mut laser_power_query.iter_mut()
+    {
         let mut new_translation_x = transform.translation.x
             + laser_direction.0.x * POWER_MOVE_SPEED * timer.delta_seconds();
         let mut new_translation_y = transform.translation.y
             + laser_direction.0.y * POWER_MOVE_SPEED * timer.delta_seconds();
 
-        let off_screen_x = !(-WINDOW_RESOLUTION.x_px / 2.0..=WINDOW_RESOLUTION.x_px / 2.0)
-            .contains(&new_translation_x);
-        let off_screen_y = !(-WINDOW_RESOLUTION.y_px / 2.0..=WINDOW_RESOLUTION.y_px / 2.0)
-            .contains(&new_translation_y);
+        let off_screen_x =
+            !(-WINDOW_RESOLUTION.x_px..=WINDOW_RESOLUTION.x_px).contains(&new_translation_x);
+        let off_screen_y =
+            !(-WINDOW_RESOLUTION.y_px..=WINDOW_RESOLUTION.y_px).contains(&new_translation_y);
 
         if off_screen_x {
             // invert direction
@@ -420,6 +424,9 @@ pub fn move_laser_power(
 
         transform.translation.x = new_translation_x;
         transform.translation.y = new_translation_y;
+
+        // update Laser center position
+        laser.center_position = transform.translation;
     }
 }
 

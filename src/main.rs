@@ -3,8 +3,8 @@ use std::time::Duration;
 use area_25_5::*;
 
 use bevy::{
-    input::common_conditions::*, log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin,
-    time::common_conditions::on_timer, window::WindowResolution,
+    log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin, time::common_conditions::on_timer,
+    window::WindowResolution,
 };
 
 fn main() {
@@ -95,7 +95,13 @@ fn main() {
         )
         .add_systems(
             FixedUpdate,
-            (move_ammo, move_enemies_towards_player, animate_sprite).in_set(MoveSet),
+            (
+                move_ammo,
+                move_enemies_towards_player,
+                animate_sprite,
+                move_laser_power,
+            )
+                .in_set(MoveSet),
         )
         .add_systems(
             FixedUpdate,

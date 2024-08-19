@@ -8,9 +8,9 @@ use crate::{
     prelude::*,
     util::check_if_collides_with_power_based_on_power_type,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
-    CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
-    PlayerHitAudioTimeout, Power, PowerBundle, PowerFound, ScoreChanged, Speed, SpritesResources,
-    Weapon, WeaponFound,
+    CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
+    PlayerArmorChanged, PlayerHitAudioTimeout, Power, PowerBundle, PowerFound, ScoreChanged, Speed,
+    SpritesResources, Weapon, WeaponFound,
 };
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
@@ -155,7 +155,7 @@ pub fn check_for_ammo_collisions_with_enemy(
                 hit_enemy_audio(&asset_server, &mut commands);
                 damage_enemy_from_ammo_or_power(
                     &mut commands,
-                    ammo_entity,
+                    Some(ammo_entity),
                     enemy_entity,
                     &mut enemy_health,
                     player_weapon_damage.0,
@@ -387,16 +387,16 @@ pub fn check_for_power_collisions_with_enemy(
 
     powers_query: Query<(Entity, &Transform, &Damage, &Power), With<Power>>,
     circle_of_death_query: Query<&CircleOfDeath, With<CircleOfDeath>>,
+    laser_query: Query<&Laser, With<Laser>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
         return;
     }
 
-    if base_camera.get_single().is_err() {
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
-    }
-    let (base_camera_transform, _) = base_camera.get_single().unwrap();
+    };
 
     let Ok((player_children, _)) = player_query.get_single() else {
         return;
@@ -444,13 +444,20 @@ pub fn check_for_power_collisions_with_enemy(
                 enemy_collider,
                 power_collider,
                 &circle_of_death_query,
+                &laser_query,
             );
+
+            let mut power_entity_to_be_despawned = None;
+
+            if power.power_type != PowerTypeEnum::Laser {
+                power_entity_to_be_despawned = Some(power_entity);
+            }
 
             if collides {
                 hit_enemy_audio(&asset_server, &mut commands);
                 damage_enemy_from_ammo_or_power(
                     &mut commands,
-                    power_entity,
+                    power_entity_to_be_despawned,
                     enemy_entity,
                     &mut enemy_health,
                     power_damage.0,
@@ -463,14 +470,16 @@ pub fn check_for_power_collisions_with_enemy(
 
 fn damage_enemy_from_ammo_or_power(
     commands: &mut Commands,
-    ammo_or_power_entity: Entity,
+    ammo_or_power_entity: Option<Entity>,
     enemy_entity: Entity,
     enemy_health: &mut Health,
     damage: f32,
     enemy_damage: &Damage,
 ) {
     // Always despawns ammo or power
-    commands.entity(ammo_or_power_entity).despawn();
+    if let Some(entity) = ammo_or_power_entity {
+        commands.entity(entity).despawn();
+    }
     damage_enemy(commands, enemy_entity, enemy_health, damage, enemy_damage);
 }
 

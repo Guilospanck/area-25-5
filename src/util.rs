@@ -1,4 +1,7 @@
-use crate::{prelude::*, CircleOfDeath, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources};
+use crate::{
+    prelude::*, CircleOfDeath, ItemTypeEnum, Laser, PowerTypeEnum, SpriteInfo, SpritesResources,
+};
+use bevy::math::{bounding::BoundingVolume, VectorSpace};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -69,6 +72,7 @@ pub(crate) fn get_power_sprite_based_on_power_type(
     match power_type {
         PowerTypeEnum::Explosions => sprites.0.diamond.clone(),
         PowerTypeEnum::CircleOfDeath => sprites.0.magic_ball.clone(),
+        PowerTypeEnum::Laser => sprites.0.diamond.clone(),
     }
 }
 
@@ -76,6 +80,7 @@ pub(crate) fn get_key_code_based_on_power_type(power_type: PowerTypeEnum) -> Key
     match power_type {
         PowerTypeEnum::Explosions => KeyCode::KeyL,
         PowerTypeEnum::CircleOfDeath => KeyCode::KeyJ,
+        PowerTypeEnum::Laser => KeyCode::KeyH,
     }
 }
 
@@ -84,6 +89,7 @@ pub(crate) fn check_if_collides_with_power_based_on_power_type(
     collider: Aabb2d,
     power_collider: Aabb2d,
     circle_of_death_query: &Query<&CircleOfDeath, With<CircleOfDeath>>,
+    laser_query: &Query<&Laser, With<Laser>>,
 ) -> bool {
     match power_type {
         PowerTypeEnum::Explosions => power_collider.intersects(&collider),
@@ -103,6 +109,30 @@ pub(crate) fn check_if_collides_with_power_based_on_power_type(
                     && (collider.max.y <= *outer_circle_radius
                         || -collider.max.y <= *outer_circle_radius)
                 {
+                    return true;
+                }
+            }
+            false
+        }
+        PowerTypeEnum::Laser => {
+            let cos_45 = 2.0_f32.sqrt() / 2.;
+            let sin_45 = 2.0_f32.sqrt() / 2.;
+
+            for laser in laser_query.iter() {
+                let Laser {
+                    center_position, ..
+                } = laser;
+
+                let mut laser_collider = Aabb2d::new(
+                    Vec2::ZERO,
+                    Vec2::new(LASER_POWER_WIDTH / 2., LASER_POWER_HEIGHT / 2.),
+                );
+                let rotation_matrix = Rot2::from_sin_cos(sin_45, cos_45);
+                let translation_matrix = center_position.truncate();
+
+                laser_collider.transform_by(translation_matrix, rotation_matrix);
+
+                if laser_collider.intersects(&collider) {
                     return true;
                 }
             }

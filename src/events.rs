@@ -734,7 +734,7 @@ pub fn despawn_powers(
         PowerTypeEnum::CircleOfDeath => {
             despawn_circle_of_death_power(commands, player_query, player_powers_query, powers_query)
         }
-        _ => unimplemented!(),
+        _ => (),
     };
 }
 
