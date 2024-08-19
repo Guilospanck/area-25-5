@@ -3,8 +3,8 @@ use std::time::Duration;
 use area_25_5::*;
 
 use bevy::{
-    input::common_conditions::*, log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin,
-    time::common_conditions::on_timer, window::WindowResolution,
+    log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin, time::common_conditions::on_timer,
+    window::WindowResolution,
 };
 
 fn main() {
@@ -48,6 +48,8 @@ fn main() {
             .register_type::<Ammo>()
             .register_type::<Item>()
             .register_type::<Buff>()
+            .register_type::<Power>()
+            .register_type::<CircleOfDeath>()
             .register_type::<BuffGroup>()
             .add_plugins(WorldInspectorPlugin::new());
     }
@@ -93,7 +95,13 @@ fn main() {
         )
         .add_systems(
             FixedUpdate,
-            (move_ammo, move_enemies_towards_player, animate_sprite).in_set(MoveSet),
+            (
+                move_ammo,
+                move_enemies_towards_player,
+                animate_sprite,
+                move_laser_power,
+            )
+                .in_set(MoveSet),
         )
         .add_systems(
             FixedUpdate,
@@ -138,10 +146,11 @@ fn main() {
             FixedUpdate,
             refill_mana.run_if(on_timer(Duration::from_secs(1))),
         )
-        // power key codes
-        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyH)))
-        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyJ)))
-        .add_systems(Update, power_up.run_if(input_just_pressed(KeyCode::KeyL)))
+        .add_systems(
+            FixedUpdate,
+            expand_circle_of_death.run_if(on_timer(Duration::from_millis(100))),
+        )
+        .add_systems(FixedUpdate, power_up)
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
@@ -159,5 +168,6 @@ fn main() {
         .observe(on_weapon_found)
         .observe(on_player_profile_ui_set)
         .observe(on_power_found)
+        .observe(despawn_powers)
         .run();
 }

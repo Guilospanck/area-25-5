@@ -1,8 +1,5 @@
-use bevy::{reflect::List, render::view::visibility};
-
 use crate::{
     enemy::Enemy,
-    equip_player_with_power,
     events::ShootBullets,
     player::Player,
     prelude::*,
@@ -245,12 +242,16 @@ pub fn power_up(
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    meshes: ResMut<Assets<Mesh>>,
+    materials: ResMut<Assets<ColorMaterial>>,
 
-    mut player_query: Query<(Entity, &mut Mana, &Children, &Player)>,
+    mut player_query: Query<(Entity, &Transform, &mut Mana, &Children, &Player)>,
     power_query: Query<(&Damage, &Power)>,
 ) {
-    let Ok((_, mut player_mana, player_children, _)) = player_query.get_single_mut() else {
+    let Ok((_, player_transform, mut player_mana, player_children, _)) =
+        player_query.get_single_mut()
+    else {
         return;
     };
 
@@ -269,7 +270,7 @@ pub fn power_up(
         for player_power in current_player_powers {
             let power = player_power.1;
 
-            if matches!(power.trigger_key, key_code) {
+            if power.trigger_key == key_code {
                 return Some(player_power);
             }
         }
@@ -289,15 +290,24 @@ pub fn power_up(
             texture_atlas_layout,
             &sprites,
             asset_server,
+            meshes,
+            materials,
             power.clone(),
             power_damage.clone(),
+            player_transform.translation,
         );
         Some(power.mana_needed)
     };
 
-    let key_pressed = keyboard_input.get_pressed().next().unwrap();
-
-    let optional_mana = spawn_power_based_on_keypress(*key_pressed);
+    let optional_mana = if keyboard_input.any_just_pressed([KeyCode::KeyH].into_iter()) {
+        spawn_power_based_on_keypress(KeyCode::KeyH)
+    } else if keyboard_input.any_just_pressed([KeyCode::KeyJ].into_iter()) {
+        spawn_power_based_on_keypress(KeyCode::KeyJ)
+    } else if keyboard_input.any_just_pressed([KeyCode::KeyL].into_iter()) {
+        spawn_power_based_on_keypress(KeyCode::KeyL)
+    } else {
+        return;
+    };
 
     let Some(mana_needed) = optional_mana else {
         return;

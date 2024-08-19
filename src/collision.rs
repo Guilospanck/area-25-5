@@ -2,15 +2,15 @@ use crate::{
     ammo::Ammo,
     audio::{hit_enemy_audio, hit_item_audio, player_hit_audio},
     enemy::Enemy,
-    equip_player_with_power,
     events::{PlayerHealthChanged, PlayerSpeedChanged},
     item::Item,
     player::Player,
     prelude::*,
+    util::check_if_collides_with_power_based_on_power_type,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
-    Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, PlayerArmorChanged,
-    PlayerHitAudioTimeout, Power, PowerBundle, PowerFound, ScoreChanged, Speed, SpritesResources,
-    Weapon, WeaponFound,
+    CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
+    PlayerArmorChanged, PlayerHitAudioTimeout, Power, PowerBundle, PowerFound, ScoreChanged, Speed,
+    SpritesResources, Weapon, WeaponFound,
 };
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
@@ -155,7 +155,7 @@ pub fn check_for_ammo_collisions_with_enemy(
                 hit_enemy_audio(&asset_server, &mut commands);
                 damage_enemy_from_ammo_or_power(
                     &mut commands,
-                    ammo_entity,
+                    Some(ammo_entity),
                     enemy_entity,
                     &mut enemy_health,
                     player_weapon_damage.0,
@@ -385,18 +385,18 @@ pub fn check_for_power_collisions_with_enemy(
     player_query: Query<(&Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
 
-    powers_query: Query<(Entity, &Transform, &Damage), With<Power>>,
+    powers_query: Query<(Entity, &Transform, &Damage, &Power), With<Power>>,
+    circle_of_death_query: Query<&CircleOfDeath, With<CircleOfDeath>>,
+    laser_query: Query<&Laser, With<Laser>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
-        commands.trigger(AllEnemiesDied);
         return;
     }
 
-    if base_camera.get_single().is_err() {
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
-    }
-    let (base_camera_transform, _) = base_camera.get_single().unwrap();
+    };
 
     let Ok((player_children, _)) = player_query.get_single() else {
         return;
@@ -425,23 +425,39 @@ pub fn check_for_power_collisions_with_enemy(
             ),
         );
 
-        for (power_entity, power_transform, power_damage) in powers_query.iter() {
+        for (power_entity, power_transform, power_damage, power) in powers_query.iter() {
             // if current power is from player, do not collide it
             if current_player_powers_entity.contains(&power_entity) {
                 continue;
             }
 
-            // TODO: turn this half size into config
             let power_collider = Aabb2d::new(
                 power_transform.translation.truncate(),
-                Vec2::new(16.0, 16.0),
+                Vec2::new(
+                    (POWER_SPRITE_SIZE / 2) as f32,
+                    (POWER_SPRITE_SIZE / 2) as f32,
+                ),
             );
 
-            if power_collider.intersects(&enemy_collider) {
+            let collides = check_if_collides_with_power_based_on_power_type(
+                power.power_type.clone(),
+                enemy_collider,
+                power_collider,
+                &circle_of_death_query,
+                &laser_query,
+            );
+
+            let mut power_entity_to_be_despawned = None;
+
+            if power.power_type != PowerTypeEnum::Laser {
+                power_entity_to_be_despawned = Some(power_entity);
+            }
+
+            if collides {
                 hit_enemy_audio(&asset_server, &mut commands);
                 damage_enemy_from_ammo_or_power(
                     &mut commands,
-                    power_entity,
+                    power_entity_to_be_despawned,
                     enemy_entity,
                     &mut enemy_health,
                     power_damage.0,
@@ -454,14 +470,16 @@ pub fn check_for_power_collisions_with_enemy(
 
 fn damage_enemy_from_ammo_or_power(
     commands: &mut Commands,
-    ammo_or_power_entity: Entity,
+    ammo_or_power_entity: Option<Entity>,
     enemy_entity: Entity,
     enemy_health: &mut Health,
     damage: f32,
     enemy_damage: &Damage,
 ) {
     // Always despawns ammo or power
-    commands.entity(ammo_or_power_entity).despawn();
+    if let Some(entity) = ammo_or_power_entity {
+        commands.entity(entity).despawn();
+    }
     damage_enemy(commands, enemy_entity, enemy_health, damage, enemy_damage);
 }
 

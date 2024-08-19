@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use bevy::sprite::Mesh2dHandle;
+
 use crate::{
     audio::hit_weapon_audio,
     equip_player_with_power,
@@ -13,9 +15,9 @@ use crate::{
         get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
         get_weapon_sprite_based_on_weapon_type,
     },
-    AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CleanupWhenPlayerDies, ContainerBuffsUI,
-    CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy,
-    EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
+    AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
+    ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage,
+    Enemy, EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
     PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerWaves, ScoreUI, Speed,
     SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
 };
@@ -90,8 +92,15 @@ pub struct WeaponFound {
     pub player_weapon_entity: Option<Entity>,
     pub player_ammo_entity: Option<Entity>,
 }
+
 #[derive(Event)]
 pub struct PowerFound;
+
+// Used for instances of Power (like CircleOfDeath)
+// that need to be despawned once the entity (like the Annulus)
+// is despawned
+#[derive(Event)]
+pub struct DespawnPower(pub PowerTypeEnum);
 
 #[derive(Event)]
 pub struct GameOver;
@@ -455,7 +464,6 @@ pub fn on_wave_changed(
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
     item_waves: Res<ItemWaves>,
-    power_waves: Res<PowerWaves>,
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
@@ -681,6 +689,85 @@ pub fn refill_mana(mut commands: Commands, mut player: Query<&mut Mana, With<Pla
     commands.trigger(PlayerManaChanged {
         mana: player_mana.0,
     });
+}
+
+pub fn expand_circle_of_death(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut circle_of_death: Query<
+        (Entity, &mut Mesh2dHandle, &mut CircleOfDeath),
+        With<CircleOfDeath>,
+    >,
+) {
+    for (circle_entity, mut mesh2d_handle, mut circle) in circle_of_death.iter_mut() {
+        let new_outer_radius = circle.outer_circle_radius * 0.2 + circle.outer_circle_radius;
+        let new_inner_radius = new_outer_radius - 10.0;
+
+        if new_inner_radius > WINDOW_RESOLUTION.x_px {
+            commands.entity(circle_entity).despawn();
+            commands.trigger(DespawnPower(PowerTypeEnum::CircleOfDeath));
+            continue;
+        }
+
+        let new_mesh = meshes.add(Annulus::new(new_inner_radius, new_outer_radius));
+
+        circle.inner_circle_radius = new_inner_radius;
+        circle.outer_circle_radius = new_outer_radius;
+
+        *mesh2d_handle = Mesh2dHandle(new_mesh);
+    }
+}
+
+pub fn despawn_powers(
+    trigger: Trigger<DespawnPower>,
+
+    commands: Commands,
+    player_query: Query<(&Children, &Player)>,
+    player_powers_query: Query<(Entity, &Power)>,
+
+    powers_query: Query<(Entity, &Power), With<Power>>,
+) {
+    let event = trigger.event();
+    let power_type = event.0.clone();
+
+    match power_type {
+        PowerTypeEnum::CircleOfDeath => {
+            despawn_circle_of_death_power(commands, player_query, player_powers_query, powers_query)
+        }
+        _ => (),
+    };
+}
+
+fn despawn_circle_of_death_power(
+    mut commands: Commands,
+    player_query: Query<(&Children, &Player)>,
+    player_powers_query: Query<(Entity, &Power)>,
+
+    powers_query: Query<(Entity, &Power), With<Power>>,
+) {
+    let Ok((player_children, _)) = player_query.get_single() else {
+        return;
+    };
+
+    let mut current_player_powers_entity: Vec<Entity> = vec![];
+    for &child in player_children {
+        if let Ok(player_powers) = player_powers_query.get(child) {
+            current_player_powers_entity.push(player_powers.0);
+        }
+    }
+
+    let circle_of_death_key_code = get_key_code_based_on_power_type(PowerTypeEnum::CircleOfDeath);
+
+    for (power_entity, power) in powers_query.iter() {
+        // if current power is from player, do not despawn it
+        if current_player_powers_entity.contains(&power_entity) {
+            continue;
+        }
+
+        if power.trigger_key == circle_of_death_key_code {
+            commands.entity(power_entity).despawn();
+        }
+    }
 }
 
 const NUMBER_OF_POSITIONS: usize = 360; // 2pi
