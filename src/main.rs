@@ -169,5 +169,6 @@ fn main() {
         .observe(on_player_profile_ui_set)
         .observe(on_power_found)
         .observe(despawn_powers)
+        .observe(update_power_ui)
         .run();
 }

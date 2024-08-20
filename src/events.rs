@@ -18,8 +18,9 @@ use crate::{
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage,
     Enemy, EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
-    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerUI, PowerUIRootNode, PowerWaves,
-    ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
+    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerSpriteUI, PowerUI,
+    PowerUIRootNode, PowerWaves, ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI,
+    WeaponWaves,
 };
 
 #[derive(Event)]
@@ -101,6 +102,11 @@ pub struct PowerFound;
 // is despawned
 #[derive(Event)]
 pub struct DespawnPower(pub PowerTypeEnum);
+
+#[derive(Event)]
+pub struct OnUpdatePowerUI {
+    power_type: PowerTypeEnum,
+}
 
 #[derive(Event)]
 pub struct GameOver;
@@ -1148,9 +1154,6 @@ pub fn on_power_found(
 
     player_query: Query<(Entity, &Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
-
-    power_ui_root_node: Query<(Entity, &PowerUIRootNode)>,
-    power_ui_query: Query<&PowerUI, With<PowerUI>>,
 ) {
     let Ok((player_entity, player_children, _)) = player_query.get_single() else {
         return;
@@ -1193,32 +1196,61 @@ pub fn on_power_found(
         player_entity,
     );
 
-    // TODO: push new power, not replace it
-    // TODO: Add legend to which keycode it is configured
+    commands.trigger(OnUpdatePowerUI { power_type });
+}
+
+pub fn update_power_ui(
+    trigger: Trigger<OnUpdatePowerUI>,
+
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+
+    power_ui_root_node: Query<(Entity, &PowerUIRootNode)>,
+    mut power_ui_query: Query<(&mut PowerUI, &Children), With<PowerUI>>,
+    power_sprite_ui_query: Query<&Children, With<PowerSpriteUI>>,
+    mut power_level_ui_query: Query<&mut Text, With<PowerLevelUI>>,
+) {
+    let event = trigger.event();
+    let power_type = event.power_type.clone();
+
     let sprite_source = get_power_sprite_based_on_power_type(power_type.clone(), &sprites).source;
 
     let Ok((power_ui_root_node_entity, _)) = power_ui_root_node.get_single() else {
         return;
     };
 
-    let mut found = false;
-    for power in power_ui_query.iter() {
-        if power.power_type == power_type {
-            found = true;
+    let mut found = None;
+    for mut power_ui in power_ui_query.iter_mut() {
+        if power_ui.0.power_type == power_type {
+            // Update level of existing power
+            power_ui.0.power_level += 1;
+
+            found = Some(power_ui);
+            break;
         }
     }
 
-    if found {
+    // Update level of existing power on the UI
+    if found.is_some() {
+        let (power_ui, power_children) = found.unwrap();
+
+        for &child in power_children {
+            if let Ok(power_sprite_ui_children) = power_sprite_ui_query.get(child) {
+                for &sprite_child in power_sprite_ui_children {
+                    if let Ok(mut power_level_ui_text) = power_level_ui_query.get_mut(sprite_child)
+                    {
+                        power_level_ui_text.sections.first_mut().unwrap().value =
+                            format!("{}", power_ui.power_level);
+                    }
+                }
+            }
+        }
         return;
     }
 
-    let child_id = spawn_power_ui(
-        &mut commands,
-        &asset_server,
-        sprite_source,
-        power_type,
-        power_by_level.level,
-    );
+    // Only spawn new powers
+    let child_id = spawn_power_ui(&mut commands, &asset_server, sprite_source, power_type);
     commands
         .entity(power_ui_root_node_entity)
         .add_child(child_id);

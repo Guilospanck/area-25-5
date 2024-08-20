@@ -43,8 +43,14 @@ pub struct PowerUIRootNode;
 #[derive(Component)]
 pub struct PowerUI {
     pub power_type: PowerTypeEnum,
-    level: usize,
+    pub power_level: usize,
 }
+
+#[derive(Component)]
+pub struct PowerSpriteUI;
+
+#[derive(Component)]
+pub struct PowerLevelUI;
 
 #[derive(Component)]
 pub struct PlayerProfileUI;
@@ -518,7 +524,6 @@ pub(crate) fn spawn_power_ui(
     asset_server: &Res<AssetServer>,
     sprite_source: &str,
     power_type: PowerTypeEnum,
-    level: usize,
 ) -> Entity {
     let parent = commands
         .spawn((
@@ -533,11 +538,14 @@ pub(crate) fn spawn_power_ui(
                 ..default()
             },
             OVERLAY_LAYER,
-            PowerUI { power_type, level },
+            PowerUI {
+                power_type,
+                power_level: 1,
+            },
         ))
         .id();
 
-    let child = commands
+    let sprite_ui_id = commands
         .spawn((
             NodeBundle {
                 style: Style {
@@ -549,10 +557,40 @@ pub(crate) fn spawn_power_ui(
             },
             UiImage::new(asset_server.load(sprite_source.to_owned())),
             OVERLAY_LAYER,
+            PowerSpriteUI,
         ))
         .id();
 
-    commands.entity(parent).add_child(child).id()
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 15.0,
+        ..default()
+    };
+
+    let power_level_ui_id = commands
+        .spawn((
+            TextBundle {
+                text: Text::from_section("1", text_style),
+                style: Style {
+                    position_type: PositionType::Relative,
+                    // TODO: get rid of magic numbers
+                    top: Val::Px(1.5),
+                    left: Val::Px(50.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PowerLevelUI,
+        ))
+        .id();
+
+    let child_id = commands
+        .entity(sprite_ui_id)
+        .add_child(power_level_ui_id)
+        .id();
+    commands.entity(parent).add_child(child_id).id()
 }
 
 pub fn spawn_player_stats_ui(
