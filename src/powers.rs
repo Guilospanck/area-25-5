@@ -190,7 +190,6 @@ pub fn equip_player_with_power(
         origin: Vec2::ZERO,
         power_type: power_type.clone(),
         stopping_condition: stopping_condition.clone(),
-        // TODO: change this value depending on the Power type
         value: *max_value,
         max_value: *max_value,
         mana_needed: *mana_needed,
@@ -466,7 +465,7 @@ fn _get_power_bundle(
     PowerBundle::new(
         &mut texture_atlas_layout,
         sprites,
-        &asset_server,
+        asset_server,
         scale,
         pos,
         direction,

@@ -50,13 +50,17 @@ speed, armor, damage and so on)
 - [x] (BUG) Reset buff on restart
 - [x] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
-- [x] Add powers
+- [-] Add powers
 	- [x] Missing collision from circle to enemies 
 	- [x] Circle should be spawned at player's location
 	- [x] Explosions are being spawned only on the visible screen (probably needs
 	to be multiplied by 2 due to the BASE LAYER scale)
 	- [x] Implement laser power
 		- [x] Implement collision
+	- [ ] Add power to UI
+		- [x] Add more than one power to the UI
+		- [ ] Add keycode shortcuts to the UI as well
+
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Change all spawns of empty entities to `.spawn_empty()`

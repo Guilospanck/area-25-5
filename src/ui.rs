@@ -41,7 +41,10 @@ pub struct WeaponUI;
 pub struct PowerUIRootNode;
 
 #[derive(Component)]
-pub struct PowerUI;
+pub struct PowerUI {
+    pub power_type: PowerTypeEnum,
+    level: usize,
+}
 
 #[derive(Component)]
 pub struct PlayerProfileUI;
@@ -495,12 +498,12 @@ pub(crate) fn spawn_power_ui_root_node(commands: &mut Commands) {
     commands.spawn((
         NodeBundle {
             style: Style {
-                width: Val::Percent(100.0),
+                width: Val::Px(195.0),
+                height: Val::Px(60.0),
                 position_type: PositionType::Absolute,
                 bottom: Val::Px(10.),
                 right: Val::Px(10.),
-                row_gap: Val::Px(5.),
-                flex_direction: FlexDirection::ColumnReverse,
+                column_gap: Val::Px(5.),
                 ..default()
             },
             ..default()
@@ -514,27 +517,10 @@ pub(crate) fn spawn_power_ui(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     sprite_source: &str,
+    power_type: PowerTypeEnum,
+    level: usize,
 ) -> Entity {
     let parent = commands
-        .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    position_type: PositionType::Absolute,
-                    bottom: Val::Px(10.),
-                    flex_direction: FlexDirection::Column,
-                    justify_content: JustifyContent::FlexEnd,
-                    align_items: AlignItems::FlexEnd,
-                    ..default()
-                },
-                ..default()
-            },
-            OVERLAY_LAYER,
-            PowerUI,
-        ))
-        .id();
-
-    let child = commands
         .spawn((
             NodeBundle {
                 style: Style {
@@ -544,6 +530,21 @@ pub(crate) fn spawn_power_ui(
                 },
                 border_radius: BorderRadius::all(Val::Px(5.)),
                 background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PowerUI { power_type, level },
+        ))
+        .id();
+
+    let child = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
+                    ..default()
+                },
                 ..default()
             },
             UiImage::new(asset_server.load(sprite_source.to_owned())),

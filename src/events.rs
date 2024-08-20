@@ -1150,6 +1150,7 @@ pub fn on_power_found(
     player_powers_query: Query<(Entity, &Power)>,
 
     power_ui_root_node: Query<(Entity, &PowerUIRootNode)>,
+    power_ui_query: Query<&PowerUI, With<PowerUI>>,
 ) {
     let Ok((player_entity, player_children, _)) = player_query.get_single() else {
         return;
@@ -1194,13 +1195,30 @@ pub fn on_power_found(
 
     // TODO: push new power, not replace it
     // TODO: Add legend to which keycode it is configured
-    let sprite_source = get_power_sprite_based_on_power_type(power_type, &sprites).source;
+    let sprite_source = get_power_sprite_based_on_power_type(power_type.clone(), &sprites).source;
 
     let Ok((power_ui_root_node_entity, _)) = power_ui_root_node.get_single() else {
         return;
     };
 
-    let child_id = spawn_power_ui(&mut commands, &asset_server, sprite_source);
+    let mut found = false;
+    for power in power_ui_query.iter() {
+        if power.power_type == power_type {
+            found = true;
+        }
+    }
+
+    if found {
+        return;
+    }
+
+    let child_id = spawn_power_ui(
+        &mut commands,
+        &asset_server,
+        sprite_source,
+        power_type,
+        power_by_level.level,
+    );
     commands
         .entity(power_ui_root_node_entity)
         .add_child(child_id);
