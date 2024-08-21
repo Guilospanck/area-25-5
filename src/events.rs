@@ -39,16 +39,6 @@ pub struct PlayerManaChanged {
 }
 
 #[derive(Event)]
-pub struct PlayerSpeedChanged {
-    pub speed: f32,
-}
-
-#[derive(Event)]
-pub struct PlayerArmorChanged {
-    pub armor: f32,
-}
-
-#[derive(Event)]
 pub struct PlayerSpawned;
 
 #[derive(Event)]
@@ -645,9 +635,6 @@ pub fn remove_outdated_buffs(
                     // TODO: check for shield type (magical vs physical)
                     if shield.defensive > 0. {
                         player_armor.0 -= shield.defensive * NUMBER_OF_BUFF_ITEMS as f32;
-                        commands.trigger(PlayerArmorChanged {
-                            armor: player_armor.0,
-                        });
                     }
                     if buff_ui_despawned.is_none() {
                         commands.trigger(BuffUIRemove {

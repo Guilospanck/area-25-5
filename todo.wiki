@@ -60,10 +60,11 @@ as the time passes (cooldown)
 	- [-] Add power to UI
 		- [x] Add more than one power to the UI
 		- [x] Add keycode shortcuts to the UI as well
-		- [ ] Despawn on reset
+		- [x] Despawn on reset
 
 
 
+- [ ] (BUG) Reset weapon (and weapon UI) on restart game
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Change all spawns of empty entities to `.spawn_empty()`
@@ -84,6 +85,7 @@ Backlog:
 - [ ] Improve enemy movement towards player
 - [ ] Change speed of ammo
 - [ ] Change speed of laser power
+- [ ] Make weapon spawned on the map bigger
  
 Features:
 - HP bar for some boss at some point

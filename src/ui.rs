@@ -4,7 +4,7 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::{prelude::*, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
+use crate::{prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
 
 // ############## UI ####################
 #[derive(Component)]
@@ -501,22 +501,26 @@ pub(crate) fn spawn_weapon_ui(
 }
 
 pub(crate) fn spawn_power_ui_root_node(commands: &mut Commands) {
-    commands.spawn((
-        NodeBundle {
-            style: Style {
-                width: Val::Px(195.0),
-                height: Val::Px(60.0),
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(10.),
-                right: Val::Px(10.),
-                column_gap: Val::Px(5.),
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(195.0),
+                    height: Val::Px(60.0),
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(10.),
+                    right: Val::Px(10.),
+                    column_gap: Val::Px(5.),
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        },
-        OVERLAY_LAYER,
-        PowerUIRootNode,
-    ));
+            OVERLAY_LAYER,
+            PowerUIRootNode,
+        ))
+        .with_children(|parent| {
+            parent.spawn_empty();
+        });
 }
 
 pub(crate) fn spawn_power_ui(
@@ -543,6 +547,7 @@ pub(crate) fn spawn_power_ui(
                 power_type,
                 power_level: 1,
             },
+            CleanupWhenPlayerDies,
         ))
         .id();
 
