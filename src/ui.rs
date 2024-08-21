@@ -1,6 +1,5 @@
 use bevy::{
     color::palettes::css::YELLOW,
-    reflect::List,
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 

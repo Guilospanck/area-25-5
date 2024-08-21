@@ -1,7 +1,7 @@
 use crate::{
     prelude::*, CircleOfDeath, ItemTypeEnum, Laser, PowerTypeEnum, SpriteInfo, SpritesResources,
 };
-use bevy::math::{bounding::BoundingVolume, VectorSpace};
+use bevy::math::bounding::BoundingVolume;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 

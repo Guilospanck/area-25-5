@@ -8,7 +8,6 @@ use crate::{
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Direction, SpritesResources,
 };
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use bevy_inspector_egui::egui::emath::Rot2;
 use rand::Rng;
 
 #[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]

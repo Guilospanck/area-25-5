@@ -8,7 +8,7 @@ use crate::{
     game_actions::shoot,
     player::Player,
     prelude::*,
-    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar, spawn_power,
+    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
     spawn_power_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
