@@ -444,7 +444,6 @@ pub fn check_for_power_collisions_with_enemy(
             }
 
             if collides {
-                hit_enemy_audio(&asset_server, &mut commands);
                 damage_enemy_from_ammo_or_power(
                     &mut commands,
                     power_entity_to_be_despawned,
