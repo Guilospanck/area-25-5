@@ -64,6 +64,7 @@ as the time passes (cooldown)
 
 
 
+- [ ] Do not play audio when the laser hits the enemy
 - [ ] (BUG) Reset weapon (and weapon UI) on restart game
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen

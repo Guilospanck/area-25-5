@@ -8,9 +8,9 @@ use crate::util::get_ammo_sprite_based_on_weapon_type;
 use crate::util::get_random_vec3;
 use crate::CleanupWhenPlayerDies;
 
-#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub struct Ammo(pub WeaponTypeEnum);
 
 #[derive(Bundle, Clone)]

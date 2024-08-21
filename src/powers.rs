@@ -10,26 +10,26 @@ use crate::{
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use rand::Rng;
 
-#[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
 pub struct CircleOfDeath {
     pub inner_circle_radius: f32,
     pub outer_circle_radius: f32,
 }
 
-#[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
 pub struct Laser {
     max_bounces: u32,
     current_bounces: u32,
     pub center_position: Vec3,
 }
 
-#[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
 pub struct Power {
     // TODO: maybe remove this
     pub origin: Vec2,

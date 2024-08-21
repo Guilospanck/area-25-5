@@ -8,18 +8,18 @@ pub(crate) const POWER_MOVE_SPEED: f32 = 100.0;
 pub(crate) const LASER_POWER_WIDTH: f32 = 300.;
 pub(crate) const LASER_POWER_HEIGHT: f32 = 2.;
 
-#[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone, PartialEq))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Debug, Clone, PartialEq))]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone, PartialEq))]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Debug, Clone, PartialEq))]
 pub enum PowerTypeEnum {
     Explosions,
     CircleOfDeath,
     Laser,
 }
 
-#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub enum StoppingCondition {
     #[default]
     Instances,

@@ -7,6 +7,9 @@ use bevy::{
     window::WindowResolution,
 };
 
+#[cfg(not(feature = "web"))]
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
+
 fn main() {
     let mut app = App::new();
 
@@ -40,10 +43,9 @@ fn main() {
         Wireframe2dPlugin,
     ));
 
-    if cfg!(not(target_family = "wasm")) {
+    #[cfg(not(feature = "web"))]
+    fn add_debug_related_info(app: &mut App) {
         // INFO: uncomment to inspect the world elements
-        use bevy_inspector_egui::quick::WorldInspectorPlugin;
-
         app.register_type::<Weapon>()
             .register_type::<Ammo>()
             .register_type::<Item>()
@@ -53,6 +55,11 @@ fn main() {
             .register_type::<BuffGroup>()
             .add_plugins(WorldInspectorPlugin::new());
     }
+
+    #[cfg(feature = "web")]
+    fn add_debug_related_info(_app: &mut App) {}
+
+    add_debug_related_info(&mut app);
 
     app.insert_resource(Msaa::Off)
         // states

@@ -5,5 +5,5 @@ pub(crate) use bevy::{
 };
 
 #[allow(unused_imports)]
-#[cfg(not(web))]
+#[cfg(not(feature = "web"))]
 pub(crate) use bevy_inspector_egui::prelude::*;

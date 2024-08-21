@@ -5,9 +5,9 @@ use super::*;
 pub(crate) const ITEM_RANDOM_SEED: u64 = 1937836746771;
 pub(crate) const ITEM_SPRITE_SIZE: u8 = 32;
 
-#[cfg_attr(not(web), derive(Reflect, Component, Default, Debug, Clone))]
-#[cfg_attr(not(web), reflect(Component))]
-#[cfg_attr(web, derive(Component, Default, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub enum ItemStatsType {
     #[default]
     Speed,
