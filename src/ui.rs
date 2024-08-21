@@ -524,6 +524,7 @@ pub(crate) fn spawn_power_ui(
     asset_server: &Res<AssetServer>,
     sprite_source: &str,
     power_type: PowerTypeEnum,
+    keycode: KeyCode,
 ) -> Entity {
     let parent = commands
         .spawn((
@@ -571,7 +572,7 @@ pub(crate) fn spawn_power_ui(
     let power_level_ui_id = commands
         .spawn((
             TextBundle {
-                text: Text::from_section("1", text_style),
+                text: Text::from_section("1", text_style.clone()),
                 style: Style {
                     position_type: PositionType::Relative,
                     // TODO: get rid of magic numbers
@@ -586,9 +587,34 @@ pub(crate) fn spawn_power_ui(
         ))
         .id();
 
+    let keycode_string = match keycode {
+        KeyCode::KeyH => "H",
+        KeyCode::KeyJ => "J",
+        KeyCode::KeyL => "L",
+        _ => unimplemented!(),
+    };
+
+    let keycode_ui_id = commands
+        .spawn((
+            TextBundle {
+                text: Text::from_section(keycode_string.to_string(), text_style),
+                style: Style {
+                    position_type: PositionType::Relative,
+                    // TODO: get rid of magic numbers
+                    top: Val::Px(43.0),
+                    left: Val::Px(-1.0),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .id();
+
     let child_id = commands
         .entity(sprite_ui_id)
         .add_child(power_level_ui_id)
+        .add_child(keycode_ui_id)
         .id();
     commands.entity(parent).add_child(child_id).id()
 }

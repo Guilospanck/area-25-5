@@ -106,6 +106,7 @@ pub struct DespawnPower(pub PowerTypeEnum);
 #[derive(Event)]
 pub struct OnUpdatePowerUI {
     power_type: PowerTypeEnum,
+    keycode: KeyCode,
 }
 
 #[derive(Event)]
@@ -1196,7 +1197,10 @@ pub fn on_power_found(
         player_entity,
     );
 
-    commands.trigger(OnUpdatePowerUI { power_type });
+    commands.trigger(OnUpdatePowerUI {
+        power_type,
+        keycode,
+    });
 }
 
 pub fn update_power_ui(
@@ -1213,6 +1217,7 @@ pub fn update_power_ui(
 ) {
     let event = trigger.event();
     let power_type = event.power_type.clone();
+    let keycode = event.keycode;
 
     let sprite_source = get_power_sprite_based_on_power_type(power_type.clone(), &sprites).source;
 
@@ -1250,7 +1255,13 @@ pub fn update_power_ui(
     }
 
     // Only spawn new powers
-    let child_id = spawn_power_ui(&mut commands, &asset_server, sprite_source, power_type);
+    let child_id = spawn_power_ui(
+        &mut commands,
+        &asset_server,
+        sprite_source,
+        power_type,
+        keycode,
+    );
     commands
         .entity(power_ui_root_node_entity)
         .add_child(child_id);

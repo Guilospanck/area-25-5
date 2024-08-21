@@ -57,9 +57,12 @@ as the time passes (cooldown)
 	to be multiplied by 2 due to the BASE LAYER scale)
 	- [x] Implement laser power
 		- [x] Implement collision
-	- [ ] Add power to UI
+	- [-] Add power to UI
 		- [x] Add more than one power to the UI
-		- [ ] Add keycode shortcuts to the UI as well
+		- [x] Add keycode shortcuts to the UI as well
+		- [ ] Despawn on reset
+
+
 
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
@@ -78,6 +81,9 @@ Backlog:
 - [ ] Create the concept of enemies throwing magic or bullets as well
 - [ ] Some enemies may be fixed at some place and only cast spells
 - [ ] Add proper audio and game sound
+- [ ] Improve enemy movement towards player
+- [ ] Change speed of ammo
+- [ ] Change speed of laser power
  
 Features:
 - HP bar for some boss at some point
