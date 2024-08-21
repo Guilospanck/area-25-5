@@ -50,13 +50,21 @@ speed, armor, damage and so on)
 - [x] (BUG) Reset buff on restart
 - [x] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
-- [x] Add powers
+- [-] Add powers
 	- [x] Missing collision from circle to enemies 
 	- [x] Circle should be spawned at player's location
 	- [x] Explosions are being spawned only on the visible screen (probably needs
 	to be multiplied by 2 due to the BASE LAYER scale)
 	- [x] Implement laser power
 		- [x] Implement collision
+	- [-] Add power to UI
+		- [x] Add more than one power to the UI
+		- [x] Add keycode shortcuts to the UI as well
+		- [x] Despawn on reset
+
+
+
+- [ ] (BUG) Reset weapon (and weapon UI) on restart game
 - [ ] (BUG) The game starts before hitting start 
 - [ ] Fix spawns happening outside screen
 - [ ] Change all spawns of empty entities to `.spawn_empty()`
@@ -74,6 +82,10 @@ Backlog:
 - [ ] Create the concept of enemies throwing magic or bullets as well
 - [ ] Some enemies may be fixed at some place and only cast spells
 - [ ] Add proper audio and game sound
+- [ ] Improve enemy movement towards player
+- [ ] Change speed of ammo
+- [ ] Change speed of laser power
+- [ ] Make weapon spawned on the map bigger
  
 Features:
 - HP bar for some boss at some point

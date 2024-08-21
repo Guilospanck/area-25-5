@@ -2,15 +2,14 @@ use crate::{
     ammo::Ammo,
     audio::{hit_enemy_audio, hit_item_audio, player_hit_audio},
     enemy::Enemy,
-    events::{PlayerHealthChanged, PlayerSpeedChanged},
+    events::PlayerHealthChanged,
     item::Item,
     player::Player,
     prelude::*,
     util::check_if_collides_with_power_based_on_power_type,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
-    PlayerArmorChanged, PlayerHitAudioTimeout, Power, PowerBundle, PowerFound, ScoreChanged, Speed,
-    SpritesResources, Weapon, WeaponFound,
+    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
 };
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
@@ -235,23 +234,14 @@ pub fn check_for_item_collisions(
                 match &item.item_type {
                     ItemTypeEnum::Speed(speed) => {
                         player_speed.0 += speed.0;
-                        commands.trigger(PlayerSpeedChanged {
-                            speed: player_speed.0,
-                        });
                     }
                     ItemTypeEnum::Armor(armor) => {
                         player_armor.0 += armor.0;
-                        commands.trigger(PlayerArmorChanged {
-                            armor: player_armor.0,
-                        });
                     }
                     ItemTypeEnum::Shield(shield) => {
                         // TODO: check for shield type (magical vs physical)
                         if shield.defensive > 0. {
                             player_armor.0 += shield.defensive * NUMBER_OF_BUFF_ITEMS as f32;
-                            commands.trigger(PlayerArmorChanged {
-                                armor: player_armor.0,
-                            });
                         }
 
                         // Add new buff to player

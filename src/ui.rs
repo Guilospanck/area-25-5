@@ -1,10 +1,9 @@
 use bevy::{
     color::palettes::css::YELLOW,
-    reflect::List,
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::{prelude::*, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
+use crate::{prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
 
 // ############## UI ####################
 #[derive(Component)]
@@ -36,6 +35,21 @@ pub struct BuffsUI {
 
 #[derive(Component)]
 pub struct WeaponUI;
+
+#[derive(Component)]
+pub struct PowerUIRootNode;
+
+#[derive(Component)]
+pub struct PowerUI {
+    pub power_type: PowerTypeEnum,
+    pub power_level: usize,
+}
+
+#[derive(Component)]
+pub struct PowerSpriteUI;
+
+#[derive(Component)]
+pub struct PowerLevelUI;
 
 #[derive(Component)]
 pub struct PlayerProfileUI;
@@ -485,6 +499,130 @@ pub(crate) fn spawn_weapon_ui(
     commands.entity(parent).add_child(child);
 }
 
+pub(crate) fn spawn_power_ui_root_node(commands: &mut Commands) {
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(195.0),
+                    height: Val::Px(60.0),
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(10.),
+                    right: Val::Px(10.),
+                    column_gap: Val::Px(5.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PowerUIRootNode,
+        ))
+        .with_children(|parent| {
+            parent.spawn_empty();
+        });
+}
+
+pub(crate) fn spawn_power_ui(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    sprite_source: &str,
+    power_type: PowerTypeEnum,
+    keycode: KeyCode,
+) -> Entity {
+    let parent = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(60.0),
+                    height: Val::Px(60.0),
+                    ..default()
+                },
+                border_radius: BorderRadius::all(Val::Px(5.)),
+                background_color: BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2)),
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PowerUI {
+                power_type,
+                power_level: 1,
+            },
+            CleanupWhenPlayerDies,
+        ))
+        .id();
+
+    let sprite_ui_id = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
+                    ..default()
+                },
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite_source.to_owned())),
+            OVERLAY_LAYER,
+            PowerSpriteUI,
+        ))
+        .id();
+
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 15.0,
+        ..default()
+    };
+
+    let power_level_ui_id = commands
+        .spawn((
+            TextBundle {
+                text: Text::from_section("1", text_style.clone()),
+                style: Style {
+                    position_type: PositionType::Relative,
+                    // TODO: get rid of magic numbers
+                    top: Val::Px(1.5),
+                    left: Val::Px(50.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            PowerLevelUI,
+        ))
+        .id();
+
+    let keycode_string = match keycode {
+        KeyCode::KeyH => "H",
+        KeyCode::KeyJ => "J",
+        KeyCode::KeyL => "L",
+        _ => unimplemented!(),
+    };
+
+    let keycode_ui_id = commands
+        .spawn((
+            TextBundle {
+                text: Text::from_section(keycode_string.to_string(), text_style),
+                style: Style {
+                    position_type: PositionType::Relative,
+                    // TODO: get rid of magic numbers
+                    top: Val::Px(43.0),
+                    left: Val::Px(-1.0),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .id();
+
+    let child_id = commands
+        .entity(sprite_ui_id)
+        .add_child(power_level_ui_id)
+        .add_child(keycode_ui_id)
+        .id();
+    commands.entity(parent).add_child(child_id).id()
+}
+
 pub fn spawn_player_stats_ui(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
@@ -652,6 +790,7 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     spawn_profile_ui(&mut commands, &asset_server);
     spawn_container_buffs_ui(&mut commands);
     spawn_weapon_ui(&mut commands, &asset_server, DEFAULT_WEAPON_SPRITE_SOURCE);
+    spawn_power_ui_root_node(&mut commands);
 }
 
 pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {

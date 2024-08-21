@@ -1,7 +1,6 @@
 use crate::{
     prelude::*, CurrentScore, CurrentTime, CurrentTimeChanged, CurrentTimeUI, CurrentWave,
-    CurrentWaveUI, PlayerArmorChanged, PlayerHealthChanged, PlayerProfileUISet, PlayerSpeedChanged,
-    ScoreChanged,
+    CurrentWaveUI, PlayerHealthChanged, PlayerProfileUISet, ScoreChanged,
 };
 
 #[derive(Component, Clone)]
@@ -25,7 +24,7 @@ pub fn reset_initial_state(
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
     }
-    current_time.minutes = 0u16;
+    current_time.minutes = 10u16;
     current_time.seconds = 30u16;
     current_score.0 = 0.0;
 
@@ -33,10 +32,6 @@ pub fn reset_initial_state(
     commands.trigger(CurrentTimeChanged);
     commands.trigger(PlayerProfileUISet);
 
-    commands.trigger(PlayerSpeedChanged {
-        speed: PLAYER_MOVE_SPEED,
-    });
-    commands.trigger(PlayerArmorChanged { armor: 0.0 });
     commands.trigger(PlayerHealthChanged {
         health: PLAYER_HEALTH,
     });

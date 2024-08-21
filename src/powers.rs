@@ -8,7 +8,6 @@ use crate::{
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Direction, SpritesResources,
 };
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
-use bevy_inspector_egui::egui::emath::Rot2;
 use rand::Rng;
 
 #[cfg_attr(not(web), derive(Reflect, Component, Debug, Clone))]
@@ -164,7 +163,7 @@ pub fn equip_player_with_power(
     commands: &mut Commands,
     texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
+    asset_server: &Res<AssetServer>,
 
     power_by_level: &PowerByLevel,
     player_entity: Entity,
@@ -190,7 +189,6 @@ pub fn equip_player_with_power(
         origin: Vec2::ZERO,
         power_type: power_type.clone(),
         stopping_condition: stopping_condition.clone(),
-        // TODO: change this value depending on the Power type
         value: *max_value,
         max_value: *max_value,
         mana_needed: *mana_needed,
@@ -228,7 +226,7 @@ pub fn spawn_power(
     let power_bundle = _get_power_bundle(
         texture_atlas_layout,
         sprites,
-        asset_server,
+        &asset_server,
         power.clone(),
         power_damage.0,
         visibility,
@@ -433,7 +431,7 @@ pub fn move_laser_power(
 fn _get_power_bundle(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
+    asset_server: &Res<AssetServer>,
 
     power: Power,
     damage: f32,
@@ -466,7 +464,7 @@ fn _get_power_bundle(
     PowerBundle::new(
         &mut texture_atlas_layout,
         sprites,
-        &asset_server,
+        asset_server,
         scale,
         pos,
         direction,

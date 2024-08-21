@@ -8,18 +8,19 @@ use crate::{
     game_actions::shoot,
     player::Player,
     prelude::*,
-    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar, spawn_power,
-    spawn_weapon, spawn_weapon_ui,
+    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
+    spawn_power_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
-        get_weapon_sprite_based_on_weapon_type,
+        get_power_sprite_based_on_power_type, get_weapon_sprite_based_on_weapon_type,
     },
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage,
     Enemy, EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
-    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerWaves, ScoreUI, Speed,
-    SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
+    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerSpriteUI, PowerUI,
+    PowerUIRootNode, PowerWaves, ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI,
+    WeaponWaves,
 };
 
 #[derive(Event)]
@@ -35,16 +36,6 @@ pub struct PlayerHealthChanged {
 #[derive(Event)]
 pub struct PlayerManaChanged {
     pub mana: f32,
-}
-
-#[derive(Event)]
-pub struct PlayerSpeedChanged {
-    pub speed: f32,
-}
-
-#[derive(Event)]
-pub struct PlayerArmorChanged {
-    pub armor: f32,
 }
 
 #[derive(Event)]
@@ -101,6 +92,12 @@ pub struct PowerFound;
 // is despawned
 #[derive(Event)]
 pub struct DespawnPower(pub PowerTypeEnum);
+
+#[derive(Event)]
+pub struct OnUpdatePowerUI {
+    power_type: PowerTypeEnum,
+    keycode: KeyCode,
+}
 
 #[derive(Event)]
 pub struct GameOver;
@@ -638,9 +635,6 @@ pub fn remove_outdated_buffs(
                     // TODO: check for shield type (magical vs physical)
                     if shield.defensive > 0. {
                         player_armor.0 -= shield.defensive * NUMBER_OF_BUFF_ITEMS as f32;
-                        commands.trigger(PlayerArmorChanged {
-                            armor: player_armor.0,
-                        });
                     }
                     if buff_ui_despawned.is_none() {
                         commands.trigger(BuffUIRemove {
@@ -1164,7 +1158,7 @@ pub fn on_power_found(
     let power_by_level = current_wave_power.unwrap();
 
     let power_type = power_by_level.power.power_type.clone();
-    let keycode = get_key_code_based_on_power_type(power_type);
+    let keycode = get_key_code_based_on_power_type(power_type.clone());
 
     // Remove power from player if it has the same keycode - therefore
     // it is the same type.
@@ -1185,8 +1179,77 @@ pub fn on_power_found(
         &mut commands,
         texture_atlas_layout,
         &sprites,
-        asset_server,
+        &asset_server,
         power_by_level,
         player_entity,
     );
+
+    commands.trigger(OnUpdatePowerUI {
+        power_type,
+        keycode,
+    });
+}
+
+pub fn update_power_ui(
+    trigger: Trigger<OnUpdatePowerUI>,
+
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+
+    power_ui_root_node: Query<(Entity, &PowerUIRootNode)>,
+    mut power_ui_query: Query<(&mut PowerUI, &Children), With<PowerUI>>,
+    power_sprite_ui_query: Query<&Children, With<PowerSpriteUI>>,
+    mut power_level_ui_query: Query<&mut Text, With<PowerLevelUI>>,
+) {
+    let event = trigger.event();
+    let power_type = event.power_type.clone();
+    let keycode = event.keycode;
+
+    let sprite_source = get_power_sprite_based_on_power_type(power_type.clone(), &sprites).source;
+
+    let Ok((power_ui_root_node_entity, _)) = power_ui_root_node.get_single() else {
+        return;
+    };
+
+    let mut found = None;
+    for mut power_ui in power_ui_query.iter_mut() {
+        if power_ui.0.power_type == power_type {
+            // Update level of existing power
+            power_ui.0.power_level += 1;
+
+            found = Some(power_ui);
+            break;
+        }
+    }
+
+    // Update level of existing power on the UI
+    if found.is_some() {
+        let (power_ui, power_children) = found.unwrap();
+
+        for &child in power_children {
+            if let Ok(power_sprite_ui_children) = power_sprite_ui_query.get(child) {
+                for &sprite_child in power_sprite_ui_children {
+                    if let Ok(mut power_level_ui_text) = power_level_ui_query.get_mut(sprite_child)
+                    {
+                        power_level_ui_text.sections.first_mut().unwrap().value =
+                            format!("{}", power_ui.power_level);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    // Only spawn new powers
+    let child_id = spawn_power_ui(
+        &mut commands,
+        &asset_server,
+        sprite_source,
+        power_type,
+        keycode,
+    );
+    commands
+        .entity(power_ui_root_node_entity)
+        .add_child(child_id);
 }

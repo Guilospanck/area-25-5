@@ -36,7 +36,7 @@ pub struct PowerType {
 }
 
 const POWER_LVL_1: PowerType = PowerType {
-    damage: 1.0,
+    damage: 0.1,
     mana_needed: 10.0,
     power_type: PowerTypeEnum::Laser,
     stopping_condition: StoppingCondition::ScreenBounces,
@@ -78,7 +78,7 @@ pub const POWERS_PER_WAVE: [PowerByLevel; NUMBER_OF_WAVES] = [
     },
     PowerByLevel {
         level: 4,
-        power: POWER_LVL_1,
+        power: POWER_LVL_3,
         quantity: 1,
     },
     PowerByLevel {
