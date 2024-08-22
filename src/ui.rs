@@ -404,6 +404,7 @@ pub fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>
             },
             OVERLAY_LAYER,
             PlayerProfileUI,
+            CleanupWhenPlayerDies,
         ))
         .id();
 

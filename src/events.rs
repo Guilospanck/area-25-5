@@ -263,6 +263,7 @@ pub fn on_player_mana_changed(
     mut commands: Commands,
 
     player_profile_ui_query: Query<(Entity, &Children, &PlayerProfileUI)>,
+    // This is the container of the mana and health bars
     mut player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_mana_ui_query: Query<(Entity, &ManaBarUI)>,
 ) {

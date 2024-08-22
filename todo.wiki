@@ -61,14 +61,16 @@ as the time passes (cooldown)
 		- [x] Add more than one power to the UI
 		- [x] Add keycode shortcuts to the UI as well
 		- [x] Despawn on reset
+- [x] (BUG) need do despawn the powers (right now only the UI is despawned)
+- [x] Do not play audio when the laser hits the enemy (not playing audio at all for powers)
+- [x] (BUG) Reset weapon (and weapon UI) on restart game
+- [x] Fix spawns happening outside screen
 
-
-
-- [ ] Do not play audio when the laser hits the enemy
-- [ ] (BUG) Reset weapon (and weapon UI) on restart game
+- [ ] (BUG-itchio) The screen is not completely showing
 - [ ] (BUG) The game starts before hitting start 
-- [ ] Fix spawns happening outside screen
+- [ ] Change annoying audio
 - [ ] Change all spawns of empty entities to `.spawn_empty()`
+- [ ] Validate circle power is actually dealing damage to enemies
 
 Ongoing:
 - [-] Spawn different weapons (Still need more)
@@ -87,6 +89,7 @@ Backlog:
 - [ ] Change speed of ammo
 - [ ] Change speed of laser power
 - [ ] Make weapon spawned on the map bigger
+- [ ] Improve rendering of circle
  
 Features:
 - HP bar for some boss at some point

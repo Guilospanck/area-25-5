@@ -9,7 +9,10 @@ use crate::util::get_weapon_sprite_based_on_weapon_type;
 use crate::CleanupWhenPlayerDies;
 use rand::Rng;
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub struct Weapon(pub WeaponTypeEnum);
