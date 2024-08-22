@@ -6,8 +6,8 @@ use crate::{
     spawn_player_stats_ui, spawn_power,
     util::{get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, BaseCamera, Damage, Health, Mana, PlayAgainButton, PlayerCamera,
-    PlayerManaChanged, PlayerStatsUI, Power, RestartGame,
-    RestartGameButton, Speed, SpritesResources, StartGameButton, Weapon,
+    PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
+    SpritesResources, StartGameButton, Weapon,
 };
 
 pub fn move_enemies_towards_player(
