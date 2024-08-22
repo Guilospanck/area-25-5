@@ -71,6 +71,7 @@ fn main() {
                 CollisionSet.run_if(in_state(GameState::Alive)),
                 MoveSet.run_if(in_state(GameState::Alive)),
                 InputSet.run_if(in_state(GameState::Alive)),
+                TimeBasedSet.run_if(in_state(GameState::Alive)),
             ),
         )
         // systems
@@ -112,7 +113,13 @@ fn main() {
         )
         .add_systems(
             FixedUpdate,
-            (move_player, handle_click, handle_show_player_stats_ui).in_set(InputSet),
+            (
+                move_player,
+                handle_click,
+                handle_show_player_stats_ui,
+                power_up,
+            )
+                .in_set(InputSet),
         )
         .add_systems(
             FixedUpdate,
@@ -139,25 +146,15 @@ fn main() {
         )
         .add_systems(
             FixedUpdate,
-            tick_timer.run_if(on_timer(Duration::from_secs(1))),
+            (
+                tick_timer.run_if(on_timer(Duration::from_secs(1))),
+                remove_outdated_buffs.run_if(on_timer(Duration::from_secs(1))),
+                animate_player_buffs.run_if(on_timer(Duration::from_nanos(100))),
+                refill_mana.run_if(on_timer(Duration::from_secs(1))),
+                expand_circle_of_death.run_if(on_timer(Duration::from_millis(100))),
+            )
+                .in_set(TimeBasedSet),
         )
-        .add_systems(
-            FixedUpdate,
-            remove_outdated_buffs.run_if(on_timer(Duration::from_secs(1))),
-        )
-        .add_systems(
-            FixedUpdate,
-            animate_player_buffs.run_if(on_timer(Duration::from_nanos(100))),
-        )
-        .add_systems(
-            FixedUpdate,
-            refill_mana.run_if(on_timer(Duration::from_secs(1))),
-        )
-        .add_systems(
-            FixedUpdate,
-            expand_circle_of_death.run_if(on_timer(Duration::from_millis(100))),
-        )
-        .add_systems(FixedUpdate, power_up)
         .observe(on_player_spawned)
         .observe(on_mouse_click)
         .observe(on_player_health_changed)
