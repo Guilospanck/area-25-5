@@ -44,7 +44,15 @@ pub enum GameState {
     Won,
 }
 
-pub fn setup_resources(mut commands: Commands) {
+#[derive(Resource)]
+pub struct WindowResolutionResource {
+    pub x_px: f32,
+    pub y_px: f32,
+}
+
+pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
+    let window = windows.single();
+
     commands.insert_resource(CurrentWave(1));
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
@@ -60,6 +68,10 @@ pub fn setup_resources(mut commands: Commands) {
         Duration::from_secs(3),
         TimerMode::Repeating,
     )));
+    commands.insert_resource(WindowResolutionResource {
+        x_px: window.resolution.width(),
+        y_px: window.resolution.height(),
+    });
 }
 
 pub fn get_sprites() -> Sprites<'static> {

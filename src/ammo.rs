@@ -7,8 +7,12 @@ use crate::stats::Direction;
 use crate::util::get_ammo_sprite_based_on_weapon_type;
 use crate::util::get_random_vec3;
 use crate::CleanupWhenPlayerDies;
+use crate::WindowResolutionResource;
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub struct Ammo(pub WeaponTypeEnum);
@@ -102,6 +106,7 @@ pub fn spawn_ammo(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
     asset_server: Res<AssetServer>,
+    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let weapon_type = &weapon_by_level.weapon.weapon_type;
     let damage = weapon_by_level.weapon.damage;
@@ -111,7 +116,8 @@ pub fn spawn_ammo(
     let layer = PLAYER_LAYER;
 
     for idx in 1..=weapon_by_level.quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED));
+        let random_spawning_pos =
+            get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED), window_resolution);
 
         let bundle = AmmoBundle::new(
             &mut texture_atlas_layout,
@@ -133,8 +139,8 @@ pub fn spawn_ammo(
 pub fn move_ammo(
     mut commands: Commands,
     mut ammos_query: Query<(Entity, &mut Transform, &Direction), With<Ammo>>,
-    // weapon_query: Query<&Direction, (With<Weapon>, With<Player>)>,
     timer: Res<Time>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     for (entity, mut transform, ammo_direction) in &mut ammos_query {
         let new_translation_x =
@@ -142,9 +148,9 @@ pub fn move_ammo(
         let new_translation_y =
             transform.translation.y - ammo_direction.0.y * AMMO_MOVE_SPEED * timer.delta_seconds();
 
-        let off_screen_x = !(-WINDOW_RESOLUTION.x_px / 2.0..=WINDOW_RESOLUTION.x_px / 2.0)
+        let off_screen_x = !(-window_resolution.x_px / 2.0..=window_resolution.x_px / 2.0)
             .contains(&new_translation_x);
-        let off_screen_y = !(-WINDOW_RESOLUTION.y_px / 2.0..=WINDOW_RESOLUTION.y_px / 2.0)
+        let off_screen_y = !(-window_resolution.y_px / 2.0..=window_resolution.y_px / 2.0)
             .contains(&new_translation_y);
 
         if off_screen_x || off_screen_y {

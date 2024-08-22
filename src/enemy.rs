@@ -1,6 +1,7 @@
 use crate::{
     prelude::*, spawn_health_bar, util::get_random_vec3, AnimationIndices, AnimationTimer,
     CleanupWhenPlayerDies, Damage, Health, SpriteInfo, Sprites, SpritesResources,
+    WindowResolutionResource,
 };
 
 #[derive(Component, Clone)]
@@ -87,6 +88,7 @@ pub fn spawn_enemy(
     enemy_by_level: &EnemyByLevel,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
+    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let health = enemy_by_level.enemy.health;
     let damage = enemy_by_level.enemy.damage;
@@ -95,7 +97,7 @@ pub fn spawn_enemy(
     let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
 
     for idx in 1..=enemy_by_level.quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64, None);
+        let random_spawning_pos = get_random_vec3(idx as u64, None, window_resolution);
 
         let bundle = EnemyBundle::idle(
             texture_atlas_layout,

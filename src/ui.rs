@@ -3,7 +3,10 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::{prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
+use crate::{
+    prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet,
+    WindowResolutionResource,
+};
 
 // ############## UI ####################
 #[derive(Component)]
@@ -263,7 +266,11 @@ fn spawn_ui_bar<T: Component>(
     }
 }
 
-fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+fn current_wave(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    window_resolution: &Res<WindowResolutionResource>,
+) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
@@ -284,8 +291,8 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 ..Default::default()
             },
             transform: Transform::from_translation(Vec3::new(
-                -WINDOW_RESOLUTION.x_px / 2. + 100.,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                -window_resolution.x_px / 2. + 100.,
+                window_resolution.y_px / 2. - 30.,
                 UI_Z_INDEX,
             )),
             text_anchor: Anchor::TopCenter,
@@ -296,7 +303,11 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     ));
 }
 
-fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+fn spawn_score_points_ui(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    window_resolution: &Res<WindowResolutionResource>,
+) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
@@ -318,7 +329,7 @@ fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer
             },
             transform: Transform::from_translation(Vec3::new(
                 0.0,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                window_resolution.y_px / 2. - 30.,
                 UI_Z_INDEX,
             )),
             text_anchor: Anchor::TopCenter,
@@ -329,7 +340,11 @@ fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer
     ));
 }
 
-fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+fn spawn_current_timer_ui(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    window_resolution: &Res<WindowResolutionResource>,
+) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
@@ -351,7 +366,7 @@ fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServe
             },
             transform: Transform::from_translation(Vec3::new(
                 200.0,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
+                window_resolution.y_px / 2. - 30.,
                 UI_Z_INDEX,
             )),
             text_anchor: Anchor::TopCenter,
@@ -785,15 +800,23 @@ pub fn spawn_player_stats_ui(
         .push_children(&[player, weapon, armor, speed]);
 }
 
-pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    current_wave(&mut commands, &asset_server);
-    spawn_score_points_ui(&mut commands, &asset_server);
-    spawn_current_timer_ui(&mut commands, &asset_server);
+pub fn setup_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    window_resolution: Res<WindowResolutionResource>,
+) {
+    current_wave(&mut commands, &asset_server, &window_resolution);
+    spawn_score_points_ui(&mut commands, &asset_server, &window_resolution);
+    spawn_current_timer_ui(&mut commands, &asset_server, &window_resolution);
     spawn_container_buffs_ui(&mut commands);
     spawn_power_ui_root_node(&mut commands);
 }
 
-pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn menu_screen(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    window_resolution: Res<WindowResolutionResource>,
+) {
     let title = "MAIN MENU";
     let button_title = "Start game";
     let font_size = 100.;
@@ -819,13 +842,14 @@ pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .id();
 
-    _default_screen(commands, MenuOverlay, vec![one, two]);
+    _default_screen(commands, MenuOverlay, vec![one, two], &window_resolution);
 }
 
 pub fn game_over_screen(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     current_score: Res<CurrentScore>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     let title = "GAME OVER";
     let button_title = "Restart game";
@@ -861,13 +885,19 @@ pub fn game_over_screen(
         })
         .id();
 
-    _default_screen(commands, GameOverOverlay, vec![one, two, three]);
+    _default_screen(
+        commands,
+        GameOverOverlay,
+        vec![one, two, three],
+        &window_resolution,
+    );
 }
 
 pub fn game_won_screen(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     current_score: Res<CurrentScore>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     let title = "YOU WON";
     let button_title = "Play again";
@@ -903,18 +933,24 @@ pub fn game_won_screen(
         })
         .id();
 
-    _default_screen(commands, GameWonOverlay, vec![one, two, three]);
+    _default_screen(
+        commands,
+        GameWonOverlay,
+        vec![one, two, three],
+        &window_resolution,
+    );
 }
 
 fn _default_screen<T: Component>(
     mut commands: Commands,
     root_node_component: T,
     children_entities: Vec<Entity>,
+    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let node_bundle = NodeBundle {
         style: Style {
-            width: Val::Px(WINDOW_RESOLUTION.x_px),
-            height: Val::Px(WINDOW_RESOLUTION.y_px),
+            width: Val::Px(window_resolution.x_px),
+            height: Val::Px(window_resolution.y_px),
             align_content: AlignContent::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
