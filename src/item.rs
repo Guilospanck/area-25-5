@@ -5,7 +5,10 @@ use crate::{
 };
 use rand::Rng;
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub struct Item {
@@ -103,7 +106,7 @@ pub fn spawn_item(
         let bundle = ItemBundle::new(
             texture_atlas_layout,
             sprites,
-            &asset_server,
+            asset_server,
             scale,
             random_spawning_pos,
             item_type.clone(),
