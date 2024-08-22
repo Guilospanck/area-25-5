@@ -309,6 +309,7 @@ fn spawn_circle_of_death_power(
             outer_circle_radius: 50.,
         },
         BASE_LAYER,
+        CleanupWhenPlayerDies,
     ));
 
     for _ in 1..=quantity {
@@ -355,6 +356,7 @@ fn spawn_laser_power(
         },
         Direction(direction),
         BASE_LAYER,
+        CleanupWhenPlayerDies,
     ));
 
     for _ in 1..=quantity {
