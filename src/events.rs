@@ -9,7 +9,7 @@ use crate::{
     player::Player,
     prelude::*,
     spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
-    spawn_power_ui, spawn_weapon, spawn_weapon_ui,
+    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
@@ -376,6 +376,10 @@ pub fn on_player_spawned(
         &sprites,
         &asset_server,
     );
+
+    // UI stuff
+    spawn_weapon_ui(&mut commands, &asset_server, DEFAULT_WEAPON_SPRITE_SOURCE);
+    spawn_profile_ui(&mut commands, &asset_server);
 }
 
 pub fn on_enemy_health_changed(

@@ -367,7 +367,6 @@ pub fn check_for_weapon_collisions(
 
 pub fn check_for_power_collisions_with_enemy(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,

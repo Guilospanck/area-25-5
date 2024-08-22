@@ -385,7 +385,7 @@ pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
         });
 }
 
-fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+pub fn spawn_profile_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let parent = commands
         .spawn((
             NodeBundle {
@@ -476,6 +476,7 @@ pub(crate) fn spawn_weapon_ui(
             },
             OVERLAY_LAYER,
             WeaponUI,
+            CleanupWhenPlayerDies,
         ))
         .id();
 
@@ -787,9 +788,7 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     current_wave(&mut commands, &asset_server);
     spawn_score_points_ui(&mut commands, &asset_server);
     spawn_current_timer_ui(&mut commands, &asset_server);
-    spawn_profile_ui(&mut commands, &asset_server);
     spawn_container_buffs_ui(&mut commands);
-    spawn_weapon_ui(&mut commands, &asset_server, DEFAULT_WEAPON_SPRITE_SOURCE);
     spawn_power_ui_root_node(&mut commands);
 }
 
