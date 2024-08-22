@@ -28,8 +28,8 @@ pub(crate) fn get_random_vec3(increment: u64, seed: Option<u64>) -> Vec3 {
     let mut rng = ChaCha8Rng::seed_from_u64(random_seed + increment);
 
     Vec3::new(
-        (rng.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.x_px,
-        (rng.gen::<f32>() - 0.5) * WINDOW_RESOLUTION.y_px,
+        (rng.gen::<f32>() - 0.5) * (WINDOW_RESOLUTION.x_px - 100.0),
+        (rng.gen::<f32>() - 0.5) * (WINDOW_RESOLUTION.y_px - 100.0),
         CHAR_Z_INDEX,
     )
 }
