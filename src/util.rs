@@ -1,6 +1,5 @@
 use crate::{
     prelude::*, CircleOfDeath, ItemTypeEnum, Laser, PowerTypeEnum, SpriteInfo, SpritesResources,
-    WindowResolutionResource,
 };
 use bevy::math::bounding::BoundingVolume;
 use rand::{Rng, SeedableRng};
@@ -24,17 +23,13 @@ pub(crate) fn get_unit_vector(vec: Vec2) -> Vec2 {
 
     Vec2::new(normalized_direction_x, normalized_direction_y)
 }
-pub(crate) fn get_random_vec3(
-    increment: u64,
-    seed: Option<u64>,
-    window_resolution: &Res<WindowResolutionResource>,
-) -> Vec3 {
+pub(crate) fn get_random_vec3(increment: u64, seed: Option<u64>) -> Vec3 {
     let random_seed = seed.unwrap_or(ENEMY_RANDOM_SEED);
     let mut rng = ChaCha8Rng::seed_from_u64(random_seed + increment);
 
     Vec3::new(
-        (rng.gen::<f32>() - 0.5) * (window_resolution.x_px - 100.0),
-        (rng.gen::<f32>() - 0.5) * (window_resolution.y_px - 100.0),
+        (rng.gen::<f32>() - 0.5) * (CUSTOM_WINDOW_RESOLUTION.x_px - 100.0),
+        (rng.gen::<f32>() - 0.5) * (CUSTOM_WINDOW_RESOLUTION.y_px - 100.0),
         CHAR_Z_INDEX,
     )
 }

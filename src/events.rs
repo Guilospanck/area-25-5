@@ -318,7 +318,6 @@ pub fn on_player_spawned(
     player_state: Res<State<GameState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    window_resolution: Res<WindowResolutionResource>,
 ) {
     if *player_state.get() != GameState::Alive {
         next_state.set(GameState::Alive);
@@ -342,7 +341,6 @@ pub fn on_player_spawned(
         enemy_by_level,
         &mut meshes,
         &mut materials,
-        &window_resolution,
     );
 
     let current_wave_weapon = weapon_waves
@@ -361,7 +359,6 @@ pub fn on_player_spawned(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        &window_resolution,
     );
 
     let current_wave_item = item_waves
@@ -379,7 +376,6 @@ pub fn on_player_spawned(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        &window_resolution,
     );
 
     // UI stuff
@@ -479,7 +475,6 @@ pub fn on_wave_changed(
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
     weapons: Query<(Entity, Option<&Parent>), With<Weapon>>,
     items: Query<Entity, With<Item>>,
-    window_resolution: Res<WindowResolutionResource>,
 ) {
     // Despawn items and weapons that were spawned on the map
     for item in items.iter() {
@@ -510,7 +505,6 @@ pub fn on_wave_changed(
         enemy_by_level,
         &mut meshes,
         &mut materials,
-        &window_resolution,
     );
 
     // Spawn more different weapons
@@ -530,7 +524,6 @@ pub fn on_wave_changed(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        &window_resolution,
     );
 
     let current_wave_item = item_waves
@@ -548,7 +541,6 @@ pub fn on_wave_changed(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        &window_resolution,
     );
 
     // Add new power to the player
@@ -709,13 +701,12 @@ pub fn expand_circle_of_death(
         (Entity, &mut Mesh2dHandle, &mut CircleOfDeath),
         With<CircleOfDeath>,
     >,
-    window_resolution: Res<WindowResolutionResource>,
 ) {
     for (circle_entity, mut mesh2d_handle, mut circle) in circle_of_death.iter_mut() {
         let new_outer_radius = circle.outer_circle_radius * 0.2 + circle.outer_circle_radius;
         let new_inner_radius = new_outer_radius - 10.0;
 
-        if new_inner_radius > window_resolution.x_px {
+        if new_inner_radius > CUSTOM_WINDOW_RESOLUTION.x_px {
             commands.entity(circle_entity).despawn();
             commands.trigger(DespawnPower(PowerTypeEnum::CircleOfDeath));
             continue;

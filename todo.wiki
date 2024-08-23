@@ -50,7 +50,7 @@ speed, armor, damage and so on)
 - [x] (BUG) Reset buff on restart
 - [x] Add a mana stuff that allows you to use powers. This mana will be filled 
 as the time passes (cooldown)
-- [-] Add powers
+- [x] Add powers
 	- [x] Missing collision from circle to enemies 
 	- [x] Circle should be spawned at player's location
 	- [x] Explosions are being spawned only on the visible screen (probably needs
@@ -66,7 +66,13 @@ as the time passes (cooldown)
 - [x] (BUG) Reset weapon (and weapon UI) on restart game
 - [x] Fix spawns happening outside screen
 - [x] (BUG) The game starts before hitting start 
-- [ ] (BUG-itchio) The screen is not completely showing 
+- [x] (BUG-itchio) The screen is not completely showing 
+- [ ] (BUG-itchio) Performance too poor
+	- [ ] Move player based on the resized screen while also
+	traversing the whole textured background
+	"What if you can update the coordinates of the player to make it be 
+	in sync with the background (so be able to collide stuff), but you 
+	actually don't move the player (so it won't go out of bounds)?"
 - [ ] Change annoying audio
 - [ ] Change all spawns of empty entities to `.spawn_empty()`
 - [ ] Validate circle power is actually dealing damage to enemies

@@ -120,34 +120,32 @@ pub fn move_player(
     mut base_camera: Query<(&mut Transform, &BaseCamera), Without<Player>>,
     window_resolution: Res<WindowResolutionResource>,
 ) {
+    let Ok((mut base_camera_transform, _)) = base_camera.get_single_mut() else {
+        return;
+    };
+
+    let Ok((mut player_transform, player_speed, _)) = player_query.get_single_mut() else {
+        return;
+    };
+
     let mut direction_x = 0.;
     let mut direction_y = 0.;
 
-    if base_camera.get_single_mut().is_err() {
-        return;
-    }
-    let (mut base_camera_transform, _) = base_camera.get_single_mut().unwrap();
-
-    if player_query.get_single_mut().is_err() {
-        return;
-    }
-    let (mut player_transform, player_speed, _) = player_query.get_single_mut().unwrap();
-
-    // left move
-    if keyboard_input.pressed(KeyCode::KeyA) {
-        direction_x -= 1.0;
-    }
-    // right move
-    if keyboard_input.pressed(KeyCode::KeyD) {
-        direction_x += 1.0;
-    }
     // top move
     if keyboard_input.pressed(KeyCode::KeyW) {
         direction_y += 1.0;
     }
+    // left move
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        direction_x -= 1.0;
+    }
     // bottom move
     if keyboard_input.pressed(KeyCode::KeyS) {
         direction_y -= 1.0;
+    }
+    // right move
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        direction_x += 1.0;
     }
 
     let old_pos_x = player_transform.translation.x;
@@ -174,13 +172,13 @@ pub fn move_player(
         char_new_pos_y = limit_y_top;
     }
 
-    // pan camera
-    base_camera_transform.translation.x = char_new_pos_x;
-    base_camera_transform.translation.y = char_new_pos_y;
-
     // translate player
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
+
+    // pan camera
+    base_camera_transform.translation.x = char_new_pos_x;
+    base_camera_transform.translation.y = char_new_pos_y;
 }
 
 pub fn handle_show_player_stats_ui(
@@ -249,7 +247,6 @@ pub fn power_up(
 
     mut player_query: Query<(Entity, &Transform, &mut Mana, &Children, &Player)>,
     power_query: Query<(&Damage, &Power)>,
-    window_resolution: Res<WindowResolutionResource>,
 ) {
     let Ok((_, player_transform, mut player_mana, player_children, _)) =
         player_query.get_single_mut()
@@ -297,7 +294,6 @@ pub fn power_up(
             power.clone(),
             power_damage.clone(),
             player_transform.translation,
-            &window_resolution,
         );
         Some(power.mana_needed)
     };
