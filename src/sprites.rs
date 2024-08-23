@@ -1,4 +1,4 @@
-use crate::{animation::AnimationInfo, prelude::*, SpritesResources};
+use crate::{animation::AnimationInfo, prelude::*, SpritesResources, WindowResolutionResource};
 
 #[derive(Clone, Debug, Default)]
 pub struct RectangularDimensions {
@@ -60,12 +60,14 @@ pub fn setup_sprite(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     render_background_texture(
         &mut commands,
         &mut texture_atlas_layout,
         &sprites.0,
         &asset_server,
+        &window_resolution,
     );
 }
 
@@ -103,15 +105,16 @@ fn render_background_texture(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Sprites<'static>,
     asset_server: &Res<AssetServer>,
+    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let tile = sprites.player_custom_bg.clone();
 
     // number of tiles in a row
-    let x_items = WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;
+    let x_items = window_resolution.x_px / tile.dimensions.width as f32;
     let x_items: u32 = x_items.ceil() as u32;
 
     // number of tiles in a column
-    let y_items = WINDOW_RESOLUTION.y_px / tile.dimensions.height as f32;
+    let y_items = window_resolution.y_px / tile.dimensions.height as f32;
     let y_items: u32 = y_items.ceil() as u32;
 
     for _ in 0..y_items {

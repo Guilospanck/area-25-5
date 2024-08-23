@@ -65,12 +65,12 @@ as the time passes (cooldown)
 - [x] Do not play audio when the laser hits the enemy (not playing audio at all for powers)
 - [x] (BUG) Reset weapon (and weapon UI) on restart game
 - [x] Fix spawns happening outside screen
-
-- [ ] (BUG-itchio) The screen is not completely showing
-- [ ] (BUG) The game starts before hitting start 
+- [x] (BUG) The game starts before hitting start 
+- [ ] (BUG-itchio) The screen is not completely showing 
 - [ ] Change annoying audio
 - [ ] Change all spawns of empty entities to `.spawn_empty()`
 - [ ] Validate circle power is actually dealing damage to enemies
+- [ ] Weapons spawned are too small
 
 Ongoing:
 - [-] Spawn different weapons (Still need more)

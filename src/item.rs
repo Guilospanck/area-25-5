@@ -2,6 +2,7 @@ use crate::{
     prelude::*,
     util::{get_item_sprite_based_on_item_type, get_random_vec3},
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, ItemTypeEnum, SpritesResources,
+    WindowResolutionResource,
 };
 use rand::Rng;
 
@@ -93,6 +94,7 @@ pub fn spawn_item(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
     asset_server: &Res<AssetServer>,
+    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let quantity = &item_by_level.quantity;
     let item_type = &item_by_level.item.item;
@@ -101,7 +103,11 @@ pub fn spawn_item(
     for idx in 1..=*quantity {
         let mut rng = rand::thread_rng();
         let n1: u8 = rng.gen();
-        let random_spawning_pos = get_random_vec3(idx as u64, Some(n1 as u64 * ITEM_RANDOM_SEED));
+        let random_spawning_pos = get_random_vec3(
+            idx as u64,
+            Some(n1 as u64 * ITEM_RANDOM_SEED),
+            window_resolution,
+        );
 
         let bundle = ItemBundle::new(
             texture_atlas_layout,

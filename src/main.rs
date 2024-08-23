@@ -4,7 +4,7 @@ use area_25_5::*;
 
 use bevy::{
     log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin, time::common_conditions::on_timer,
-    window::WindowResolution,
+    window::WindowTheme,
 };
 
 #[cfg(not(feature = "web"))]
@@ -18,11 +18,13 @@ fn main() {
             .set(ImagePlugin::default_nearest())
             .set(WindowPlugin {
                 primary_window: Some(Window {
-                    resolution: WindowResolution::new(
-                        WINDOW_RESOLUTION.x_px,
-                        WINDOW_RESOLUTION.y_px,
-                    )
-                    .with_scale_factor_override(1.0),
+                    title: "Area 25.5".into(),
+                    name: Some("area_25_5.app".into()),
+                    // Tells Wasm to resize the window according to the available canvas
+                    fit_canvas_to_parent: true,
+                    // Tells Wasm not to override default event handling, like F5, Ctrl+R etc.
+                    prevent_default_event_handling: false,
+                    window_theme: Some(WindowTheme::Dark),
                     ..default()
                 }),
                 ..default()
@@ -49,10 +51,8 @@ fn main() {
         app.register_type::<Weapon>()
             .register_type::<Ammo>()
             .register_type::<Item>()
-            .register_type::<Buff>()
             .register_type::<Power>()
             .register_type::<CircleOfDeath>()
-            .register_type::<BuffGroup>()
             .add_plugins(WorldInspectorPlugin::new());
     }
 
@@ -75,6 +75,7 @@ fn main() {
             ),
         )
         // systems
+        .add_systems(Update, on_window_resize)
         .add_systems(
             Startup,
             (

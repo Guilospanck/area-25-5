@@ -48,16 +48,6 @@ pub(crate) const CAPSULE_RADIUS: f32 = 4.;
 pub(crate) const BASE_CAMERA_PROJECTION_SCALE: f32 = 0.5;
 pub(crate) const SCORE_MULTIPLIER: f32 = 0.1;
 
-pub struct CustomWindowResolution {
-    pub x_px: f32,
-    pub y_px: f32,
-}
-
-pub const WINDOW_RESOLUTION: CustomWindowResolution = CustomWindowResolution {
-    x_px: 1920.0,
-    y_px: 1080.0,
-};
-
 pub const CAPSULE_COLLIDER: Vec2 =
     Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);
 

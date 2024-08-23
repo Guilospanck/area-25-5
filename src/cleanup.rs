@@ -22,7 +22,7 @@ pub fn reset_initial_state(
     // Update UI
     current_wave.0 = 1u16;
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
-        text.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
+        text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
     }
     current_time.minutes = 10u16;
     current_time.seconds = 30u16;

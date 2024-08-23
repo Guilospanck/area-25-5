@@ -1,6 +1,6 @@
-use std::time::Duration;
+use chrono::Utc;
 
-use bevy::sprite::Mesh2dHandle;
+use bevy::{sprite::Mesh2dHandle, window::WindowResized};
 
 use crate::{
     audio::hit_weapon_audio,
@@ -20,7 +20,7 @@ use crate::{
     Enemy, EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
     PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerSpriteUI, PowerUI,
     PowerUIRootNode, PowerWaves, ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI,
-    WeaponWaves,
+    WeaponWaves, WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -318,6 +318,7 @@ pub fn on_player_spawned(
     player_state: Res<State<GameState>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     if *player_state.get() != GameState::Alive {
         next_state.set(GameState::Alive);
@@ -341,6 +342,7 @@ pub fn on_player_spawned(
         enemy_by_level,
         &mut meshes,
         &mut materials,
+        &window_resolution,
     );
 
     let current_wave_weapon = weapon_waves
@@ -359,6 +361,7 @@ pub fn on_player_spawned(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        &window_resolution,
     );
 
     let current_wave_item = item_waves
@@ -376,6 +379,7 @@ pub fn on_player_spawned(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        &window_resolution,
     );
 
     // UI stuff
@@ -475,6 +479,7 @@ pub fn on_wave_changed(
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
     weapons: Query<(Entity, Option<&Parent>), With<Weapon>>,
     items: Query<Entity, With<Item>>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     // Despawn items and weapons that were spawned on the map
     for item in items.iter() {
@@ -505,6 +510,7 @@ pub fn on_wave_changed(
         enemy_by_level,
         &mut meshes,
         &mut materials,
+        &window_resolution,
     );
 
     // Spawn more different weapons
@@ -524,6 +530,7 @@ pub fn on_wave_changed(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        &window_resolution,
     );
 
     let current_wave_item = item_waves
@@ -541,6 +548,7 @@ pub fn on_wave_changed(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        &window_resolution,
     );
 
     // Add new power to the player
@@ -548,7 +556,7 @@ pub fn on_wave_changed(
 
     // Update UI
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
-        text.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
+        text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
     }
 }
 
@@ -632,8 +640,12 @@ pub fn remove_outdated_buffs(
                     return false;
                 }
 
-                let has_passed = buff_group.start_time.elapsed()
-                    > Duration::from_secs(shield.duration_seconds.unwrap());
+                let start_time = buff_group.start_time;
+                let end_time = Utc::now().time();
+                let diff = end_time - start_time;
+
+                let has_passed =
+                    diff.num_seconds() > shield.duration_seconds.unwrap().try_into().unwrap();
 
                 if has_passed {
                     // update player armor
@@ -697,12 +709,13 @@ pub fn expand_circle_of_death(
         (Entity, &mut Mesh2dHandle, &mut CircleOfDeath),
         With<CircleOfDeath>,
     >,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     for (circle_entity, mut mesh2d_handle, mut circle) in circle_of_death.iter_mut() {
         let new_outer_radius = circle.outer_circle_radius * 0.2 + circle.outer_circle_radius;
         let new_inner_radius = new_outer_radius - 10.0;
 
-        if new_inner_radius > WINDOW_RESOLUTION.x_px {
+        if new_inner_radius > window_resolution.x_px {
             commands.entity(circle_entity).despawn();
             commands.trigger(DespawnPower(PowerTypeEnum::CircleOfDeath));
             continue;
@@ -1257,4 +1270,14 @@ pub fn update_power_ui(
     commands
         .entity(power_ui_root_node_entity)
         .add_child(child_id);
+}
+
+pub fn on_window_resize(
+    mut resize_reader: EventReader<WindowResized>,
+    mut window_resolution: ResMut<WindowResolutionResource>,
+) {
+    for e in resize_reader.read() {
+        window_resolution.x_px = e.width;
+        window_resolution.y_px = e.height;
+    }
 }

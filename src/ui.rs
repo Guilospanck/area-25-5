@@ -3,7 +3,10 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::{prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
+use crate::{
+    prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet,
+    WindowResolutionResource,
+};
 
 // ############## UI ####################
 #[derive(Component)]
@@ -267,33 +270,37 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
-        font_size: 30.0,
-        ..default()
+        font_size: 20.0,
+        color: Color::Srgba(YELLOW),
     };
 
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    "Current wave: 1",
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                -WINDOW_RESOLUTION.x_px / 2. + 100.,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
+    let current_wave_text = (
+        TextBundle {
+            text: Text::from_section("Wave #1", text_style),
+            style: Style { ..default() },
             ..default()
         },
         CurrentWaveUI,
         OVERLAY_LAYER,
-    ));
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.),
+                    left: Val::Px(300.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .with_children(|parent| {
+            parent.spawn(current_wave_text);
+        });
 }
 
 fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
@@ -301,65 +308,78 @@ fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer
     let text_style = TextStyle {
         font: font.clone(),
         font_size: 60.0,
-        ..default()
+        color: Color::Srgba(YELLOW),
     };
 
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    "0",
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
+    let current_wave_text = (
+        TextBundle {
+            text: Text::from_section("0", text_style),
+            style: Style {
+                position_type: PositionType::Relative,
+                // TODO: get rid of magic numbers
+                top: Val::Px(16.),
+                left: Val::Px(18.),
+                ..default()
             },
-            transform: Transform::from_translation(Vec3::new(
-                0.0,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
             ..default()
         },
         ScoreUI,
         OVERLAY_LAYER,
-    ));
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .with_children(|parent| {
+            parent.spawn(current_wave_text);
+        });
 }
 
 fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
-        font_size: 60.0,
-        ..default()
+        font_size: 20.0,
+        color: Color::Srgba(YELLOW),
     };
 
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    "01:00",
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                200.0,
-                WINDOW_RESOLUTION.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
+    let current_wave_text = (
+        TextBundle {
+            text: Text::from_section("01:00", text_style),
+            style: Style { ..default() },
             ..default()
         },
         CurrentTimeUI,
         OVERLAY_LAYER,
-    ));
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.),
+                    left: Val::Px(400.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .with_children(|parent| {
+            parent.spawn(current_wave_text);
+        });
 }
 
 pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
@@ -913,8 +933,8 @@ fn _default_screen<T: Component>(
 ) {
     let node_bundle = NodeBundle {
         style: Style {
-            width: Val::Px(WINDOW_RESOLUTION.x_px),
-            height: Val::Px(WINDOW_RESOLUTION.y_px),
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
             align_content: AlignContent::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,

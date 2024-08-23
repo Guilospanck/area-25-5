@@ -7,7 +7,7 @@ use crate::{
     util::{get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, BaseCamera, Damage, Health, Mana, PlayAgainButton, PlayerCamera,
     PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
-    SpritesResources, StartGameButton, Weapon,
+    SpritesResources, StartGameButton, Weapon, WindowResolutionResource,
 };
 
 pub fn move_enemies_towards_player(
@@ -118,6 +118,7 @@ pub fn move_player(
     mut player_query: Query<(&mut Transform, &Speed, &Player)>,
     time: Res<Time>,
     mut base_camera: Query<(&mut Transform, &BaseCamera), Without<Player>>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     let mut direction_x = 0.;
     let mut direction_y = 0.;
@@ -155,10 +156,10 @@ pub fn move_player(
     let mut char_new_pos_x = old_pos_x + direction_x * player_speed.0 * time.delta_seconds();
     let mut char_new_pos_y = old_pos_y + direction_y * player_speed.0 * time.delta_seconds();
 
-    let limit_x_left = (-WINDOW_RESOLUTION.x_px + PLAYER_X_MARGIN) / 2.0;
-    let limit_x_right = (WINDOW_RESOLUTION.x_px - PLAYER_X_MARGIN) / 2.0;
-    let limit_y_bottom = (-WINDOW_RESOLUTION.y_px + PLAYER_Y_MARGIN) / 2.0;
-    let limit_y_top = (WINDOW_RESOLUTION.y_px - PLAYER_Y_MARGIN) / 2.0;
+    let limit_x_left = (-window_resolution.x_px + PLAYER_X_MARGIN) / 2.0;
+    let limit_x_right = (window_resolution.x_px - PLAYER_X_MARGIN) / 2.0;
+    let limit_y_bottom = (-window_resolution.y_px + PLAYER_Y_MARGIN) / 2.0;
+    let limit_y_top = (window_resolution.y_px - PLAYER_Y_MARGIN) / 2.0;
 
     if char_new_pos_x < limit_x_left {
         char_new_pos_x = limit_x_left;
@@ -248,6 +249,7 @@ pub fn power_up(
 
     mut player_query: Query<(Entity, &Transform, &mut Mana, &Children, &Player)>,
     power_query: Query<(&Damage, &Power)>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
     let Ok((_, player_transform, mut player_mana, player_children, _)) =
         player_query.get_single_mut()
@@ -295,6 +297,7 @@ pub fn power_up(
             power.clone(),
             power_damage.clone(),
             player_transform.translation,
+            &window_resolution,
         );
         Some(power.mana_needed)
     };
