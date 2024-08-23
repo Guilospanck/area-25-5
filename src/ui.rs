@@ -266,115 +266,120 @@ fn spawn_ui_bar<T: Component>(
     }
 }
 
-fn current_wave(
-    commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
-    window_resolution: &Res<WindowResolutionResource>,
-) {
+fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
-        font_size: 30.0,
-        ..default()
+        font_size: 20.0,
+        color: Color::Srgba(YELLOW),
     };
 
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    "Current wave: 1",
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                -window_resolution.x_px / 2. + 100.,
-                window_resolution.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
+    let current_wave_text = (
+        TextBundle {
+            text: Text::from_section("Wave #1", text_style),
+            style: Style { ..default() },
             ..default()
         },
         CurrentWaveUI,
         OVERLAY_LAYER,
-    ));
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.),
+                    left: Val::Px(300.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .with_children(|parent| {
+            parent.spawn(current_wave_text);
+        });
 }
 
-fn spawn_score_points_ui(
-    commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
-    window_resolution: &Res<WindowResolutionResource>,
-) {
+fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
         font_size: 60.0,
-        ..default()
+        color: Color::Srgba(YELLOW),
     };
 
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    "0",
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
+    let current_wave_text = (
+        TextBundle {
+            text: Text::from_section("0", text_style),
+            style: Style {
+                position_type: PositionType::Relative,
+                // TODO: get rid of magic numbers
+                top: Val::Px(16.),
+                left: Val::Px(18.),
+                ..default()
             },
-            transform: Transform::from_translation(Vec3::new(
-                0.0,
-                window_resolution.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
             ..default()
         },
         ScoreUI,
         OVERLAY_LAYER,
-    ));
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .with_children(|parent| {
+            parent.spawn(current_wave_text);
+        });
 }
 
-fn spawn_current_timer_ui(
-    commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
-    window_resolution: &Res<WindowResolutionResource>,
-) {
+fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let text_style = TextStyle {
         font: font.clone(),
-        font_size: 60.0,
-        ..default()
+        font_size: 20.0,
+        color: Color::Srgba(YELLOW),
     };
 
-    commands.spawn((
-        Text2dBundle {
-            text: Text {
-                sections: vec![TextSection::new(
-                    "01:00",
-                    TextStyle {
-                        color: Color::Srgba(YELLOW),
-                        ..text_style.clone()
-                    },
-                )],
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(
-                200.0,
-                window_resolution.y_px / 2. - 30.,
-                UI_Z_INDEX,
-            )),
-            text_anchor: Anchor::TopCenter,
+    let current_wave_text = (
+        TextBundle {
+            text: Text::from_section("01:00", text_style),
+            style: Style { ..default() },
             ..default()
         },
         CurrentTimeUI,
         OVERLAY_LAYER,
-    ));
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.),
+                    left: Val::Px(400.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+        ))
+        .with_children(|parent| {
+            parent.spawn(current_wave_text);
+        });
 }
 
 pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
@@ -800,14 +805,10 @@ pub fn spawn_player_stats_ui(
         .push_children(&[player, weapon, armor, speed]);
 }
 
-pub fn setup_ui(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    window_resolution: Res<WindowResolutionResource>,
-) {
-    current_wave(&mut commands, &asset_server, &window_resolution);
-    spawn_score_points_ui(&mut commands, &asset_server, &window_resolution);
-    spawn_current_timer_ui(&mut commands, &asset_server, &window_resolution);
+pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    current_wave(&mut commands, &asset_server);
+    spawn_score_points_ui(&mut commands, &asset_server);
+    spawn_current_timer_ui(&mut commands, &asset_server);
     spawn_container_buffs_ui(&mut commands);
     spawn_power_ui_root_node(&mut commands);
 }

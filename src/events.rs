@@ -556,7 +556,7 @@ pub fn on_wave_changed(
 
     // Update UI
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
-        text.sections.first_mut().unwrap().value = format!("Current wave: {}", current_wave.0);
+        text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
     }
 }
 
@@ -1268,9 +1268,6 @@ pub fn update_power_ui(
         .add_child(child_id);
 }
 
-// TODO: We need to update all the elements that are set only once
-// mainly the screens (Main menu, game over...) and the `setup_ui` that runs
-// on startup
 pub fn on_window_resize(
     mut resize_reader: EventReader<WindowResized>,
     mut window_resolution: ResMut<WindowResolutionResource>,
