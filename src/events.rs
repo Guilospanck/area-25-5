@@ -1,4 +1,4 @@
-use std::time::Duration;
+use chrono::Utc;
 
 use bevy::{sprite::Mesh2dHandle, window::WindowResized};
 
@@ -640,8 +640,12 @@ pub fn remove_outdated_buffs(
                     return false;
                 }
 
-                let has_passed = buff_group.start_time.elapsed()
-                    > Duration::from_secs(shield.duration_seconds.unwrap());
+                let start_time = buff_group.start_time;
+                let end_time = Utc::now().time();
+                let diff = end_time - start_time;
+
+                let has_passed =
+                    diff.num_seconds() > shield.duration_seconds.unwrap().try_into().unwrap();
 
                 if has_passed {
                     // update player armor

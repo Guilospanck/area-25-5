@@ -9,8 +9,9 @@ rand = "0.8.5"
 rand_chacha = "0.3.1"
 # NOTE: when building for the web, comment this and uncomment the next line
 # and the feature "not_web"
-bevy-inspector-egui = { version = "0.25.1" }
 # bevy-inspector-egui = { version = "0.25.1", optional = true }
+bevy-inspector-egui = { version = "0.25.1" }
+chrono = {version = "0.4.38", features =["wasmbind"] }
 
 [features]
 # not_web = ["bevy-inspector-egui"]

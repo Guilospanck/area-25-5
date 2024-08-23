@@ -51,10 +51,8 @@ fn main() {
         app.register_type::<Weapon>()
             .register_type::<Ammo>()
             .register_type::<Item>()
-            .register_type::<Buff>()
             .register_type::<Power>()
             .register_type::<CircleOfDeath>()
-            .register_type::<BuffGroup>()
             .add_plugins(WorldInspectorPlugin::new());
     }
 

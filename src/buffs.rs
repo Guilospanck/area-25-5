@@ -1,4 +1,4 @@
-use std::time::Instant;
+use chrono::{NaiveTime, Utc};
 
 use crate::{
     prelude::*, util::get_item_sprite_based_on_item_type, AnimationIndices, AnimationTimer, Armor,
@@ -10,7 +10,10 @@ use crate::{
 * and they might be temporary or not.
 * */
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub enum ShieldType {
@@ -19,7 +22,10 @@ pub enum ShieldType {
     Magical,
 }
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub struct Shield {
@@ -44,19 +50,15 @@ impl Default for ItemTypeEnum {
     }
 }
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
-#[cfg_attr(not(feature = "web"), reflect(Component))]
-#[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
+#[derive(Component, Debug, Clone)]
 pub struct Buff {
-    pub start_time: Instant,
+    pub start_time: NaiveTime,
     pub item: ItemTypeEnum,
 }
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
-#[cfg_attr(not(feature = "web"), reflect(Component))]
-#[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
+#[derive(Component, Debug, Clone)]
 pub struct BuffGroup {
-    pub start_time: Instant,
+    pub start_time: NaiveTime,
     pub item: ItemTypeEnum,
 }
 
@@ -87,8 +89,7 @@ impl BuffGroupBundle {
     }
 
     fn _util(item_type: ItemTypeEnum, layer: RenderLayers) -> Self {
-        use std::time::Instant;
-        let start_time = Instant::now();
+        let start_time = Utc::now().time();
         let buff_group = BuffGroup {
             item: item_type,
             start_time,
@@ -144,8 +145,7 @@ impl BuffBundle {
         let item_animation = item_sprite.animation.unwrap();
         let texture_atlas_layout = texture_atlas_layout.add(item_sprite.layout);
 
-        use std::time::Instant;
-        let start_time = Instant::now();
+        let start_time = Utc::now().time();
         let buff = Buff {
             item: item_type,
             start_time,
