@@ -70,6 +70,7 @@ as the time passes (cooldown)
 - [ ] Change annoying audio
 - [ ] Change all spawns of empty entities to `.spawn_empty()`
 - [ ] Validate circle power is actually dealing damage to enemies
+- [ ] Weapons spawned are too small
 
 Ongoing:
 - [-] Spawn different weapons (Still need more)

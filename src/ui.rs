@@ -813,11 +813,7 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     spawn_power_ui_root_node(&mut commands);
 }
 
-pub fn menu_screen(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    window_resolution: Res<WindowResolutionResource>,
-) {
+pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     let title = "MAIN MENU";
     let button_title = "Start game";
     let font_size = 100.;
@@ -843,14 +839,13 @@ pub fn menu_screen(
         })
         .id();
 
-    _default_screen(commands, MenuOverlay, vec![one, two], &window_resolution);
+    _default_screen(commands, MenuOverlay, vec![one, two]);
 }
 
 pub fn game_over_screen(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     current_score: Res<CurrentScore>,
-    window_resolution: Res<WindowResolutionResource>,
 ) {
     let title = "GAME OVER";
     let button_title = "Restart game";
@@ -886,19 +881,13 @@ pub fn game_over_screen(
         })
         .id();
 
-    _default_screen(
-        commands,
-        GameOverOverlay,
-        vec![one, two, three],
-        &window_resolution,
-    );
+    _default_screen(commands, GameOverOverlay, vec![one, two, three]);
 }
 
 pub fn game_won_screen(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     current_score: Res<CurrentScore>,
-    window_resolution: Res<WindowResolutionResource>,
 ) {
     let title = "YOU WON";
     let button_title = "Play again";
@@ -934,24 +923,18 @@ pub fn game_won_screen(
         })
         .id();
 
-    _default_screen(
-        commands,
-        GameWonOverlay,
-        vec![one, two, three],
-        &window_resolution,
-    );
+    _default_screen(commands, GameWonOverlay, vec![one, two, three]);
 }
 
 fn _default_screen<T: Component>(
     mut commands: Commands,
     root_node_component: T,
     children_entities: Vec<Entity>,
-    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let node_bundle = NodeBundle {
         style: Style {
-            width: Val::Px(window_resolution.x_px),
-            height: Val::Px(window_resolution.y_px),
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
             align_content: AlignContent::Center,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
