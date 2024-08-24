@@ -14,7 +14,6 @@ use crate::{
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
     player_query: Query<(&Transform, &Children), With<Player>>,
@@ -209,7 +208,12 @@ pub fn check_for_item_collisions(
     sprites: Res<SpritesResources>,
     mut player: Query<(&Transform, &mut Speed, &mut Armor, Entity), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
     for (item_entity, item_transform, item) in items.iter() {
         let item_collider = Aabb2d::new(
             item_transform.translation.truncate(),
@@ -223,8 +227,8 @@ pub fn check_for_item_collisions(
             // the units must be changed in order to be able to collide them
             // properly
             let player_center = Vec2::new(
-                player_transform.translation.x / BASE_CAMERA_PROJECTION_SCALE,
-                player_transform.translation.y / BASE_CAMERA_PROJECTION_SCALE,
+                player_transform.translation.x + base_camera_transform.translation.x,
+                player_transform.translation.y + base_camera_transform.translation.y,
             );
             let player_collider =
                 Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
@@ -290,15 +294,16 @@ pub fn check_for_weapon_collisions(
     player_weapon_query: Query<(&Children, Entity, &Weapon)>,
     player_ammo_query: Query<(Entity, &Ammo)>,
     weapons_not_from_player_query: Query<(Entity, &Weapon, &Damage, &Transform), Without<Player>>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
-    // Get an entity that has player
-    if player_query.get_single().is_err() {
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
-    }
-    let player = player_query.get_single().unwrap();
-    let player_entity = player.0;
-    let player_transform = player.1;
-    let player_children = player.2;
+    };
+
+    // Get an entity that has player
+    let Ok((player_entity, player_transform, player_children)) = player_query.get_single() else {
+        return;
+    };
 
     // !!!!!!!!!!!! INFO:
     // the items are being rendered on top of the base layer
@@ -306,8 +311,8 @@ pub fn check_for_weapon_collisions(
     // the units must be changed in order to be able to collide them
     // properly
     let player_center = Vec2::new(
-        player_transform.translation.x / BASE_CAMERA_PROJECTION_SCALE,
-        player_transform.translation.y / BASE_CAMERA_PROJECTION_SCALE,
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
     );
     let player_collider = Aabb2d::new(player_center, CAPSULE_COLLIDER);
 
