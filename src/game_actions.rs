@@ -120,36 +120,35 @@ pub fn move_player(
     mut base_camera: Query<(&mut Transform, &BaseCamera), Without<Player>>,
     window_resolution: Res<WindowResolutionResource>,
 ) {
+    let Ok((mut base_camera_transform, _)) = base_camera.get_single_mut() else {
+        return;
+    };
+
+    let Ok((mut player_transform, player_speed, _)) = player_query.get_single_mut() else {
+        return;
+    };
+
     let mut direction_x = 0.;
     let mut direction_y = 0.;
 
-    if base_camera.get_single_mut().is_err() {
-        return;
-    }
-    let (mut base_camera_transform, _) = base_camera.get_single_mut().unwrap();
-
-    if player_query.get_single_mut().is_err() {
-        return;
-    }
-    let (mut player_transform, player_speed, _) = player_query.get_single_mut().unwrap();
-
-    // left move
-    if keyboard_input.pressed(KeyCode::KeyA) {
-        direction_x -= 1.0;
-    }
-    // right move
-    if keyboard_input.pressed(KeyCode::KeyD) {
-        direction_x += 1.0;
-    }
     // top move
     if keyboard_input.pressed(KeyCode::KeyW) {
         direction_y += 1.0;
+    }
+    // left move
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        direction_x -= 1.0;
     }
     // bottom move
     if keyboard_input.pressed(KeyCode::KeyS) {
         direction_y -= 1.0;
     }
+    // right move
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        direction_x += 1.0;
+    }
 
+    // -------------------- PLAYER ------------------------
     let old_pos_x = player_transform.translation.x;
     let old_pos_y = player_transform.translation.y;
 
@@ -174,13 +173,40 @@ pub fn move_player(
         char_new_pos_y = limit_y_top;
     }
 
-    // pan camera
-    base_camera_transform.translation.x = char_new_pos_x;
-    base_camera_transform.translation.y = char_new_pos_y;
-
     // translate player
     player_transform.translation.x = char_new_pos_x;
     player_transform.translation.y = char_new_pos_y;
+
+    // ------------------- CAMERA -------------------------
+    let old_camera_pos_x = base_camera_transform.translation.x;
+    let old_camera_pos_y = base_camera_transform.translation.y;
+
+    let mut base_camera_new_pos_x =
+        old_camera_pos_x + direction_x * player_speed.0 * time.delta_seconds();
+    let mut base_camera_new_pos_y =
+        old_camera_pos_y + direction_y * player_speed.0 * time.delta_seconds();
+
+    let limit_x_left = (-CUSTOM_WINDOW_RESOLUTION.x_px) / 2.0;
+    let limit_x_right = (CUSTOM_WINDOW_RESOLUTION.x_px) / 2.0;
+    let limit_y_bottom = (-CUSTOM_WINDOW_RESOLUTION.y_px) / 2.0;
+    let limit_y_top = (CUSTOM_WINDOW_RESOLUTION.y_px) / 2.0;
+
+    if base_camera_new_pos_x < limit_x_left {
+        base_camera_new_pos_x = limit_x_left;
+    }
+    if base_camera_new_pos_x > limit_x_right {
+        base_camera_new_pos_x = limit_x_right;
+    }
+    if base_camera_new_pos_y < limit_y_bottom {
+        base_camera_new_pos_y = limit_y_bottom;
+    }
+    if base_camera_new_pos_y > limit_y_top {
+        base_camera_new_pos_y = limit_y_top;
+    }
+
+    // pan camera
+    base_camera_transform.translation.x = base_camera_new_pos_x;
+    base_camera_transform.translation.y = base_camera_new_pos_y;
 }
 
 pub fn handle_show_player_stats_ui(
@@ -247,12 +273,15 @@ pub fn power_up(
     meshes: ResMut<Assets<Mesh>>,
     materials: ResMut<Assets<ColorMaterial>>,
 
-    mut player_query: Query<(Entity, &Transform, &mut Mana, &Children, &Player)>,
+    mut player_query: Query<(Entity, &mut Mana, &Children, &Transform)>,
     power_query: Query<(&Damage, &Power)>,
-    window_resolution: Res<WindowResolutionResource>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
-    let Ok((_, player_transform, mut player_mana, player_children, _)) =
-        player_query.get_single_mut()
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    let Ok((_, mut player_mana, player_children, player_transform)) = player_query.get_single_mut()
     else {
         return;
     };
@@ -287,6 +316,8 @@ pub fn power_up(
             return None;
         }
 
+        let player_translation = player_transform.translation + base_camera_transform.translation;
+
         spawn_power(
             &mut commands,
             texture_atlas_layout,
@@ -296,8 +327,7 @@ pub fn power_up(
             materials,
             power.clone(),
             power_damage.clone(),
-            player_transform.translation,
-            &window_resolution,
+            player_translation,
         );
         Some(power.mana_needed)
     };

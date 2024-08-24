@@ -6,7 +6,6 @@ use crate::{
         get_key_code_based_on_power_type, get_power_sprite_based_on_power_type, get_random_vec3,
     },
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Direction, SpritesResources,
-    WindowResolutionResource,
 };
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use rand::Rng;
@@ -221,7 +220,6 @@ pub fn spawn_power(
     power: Power,
     power_damage: Damage,
     player_translation: Vec3,
-    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let visibility = Visibility::Visible;
 
@@ -239,13 +237,9 @@ pub fn spawn_power(
     let quantity = power.quantity;
 
     match power_type {
-        PowerTypeEnum::Explosions => spawn_explosion_power(
-            commands,
-            power_bundle,
-            max_value,
-            quantity,
-            window_resolution,
-        ),
+        PowerTypeEnum::Explosions => {
+            spawn_explosion_power(commands, power_bundle, max_value, quantity)
+        }
         PowerTypeEnum::CircleOfDeath => spawn_circle_of_death_power(
             commands,
             meshes,
@@ -270,7 +264,6 @@ fn spawn_explosion_power(
     power_bundle: PowerBundle,
     max_value: u32,
     quantity: u32,
-    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let base_camera_scale = Vec2::splat(BASE_CAMERA_PROJECTION_SCALE).extend(1.);
 
@@ -278,11 +271,9 @@ fn spawn_explosion_power(
         for idx in 1..=max_value {
             let mut rng = rand::thread_rng();
             let n1: u8 = rng.gen();
-            let random_spawning_pos = get_random_vec3(
-                idx as u64,
-                Some(n1 as u64 * POWER_RANDOM_SEED),
-                window_resolution,
-            ) / base_camera_scale;
+            let random_spawning_pos =
+                get_random_vec3(idx as u64, Some(n1 as u64 * POWER_RANDOM_SEED))
+                    / base_camera_scale;
 
             let mut new_bundle = power_bundle.clone();
             new_bundle.sprite.transform.translation = random_spawning_pos;
@@ -304,13 +295,11 @@ fn spawn_circle_of_death_power(
     let circle = Mesh2dHandle(meshes.add(Annulus::new(40., 50.)));
     let color = Color::srgba(255., 0., 0., 0.8);
 
-    let base_camera_scale = Vec2::splat(BASE_CAMERA_PROJECTION_SCALE).extend(1.);
-
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: circle,
             material: materials.add(color),
-            transform: Transform::from_translation(player_translation / base_camera_scale),
+            transform: Transform::from_translation(player_translation),
             ..default()
         },
         CircleOfDeath {
@@ -340,8 +329,6 @@ fn spawn_laser_power(
     let rectangle = Mesh2dHandle(meshes.add(Rectangle::new(LASER_POWER_WIDTH, LASER_POWER_HEIGHT)));
     let color = Color::srgba(255., 0., 0., 0.8);
 
-    let base_camera_scale = Vec2::splat(BASE_CAMERA_PROJECTION_SCALE).extend(1.);
-    let translation = player_translation / base_camera_scale;
     let direction = Vec3::ONE;
 
     let max_bounces = power_bundle.marker.max_value;
@@ -352,7 +339,7 @@ fn spawn_laser_power(
             mesh: rectangle,
             material: materials.add(color),
             transform: Transform {
-                translation,
+                translation: player_translation,
                 scale: Vec3::ONE,
                 rotation: Quat::from_rotation_z(PI / 4.),
             },
@@ -361,7 +348,7 @@ fn spawn_laser_power(
         Laser {
             current_bounces,
             max_bounces,
-            center_position: translation,
+            center_position: player_translation,
         },
         Direction(direction),
         BASE_LAYER,
@@ -379,7 +366,6 @@ pub fn move_laser_power(
     mut commands: Commands,
     mut laser_power_query: Query<(Entity, &mut Transform, &mut Direction, &mut Laser), With<Laser>>,
     timer: Res<Time>,
-    window_resolution: Res<WindowResolutionResource>,
 ) {
     for (entity, mut transform, mut laser_direction, mut laser) in &mut laser_power_query.iter_mut()
     {
@@ -388,10 +374,10 @@ pub fn move_laser_power(
         let mut new_translation_y = transform.translation.y
             + laser_direction.0.y * POWER_MOVE_SPEED * timer.delta_seconds();
 
-        let off_screen_x =
-            !(-window_resolution.x_px..=window_resolution.x_px).contains(&new_translation_x);
-        let off_screen_y =
-            !(-window_resolution.y_px..=window_resolution.y_px).contains(&new_translation_y);
+        let off_screen_x = !(-CUSTOM_WINDOW_RESOLUTION.x_px..=CUSTOM_WINDOW_RESOLUTION.x_px)
+            .contains(&new_translation_x);
+        let off_screen_y = !(-CUSTOM_WINDOW_RESOLUTION.y_px..=CUSTOM_WINDOW_RESOLUTION.y_px)
+            .contains(&new_translation_y);
 
         if off_screen_x {
             // invert direction

@@ -3,8 +3,11 @@ use std::time::Duration;
 use area_25_5::*;
 
 use bevy::{
-    log::LogPlugin, prelude::*, sprite::Wireframe2dPlugin, time::common_conditions::on_timer,
-    window::WindowTheme,
+    log::LogPlugin,
+    prelude::*,
+    sprite::Wireframe2dPlugin,
+    time::common_conditions::on_timer,
+    window::{WindowResolution, WindowTheme},
 };
 
 #[cfg(not(feature = "web"))]
@@ -19,9 +22,8 @@ fn main() {
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Area 25.5".into(),
+                    resolution: WindowResolution::new(1600., 900.),
                     name: Some("area_25_5.app".into()),
-                    // Tells Wasm to resize the window according to the available canvas
-                    fit_canvas_to_parent: true,
                     // Tells Wasm not to override default event handling, like F5, Ctrl+R etc.
                     prevent_default_event_handling: false,
                     window_theme: Some(WindowTheme::Dark),

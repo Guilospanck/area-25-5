@@ -3,10 +3,7 @@ use bevy::{
     sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
 };
 
-use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet,
-    WindowResolutionResource,
-};
+use crate::{prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
 
 // ############## UI ####################
 #[derive(Component)]

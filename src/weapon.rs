@@ -7,7 +7,6 @@ use crate::stats::Direction;
 use crate::util::get_random_vec3;
 use crate::util::get_weapon_sprite_based_on_weapon_type;
 use crate::CleanupWhenPlayerDies;
-use crate::WindowResolutionResource;
 use rand::Rng;
 
 #[cfg_attr(
@@ -104,7 +103,6 @@ pub fn spawn_weapon(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
     asset_server: &Res<AssetServer>,
-    window_resolution: &Res<WindowResolutionResource>,
 ) {
     let weapon_type = &weapon_by_level.weapon.weapon_type;
     let damage = weapon_by_level.weapon.damage;
@@ -115,11 +113,7 @@ pub fn spawn_weapon(
     for idx in 1..=weapon_by_level.quantity {
         let mut rng = rand::thread_rng();
         let n1: u8 = rng.gen();
-        let random_spawning_pos = get_random_vec3(
-            idx as u64,
-            Some(n1 as u64 * WEAPON_RANDOM_SEED),
-            window_resolution,
-        );
+        let random_spawning_pos = get_random_vec3(idx as u64, Some(n1 as u64 * WEAPON_RANDOM_SEED));
 
         // The base layer in which weapon is being rendered on is being scaled
         // by BASE_CAMERA_PROJECTION_SCALE, therefore we must change the weapon
