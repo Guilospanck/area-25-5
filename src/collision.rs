@@ -73,7 +73,6 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
                         );
 
                         if buff_collider.intersects(&enemy_collider) {
-                            hit_enemy_audio(&asset_server, &mut commands);
                             damage_enemy(
                                 &mut commands,
                                 enemy_entity,
