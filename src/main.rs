@@ -22,7 +22,7 @@ fn main() {
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Area 25.5".into(),
-                    resolution: WindowResolution::new(960., 540.),
+                    resolution: WindowResolution::new(1600., 900.),
                     name: Some("area_25_5.app".into()),
                     // Tells Wasm not to override default event handling, like F5, Ctrl+R etc.
                     prevent_default_event_handling: false,

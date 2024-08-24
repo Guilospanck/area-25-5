@@ -25,26 +25,24 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
         return;
     }
 
-    let player_children = player_query.get_single();
-    if player_children.is_err() {
+    let Ok((player_transform, player_children)) = player_query.get_single() else {
         return;
-    }
-    let (player_transform, player_children) = player_children.unwrap();
+    };
 
     for &child in player_children {
-        if player_buff_group_query.get(child).is_err() {
+        let Ok((player_buff_group_children, _)) = player_buff_group_query.get(child) else {
             continue;
-        }
-        let (player_buff_group_children, _) = player_buff_group_query.get(child).unwrap();
+        };
 
         for &player_buff_group_child in player_buff_group_children {
-            if player_buff_query.get(player_buff_group_child).is_err() {
+            let Ok((player_buff_transform, player_buff)) =
+                player_buff_query.get(player_buff_group_child)
+            else {
                 continue;
-            }
-            let (player_buff_transform, player_buff) =
-                player_buff_query.get(player_buff_group_child).unwrap();
+            };
 
             match &player_buff.item {
+                // Speed and armor do not deal damage to the enemies
                 ItemTypeEnum::Speed(_) | ItemTypeEnum::Armor(_) => continue,
                 ItemTypeEnum::Shield(shield) => {
                     if shield.offensive == 0. {
@@ -104,11 +102,9 @@ pub fn check_for_ammo_collisions_with_enemy(
         return;
     }
 
-    let player_children = player_query.get_single();
-    if player_children.is_err() {
+    let Ok(player_children) = player_query.get_single() else {
         return;
-    }
-    let player_children = player_children.unwrap();
+    };
 
     let mut player_weapon = None;
     let mut player_ammo = None;
@@ -123,7 +119,9 @@ pub fn check_for_ammo_collisions_with_enemy(
             break;
         }
     }
-    let player_weapon = player_weapon.unwrap();
+    let Some(player_weapon) = player_weapon else {
+        return;
+    };
     let player_weapon_damage = player_weapon.2;
 
     for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
@@ -170,8 +168,14 @@ pub fn check_for_player_collisions_to_enemy(
     time: Res<Time>,
     mut audio_timeout: ResMut<PlayerHitAudioTimeout>,
     mut enemies: Query<(&Transform, &Damage), With<Enemy>>,
-    mut player: Query<(&Transform, &mut Health, &mut Armor), With<Player>>,
+    mut player: Query<(&Transform, &mut Health, &Armor), With<Player>>,
 ) {
+    let Ok((player_transform, mut player_health, player_armor)) = player.get_single_mut() else {
+        return;
+    };
+
+    let player_collider = Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
+
     for (enemy_transform, enemy_damage) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
@@ -181,31 +185,27 @@ pub fn check_for_player_collisions_to_enemy(
             ),
         );
 
-        if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player_health, mut player_armor) = result;
-            let player_collider =
-                Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
+        if player_collider.intersects(&enemy_collider) {
+            // play audio when player was hit
+            player_hit_audio(&asset_server, &time, &mut commands, &mut audio_timeout);
 
-            if player_collider.intersects(&enemy_collider) {
-                // play audio when player was hit
-                player_hit_audio(&asset_server, &time, &mut commands, &mut audio_timeout);
-
-                damage_player(
-                    &mut commands,
-                    &mut player_health,
-                    &mut player_armor,
-                    enemy_damage.0,
-                );
-            }
+            damage_player(
+                &mut commands,
+                &mut player_health,
+                player_armor.0,
+                enemy_damage.0,
+            );
         }
     }
 }
 
+/// Item collision with the player
 pub fn check_for_item_collisions(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: Res<SpritesResources>,
+
     mut player: Query<(&Transform, &mut Speed, &mut Armor, Entity), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
@@ -214,74 +214,76 @@ pub fn check_for_item_collisions(
         return;
     };
 
+    let Ok((player_transform, mut player_speed, mut player_armor, player_entity)) =
+        player.get_single_mut()
+    else {
+        return;
+    };
+
+    // the items are being rendered on top of the base layer
+    // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
+    // the units must be changed in order to be able to collide them
+    // properly
+    let player_center = Vec2::new(
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
+    );
+    let player_collider = Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
+
     for (item_entity, item_transform, item) in items.iter() {
         let item_collider = Aabb2d::new(
             item_transform.translation.truncate(),
             Vec2::splat(ITEM_SPRITE_SIZE as f32 / 2.),
         );
 
-        if let Ok(result) = player.get_single_mut() {
-            let (player_transform, mut player_speed, mut player_armor, player_entity) = result;
-            // the items are being rendered on top of the base layer
-            // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
-            // the units must be changed in order to be able to collide them
-            // properly
-            let player_center = Vec2::new(
-                player_transform.translation.x + base_camera_transform.translation.x,
-                player_transform.translation.y + base_camera_transform.translation.y,
-            );
-            let player_collider =
-                Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
-
-            if player_collider.intersects(&item_collider) {
-                match &item.item_type {
-                    ItemTypeEnum::Speed(speed) => {
-                        player_speed.0 += speed.0;
-                    }
-                    ItemTypeEnum::Armor(armor) => {
-                        player_armor.0 += armor.0;
-                    }
-                    ItemTypeEnum::Shield(shield) => {
-                        // TODO: check for shield type (magical vs physical)
-                        if shield.defensive > 0. {
-                            player_armor.0 += shield.defensive * NUMBER_OF_BUFF_ITEMS as f32;
-                        }
-
-                        // Add new buff to player
-                        let layer = PLAYER_LAYER;
-                        let scale = Vec3::splat(0.5);
-                        let pos = Vec3::new(RADIUS_FROM_PLAYER, RADIUS_FROM_PLAYER, 0.0);
-
-                        let buff_group_bundle =
-                            BuffGroupBundle::new(item.item_type.clone(), layer.clone());
-
-                        commands.entity(player_entity).with_children(|parent| {
-                            parent.spawn(buff_group_bundle).with_children(|parent| {
-                                for _ in 0..NUMBER_OF_BUFF_ITEMS {
-                                    let buff_bundle = BuffBundle::new(
-                                        &mut texture_atlas_layout,
-                                        &sprites,
-                                        &asset_server,
-                                        scale,
-                                        pos,
-                                        item.item_type.clone(),
-                                        layer.clone(),
-                                    );
-                                    parent.spawn(buff_bundle);
-                                }
-                            });
-                        });
-                    }
+        if player_collider.intersects(&item_collider) {
+            match &item.item_type {
+                ItemTypeEnum::Speed(speed) => {
+                    player_speed.0 += speed.0;
                 }
+                ItemTypeEnum::Armor(armor) => {
+                    player_armor.0 += armor.0;
+                }
+                ItemTypeEnum::Shield(shield) => {
+                    // TODO: check for shield type (magical vs physical)
+                    if shield.defensive > 0. {
+                        player_armor.0 += shield.defensive * NUMBER_OF_BUFF_ITEMS as f32;
+                    }
 
-                commands.trigger(BuffAdded {
-                    item_type: item.item_type.clone(),
-                });
+                    // Add new buff to player
+                    let layer = PLAYER_LAYER;
+                    let scale = Vec3::splat(0.5);
+                    let pos = Vec3::new(RADIUS_FROM_PLAYER, RADIUS_FROM_PLAYER, 0.0);
 
-                // play audio when colliding item
-                hit_item_audio(&asset_server, &mut commands);
-                commands.entity(item_entity).despawn();
+                    let buff_group_bundle =
+                        BuffGroupBundle::new(item.item_type.clone(), layer.clone());
+
+                    commands.entity(player_entity).with_children(|parent| {
+                        parent.spawn(buff_group_bundle).with_children(|parent| {
+                            for _ in 0..NUMBER_OF_BUFF_ITEMS {
+                                let buff_bundle = BuffBundle::new(
+                                    &mut texture_atlas_layout,
+                                    &sprites,
+                                    &asset_server,
+                                    scale,
+                                    pos,
+                                    item.item_type.clone(),
+                                    layer.clone(),
+                                );
+                                parent.spawn(buff_bundle);
+                            }
+                        });
+                    });
+                }
             }
+
+            commands.trigger(BuffAdded {
+                item_type: item.item_type.clone(),
+            });
+
+            // play audio when colliding item
+            hit_item_audio(&asset_server, &mut commands);
+            commands.entity(item_entity).despawn();
         }
     }
 }
@@ -330,22 +332,21 @@ pub fn check_for_weapon_collisions(
         }
     }
 
+    let Some((_, player_weapon_entity, _)) = player_weapon else {
+        return;
+    };
+
+    let Some((player_ammo_entity, _)) = player_ammo else {
+        return;
+    };
+
     // Check for collision of the player entity with the weapons on the map
     for (weapon_entity, weapon, weapon_damage, weapon_transform) in
         weapons_not_from_player_query.iter()
     {
         // if the weapon belongs to the player, do not check for collision
-        let mut player_weapon_entity = None;
-        if player_weapon.is_some() {
-            player_weapon_entity = Some(player_weapon.unwrap().1);
-            if weapon_entity == player_weapon_entity.unwrap() {
-                continue;
-            }
-        }
-
-        let mut player_ammo_entity = None;
-        if player_ammo.is_some() {
-            player_ammo_entity = Some(player_ammo.unwrap().0);
+        if weapon_entity == player_weapon_entity {
+            continue;
         }
 
         let weapon_collider = Aabb2d::new(
@@ -442,7 +443,9 @@ pub fn check_for_power_collisions_with_enemy(
 
             let mut power_entity_to_be_despawned = None;
 
-            if power.power_type != PowerTypeEnum::Laser {
+            // Only despawns the explosion because the
+            // Laser and Circle have their own way of despawning
+            if power.power_type == PowerTypeEnum::Explosions {
                 power_entity_to_be_despawned = Some(power_entity);
             }
 
@@ -468,7 +471,6 @@ fn damage_enemy_from_ammo_or_power(
     damage: f32,
     enemy_damage: &Damage,
 ) {
-    // Always despawns ammo or power
     if let Some(entity) = ammo_or_power_entity {
         commands.entity(entity).despawn();
     }
@@ -502,11 +504,11 @@ fn damage_enemy(
 fn damage_player(
     commands: &mut Commands,
     player_health: &mut Health,
-    player_armor: &mut Armor,
+    player_armor: f32,
     damage: f32,
 ) {
     // reduces damage based on the armor of the player
-    let mut new_damage = damage - player_armor.0 * 0.02;
+    let mut new_damage = damage - player_armor * 0.02;
     if new_damage <= 0. {
         new_damage = 0.0;
     }

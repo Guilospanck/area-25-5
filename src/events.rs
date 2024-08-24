@@ -80,8 +80,8 @@ pub struct WeaponFound {
     pub weapon: Weapon,
     pub weapon_damage: Damage,
     pub player_entity: Entity,
-    pub player_weapon_entity: Option<Entity>,
-    pub player_ammo_entity: Option<Entity>,
+    pub player_weapon_entity: Entity,
+    pub player_ammo_entity: Entity,
 }
 
 #[derive(Event)]
@@ -146,16 +146,14 @@ fn modify_above_player_health(
 ) {
     let health_bar_translation = Vec3::new(2.0, 12.0, 0.0);
 
-    if player_query.get_single().is_err() {
+    let Ok((player_entity, player_children)) = player_query.get_single() else {
         return;
-    }
-    let (player_entity, player_children) = player_query.get_single().unwrap();
+    };
 
     for &child in player_children.iter() {
-        if player_health_bar_query.get(child).is_err() {
+        let Ok(player_health_bar_entity) = player_health_bar_query.get(child) else {
             continue;
-        }
-        let player_health_bar_entity = player_health_bar_query.get(child).unwrap();
+        };
 
         commands
             .entity(player_health_bar_entity)
@@ -170,6 +168,7 @@ fn modify_above_player_health(
             health_bar_translation,
             PLAYER_LAYER,
         );
+
         commands
             .entity(player_entity)
             .remove_children(&[player_health_bar_entity]);
@@ -188,22 +187,19 @@ fn modify_player_profile_ui_health(
 
     health: f32,
 ) {
-    if player_profile_ui_query.get_single().is_err() {
+    let Ok((_, player_profile_children, _)) = player_profile_ui_query.get_single() else {
         return;
-    }
-    let (_, player_profile_children, _) = player_profile_ui_query.get_single().unwrap();
+    };
 
     for &child in player_profile_children.iter() {
-        if player_bar_ui_root_node_query.get(child).is_err() {
+        let Ok((_, root_node_bar_children, _)) = player_bar_ui_root_node_query.get(child) else {
             continue;
-        }
-        let (_, root_node_bar_children, _) = player_bar_ui_root_node_query.get(child).unwrap();
+        };
 
         for &root_node_child in root_node_bar_children.iter() {
-            if player_health_ui_query.get(root_node_child).is_err() {
+            let Ok((health_bar_entity, _)) = player_health_ui_query.get(root_node_child) else {
                 continue;
-            }
-            let (health_bar_entity, _) = player_health_ui_query.get(root_node_child).unwrap();
+            };
 
             commands.entity(health_bar_entity).despawn_recursive();
 
@@ -267,25 +263,22 @@ pub fn on_player_mana_changed(
     mut player_bar_ui_root_node_query: Query<(Entity, &Children, &PlayerProfileUIBarsRootNode)>,
     player_mana_ui_query: Query<(Entity, &ManaBarUI)>,
 ) {
-    if player_profile_ui_query.get_single().is_err() {
+    let Ok((_, player_profile_children, _)) = player_profile_ui_query.get_single() else {
         return;
-    }
-    let (_, player_profile_children, _) = player_profile_ui_query.get_single().unwrap();
+    };
 
     let event = trigger.event();
     let mana = event.mana;
 
     for &child in player_profile_children.iter() {
-        if player_bar_ui_root_node_query.get(child).is_err() {
+        let Ok((_, root_node_bar_children, _)) = player_bar_ui_root_node_query.get(child) else {
             continue;
-        }
-        let (_, root_node_bar_children, _) = player_bar_ui_root_node_query.get(child).unwrap();
+        };
 
         for &root_node_child in root_node_bar_children.iter() {
-            if player_mana_ui_query.get(root_node_child).is_err() {
+            let Ok((mana_bar_entity, _)) = player_mana_ui_query.get(root_node_child) else {
                 continue;
-            }
-            let (mana_bar_entity, _) = player_mana_ui_query.get(root_node_child).unwrap();
+            };
 
             commands.entity(mana_bar_entity).despawn_recursive();
 
@@ -401,6 +394,7 @@ pub fn on_enemy_health_changed(
             for &child in children.iter() {
                 if let Ok(health_bar_entity) = enemy_health_bar_query.get(child) {
                     commands.entity(health_bar_entity).despawn_recursive();
+
                     let health_bar = spawn_health_bar(
                         &mut commands,
                         &mut meshes,
@@ -410,13 +404,16 @@ pub fn on_enemy_health_changed(
                         health_bar_translation,
                         PLAYER_LAYER,
                     );
+
                     commands
                         .entity(enemy_entity)
                         .remove_children(&[health_bar_entity]);
                     commands.entity(enemy_entity).add_child(health_bar);
+
                     break;
                 }
             }
+
             break;
         }
     }
@@ -615,10 +612,9 @@ pub fn remove_outdated_buffs(
     mut player: Query<(&mut Speed, &mut Armor, &Children), With<Player>>,
     player_buff_group_query: Query<(Entity, &BuffGroup)>,
 ) {
-    if player.get_single_mut().is_err() {
+    let Ok((_, mut player_armor, player_children)) = player.get_single_mut() else {
         return;
-    }
-    let (_, mut player_armor, player_children) = player.get_single_mut().unwrap();
+    };
 
     let should_be_despawned = |buff_group: BuffGroup,
                                player_armor: &mut Armor,
@@ -659,31 +655,32 @@ pub fn remove_outdated_buffs(
 
     let mut buff_group_ui_despawned = None;
     for &child in player_children {
-        if let Ok((player_buff_group_entity, player_buff_group)) =
-            player_buff_group_query.get(child)
-        {
-            if should_be_despawned(
-                player_buff_group.clone(),
-                &mut player_armor,
-                &mut commands,
-                buff_group_ui_despawned.clone(),
-            ) {
-                if buff_group_ui_despawned.is_none() {
-                    buff_group_ui_despawned = Some(player_buff_group.item.clone());
-                }
-                commands
-                    .entity(player_buff_group_entity)
-                    .despawn_recursive();
+        let Ok((player_buff_group_entity, player_buff_group)) = player_buff_group_query.get(child)
+        else {
+            continue;
+        };
+
+        if should_be_despawned(
+            player_buff_group.clone(),
+            &mut player_armor,
+            &mut commands,
+            buff_group_ui_despawned.clone(),
+        ) {
+            if buff_group_ui_despawned.is_none() {
+                buff_group_ui_despawned = Some(player_buff_group.item.clone());
             }
+
+            commands
+                .entity(player_buff_group_entity)
+                .despawn_recursive();
         }
     }
 }
 
 pub fn refill_mana(mut commands: Commands, mut player: Query<&mut Mana, With<Player>>) {
-    if player.get_single_mut().is_err() {
+    let Ok(mut player_mana) = player.get_single_mut() else {
         return;
-    }
-    let mut player_mana = player.get_single_mut().unwrap();
+    };
 
     if player_mana.0 < PLAYER_MANA {
         player_mana.0 += 1.0;
@@ -733,11 +730,8 @@ pub fn despawn_powers(
     let event = trigger.event();
     let power_type = event.0.clone();
 
-    match power_type {
-        PowerTypeEnum::CircleOfDeath => {
-            despawn_circle_of_death_power(commands, player_query, player_powers_query, powers_query)
-        }
-        _ => (),
+    if let PowerTypeEnum::CircleOfDeath = power_type {
+        despawn_circle_of_death_power(commands, player_query, player_powers_query, powers_query)
     };
 }
 
@@ -784,30 +778,37 @@ pub fn animate_player_buffs(
     let elapsed_seconds = time.elapsed_seconds();
     let degrees = elapsed_seconds % NUMBER_OF_POSITIONS as f32;
 
-    if player_query.get_single_mut().is_err() {
+    let Ok(player_children) = player_query.get_single_mut() else {
         return;
-    }
-    let player_children = player_query.get_single_mut().unwrap();
+    };
 
     for &child in player_children.iter() {
-        if player_buff_group_query.get(child).is_err() {
+        let Ok((player_buff_group_children, _)) = player_buff_group_query.get(child) else {
             continue;
-        }
-        let (player_buff_group_children, _) = player_buff_group_query.get(child).unwrap();
+        };
 
         for (idx, &player_buff_group_child) in player_buff_group_children.iter().enumerate() {
-            if let Ok((mut player_buff_transform, _player_buff)) =
-                player_buff_query.get_mut(player_buff_group_child)
-            {
-                let radians = 0.017_453_292
-                    * degrees
-                    * (idx + 1) as f32
-                    * (NUMBER_OF_POSITIONS / NUMBER_OF_BUFF_ITEMS) as f32;
-                let (mut y, mut x) = f32::sin_cos(radians);
-                y *= RADIUS_FROM_PLAYER;
-                x *= RADIUS_FROM_PLAYER;
+            if player_buff_query.get_mut(player_buff_group_child).is_err() {
+                continue;
+            }
 
-                player_buff_transform.translation = Vec3::new(x, y, 1.);
+            let (mut player_buff_transform, player_buff) =
+                player_buff_query.get_mut(player_buff_group_child).unwrap();
+
+            match player_buff.item {
+                ItemTypeEnum::Shield(_) => {
+                    let radians = DEGREES_TO_RADIANS
+                        * degrees
+                        * (idx + 1) as f32
+                        * (NUMBER_OF_POSITIONS / NUMBER_OF_BUFF_ITEMS) as f32;
+
+                    let (mut y, mut x) = f32::sin_cos(radians);
+                    y *= RADIUS_FROM_PLAYER;
+                    x *= RADIUS_FROM_PLAYER;
+
+                    player_buff_transform.translation = Vec3::new(x, y, 1.);
+                }
+                _ => continue,
             }
         }
     }
@@ -831,11 +832,9 @@ pub fn on_buff_added(
     mut buff_ui_query: Query<(&mut BuffsUI, &Children)>,
     mut buff_ui_text: Query<&mut Text>,
 ) {
-    if let Err(err) = container_buff_ui.get_single_mut() {
-        eprintln!("{err}");
+    let Ok((container_buff_children, _)) = container_buff_ui.get_single_mut() else {
         return;
-    }
-    let (container_buff_children, _) = container_buff_ui.get_single_mut().unwrap();
+    };
 
     let event = trigger.event();
     let item_type = event.item_type.clone();
@@ -843,10 +842,9 @@ pub fn on_buff_added(
     let mut buff_counter = 0;
 
     for &child in container_buff_children {
-        if buff_ui_query.get_mut(child).is_err() {
+        let Ok((mut buff_ui, buff_ui_children)) = buff_ui_query.get_mut(child) else {
             continue;
-        }
-        let (mut buff_ui, buff_ui_children) = buff_ui_query.get_mut(child).unwrap();
+        };
         let buff_type = buff_ui.item_type.clone();
         let current_buffer_counter = buff_ui.counter;
 
@@ -864,10 +862,9 @@ pub fn on_buff_added(
             buff_ui.counter = buff_counter;
 
             for &buff_ui_child in buff_ui_children {
-                if buff_ui_text.get_mut(buff_ui_child).is_err() {
+                let Ok(mut buff_ui_counter_text) = buff_ui_text.get_mut(buff_ui_child) else {
                     continue;
-                }
-                let mut buff_ui_counter_text = buff_ui_text.get_mut(buff_ui_child).unwrap();
+                };
                 buff_ui_counter_text.sections.first_mut().unwrap().value =
                     format!("x{}", buff_counter);
             }
@@ -943,18 +940,12 @@ pub fn on_weapon_found(
     // (otherwise it will only remove the link
     // to the parent entity and will look like it
     // was spawned on the center of the screen)
-    if let Some(player_weapon_entity_unwrapped) = player_weapon_entity {
-        commands
-            .entity(*player_entity)
-            .remove_children(&[*player_weapon_entity_unwrapped]);
-        commands
-            .entity(*player_weapon_entity_unwrapped)
-            .clear_children();
-        commands.entity(*player_weapon_entity_unwrapped).despawn();
-    }
-    if let Some(player_ammo_entity_unwrapped) = player_ammo_entity {
-        commands.entity(*player_ammo_entity_unwrapped).despawn();
-    }
+    commands
+        .entity(*player_entity)
+        .remove_children(&[*player_weapon_entity]);
+    commands.entity(*player_weapon_entity).clear_children();
+    commands.entity(*player_weapon_entity).despawn();
+    commands.entity(*player_ammo_entity).despawn();
 
     // Add new weapon and ammo to player's entity
     commands.entity(*player_entity).with_children(|parent| {
@@ -988,16 +979,16 @@ pub fn on_buff_remove_ui(
     let event = trigger.event();
     let item_type = event.item_type.clone();
 
-    if container_buff_ui.get_single_mut().is_err() {
+    let Ok((children, _)) = container_buff_ui.get_single_mut() else {
         return;
-    }
-    let (children, _) = container_buff_ui.get_single_mut().unwrap();
+    };
 
     for &child in children {
-        if buff_ui_query.get_mut(child).is_err() {
+        let Ok((buff_ui_entity, mut buff_ui, buff_ui_children)) = buff_ui_query.get_mut(child)
+        else {
             continue;
-        }
-        let (buff_ui_entity, mut buff_ui, buff_ui_children) = buff_ui_query.get_mut(child).unwrap();
+        };
+
         let current_buff_counter = buff_ui.counter;
 
         match (&item_type, &buff_ui.item_type) {
@@ -1011,10 +1002,11 @@ pub fn on_buff_remove_ui(
                     buff_ui.counter -= 1;
 
                     for &buff_ui_child in buff_ui_children {
-                        if buff_ui_text.get_mut(buff_ui_child).is_err() {
+                        let Ok(mut buff_ui_counter_text) = buff_ui_text.get_mut(buff_ui_child)
+                        else {
                             continue;
-                        }
-                        let mut buff_ui_counter_text = buff_ui_text.get_mut(buff_ui_child).unwrap();
+                        };
+
                         buff_ui_counter_text.sections.first_mut().unwrap().value =
                             format!("x{}", current_buff_counter - 1);
                     }
@@ -1035,11 +1027,9 @@ pub fn on_buff_add_ui(
 
     mut container_buff_ui: Query<(Entity, &ContainerBuffsUI)>,
 ) {
-    if let Err(err) = container_buff_ui.get_single_mut() {
-        eprintln!("{err}");
+    let Ok((parent, _)) = container_buff_ui.get_single_mut() else {
         return;
-    }
-    let (parent, _) = container_buff_ui.get_single_mut().unwrap();
+    };
 
     let event = trigger.event();
     let item_type = event.item_type.clone();
@@ -1237,16 +1227,20 @@ pub fn update_power_ui(
         let (power_ui, power_children) = found.unwrap();
 
         for &child in power_children {
-            if let Ok(power_sprite_ui_children) = power_sprite_ui_query.get(child) {
-                for &sprite_child in power_sprite_ui_children {
-                    if let Ok(mut power_level_ui_text) = power_level_ui_query.get_mut(sprite_child)
-                    {
-                        power_level_ui_text.sections.first_mut().unwrap().value =
-                            format!("{}", power_ui.power_level);
-                    }
+            if power_sprite_ui_query.get(child).is_err() {
+                continue;
+            }
+
+            let power_sprite_ui_children = power_sprite_ui_query.get(child).unwrap();
+
+            for &sprite_child in power_sprite_ui_children {
+                if let Ok(mut power_level_ui_text) = power_level_ui_query.get_mut(sprite_child) {
+                    power_level_ui_text.sections.first_mut().unwrap().value =
+                        format!("{}", power_ui.power_level);
                 }
             }
         }
+
         return;
     }
 

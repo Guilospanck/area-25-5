@@ -62,3 +62,5 @@ pub const CAPSULE_COLLIDER: Vec2 =
     Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);
 
 pub const NUMBER_OF_WAVES: usize = 5;
+
+pub const DEGREES_TO_RADIANS: f32 = 0.017_453_292;
