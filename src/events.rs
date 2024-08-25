@@ -1278,7 +1278,7 @@ pub fn on_window_resize(
     }
 }
 
-pub fn maybe_spawn_energy_pack(
+pub fn maybe_spawn_health_points_pack(
     _trigger: Trigger<MaybeSpawnEnergyPack>,
     mut commands: Commands,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
@@ -1295,7 +1295,7 @@ pub fn maybe_spawn_energy_pack(
     let mut rng = ChaCha8Rng::seed_from_u64(RANDOM_SEED * n1 as u64);
     let chance = rng.gen::<f32>();
 
-    if chance > 0.5 {
+    if chance > CHANCE_TO_SPAWN_HEALTH_POINTS_PACK {
         spawn_item(
             &mut commands,
             &mut texture_atlas_layout,
