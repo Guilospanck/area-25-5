@@ -4,11 +4,40 @@ use crate::{
     player::Player,
     prelude::*,
     spawn_player_stats_ui, spawn_power,
-    util::{get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
+    util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, BaseCamera, Damage, Health, Mana, PlayAgainButton, PlayerCamera,
     PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
     SpritesResources, StartGameButton, Weapon, WindowResolutionResource,
 };
+
+pub fn change_enemy_direction(
+    mut enemies: Query<&mut Enemy, (With<Enemy>, Without<Player>)>,
+    player: Query<(&Transform, &Player)>,
+) {
+    let position = match player.get_single() {
+        Ok(player_position) => Vec2::new(
+            player_position.0.translation.x,
+            player_position.0.translation.y,
+        ),
+        Err(_) => Vec2::splat(0.),
+    };
+
+    for (index, mut enemy) in enemies.iter_mut().enumerate() {
+        let mut signal = 1.;
+        if index % 2 != 0 {
+            signal = -1.;
+        }
+
+        let chance = get_random_chance() * signal;
+        enemy.direction_intention.translation = (position
+            + Vec2::new(
+                INITIAL_WINDOW_RESOLUTION.x_px * chance,
+                INITIAL_WINDOW_RESOLUTION.y_px * chance,
+            ))
+        .extend(1.);
+        enemy.is_random = !enemy.is_random;
+    }
+}
 
 pub fn move_enemies_towards_player(
     // The reason the `Without` is needed here, even though it wouldn't be
@@ -16,24 +45,62 @@ pub fn move_enemies_towards_player(
     // is that rust mutability does not allow a variable to be mutable and
     // immutable at the same time. See https://bevyengine.org/learn/errors/#b0001
     // for more.
-    mut enemies: Query<&mut Transform, (With<Enemy>, Without<Player>)>,
-    timer: Res<Time>,
+    mut enemies: Query<(&mut Transform, &Enemy), (With<Enemy>, Without<Player>)>,
+    time: Res<Time>,
     player: Query<(&Transform, &Player)>,
+    window_resolution: Res<WindowResolutionResource>,
 ) {
-    for mut transform in enemies.iter_mut() {
-        let position = match player.get_single() {
-            Ok(player_position) => Vec2::new(
-                player_position.0.translation.x,
-                player_position.0.translation.y,
-            ),
-            Err(_) => Vec2::splat(0.),
-        };
+    let mut position = match player.get_single() {
+        Ok(player_position) => Vec2::new(
+            player_position.0.translation.x,
+            player_position.0.translation.y,
+        ),
+        Err(_) => Vec2::splat(0.),
+    };
+
+    let limit_x_left = (-window_resolution.x_px + PLAYER_X_MARGIN) / 2.0;
+    let limit_x_right = (window_resolution.x_px - PLAYER_X_MARGIN) / 2.0;
+    let limit_y_bottom = (-window_resolution.y_px + PLAYER_Y_MARGIN) / 2.0;
+    let limit_y_top = (window_resolution.y_px - PLAYER_Y_MARGIN) / 2.0;
+
+    for (mut transform, enemy) in enemies.iter_mut() {
+        // Enemies have greater speed when charging the player.
+        let mut speed = ENEMY_MOVE_SPEED * ENEMY_BOOST_SPEED_WHEN_CHARGING;
+
+        // if the player is gonna walk randomly, then uses the `direction_intention`
+        // instead of the player's position as the origin for the unit direction vector.
+        //
+        // It also walks in a slower way.
+        if enemy.is_random {
+            position = enemy.direction_intention.translation.truncate();
+            speed = ENEMY_MOVE_SPEED / ENEMY_BOOST_SPEED_WHEN_CHARGING;
+        }
 
         let unit_direction = get_unit_direction_vector(position, transform.translation.truncate());
+
+        let old_pos_x = transform.translation.x;
+        let old_pos_y = transform.translation.y;
+
+        let mut char_new_pos_x = old_pos_x - unit_direction.x * speed * time.delta_seconds();
+        let mut char_new_pos_y = old_pos_y + unit_direction.y * speed * time.delta_seconds();
+
+        if char_new_pos_x < limit_x_left {
+            char_new_pos_x = limit_x_left;
+        }
+        if char_new_pos_x > limit_x_right {
+            char_new_pos_x = limit_x_right;
+        }
+        if char_new_pos_y < limit_y_bottom {
+            char_new_pos_y = limit_y_bottom;
+        }
+        if char_new_pos_y > limit_y_top {
+            char_new_pos_y = limit_y_top;
+        }
+
         // See that these `-=` and `+=` are the opposite of what we use when spawning bullets
         // As now we need to make the enemies go *towards* the player, not *outwards*
-        transform.translation.x -= unit_direction.x * ENEMY_MOVE_SPEED * timer.delta_seconds();
-        transform.translation.y += unit_direction.y * ENEMY_MOVE_SPEED * timer.delta_seconds();
+        transform.translation.x = char_new_pos_x;
+        transform.translation.y = char_new_pos_y;
     }
 }
 

@@ -1,10 +1,16 @@
 use crate::{
-    prelude::*, spawn_health_bar, util::get_random_vec3, AnimationIndices, AnimationTimer,
-    CleanupWhenPlayerDies, Damage, Health, SpriteInfo, Sprites, SpritesResources,
+    prelude::*,
+    spawn_health_bar,
+    util::{get_random_chance, get_random_vec3},
+    AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health, SpriteInfo, Sprites,
+    SpritesResources,
 };
 
 #[derive(Component, Clone)]
-pub struct Enemy;
+pub struct Enemy {
+    pub is_random: bool,
+    pub direction_intention: Transform,
+}
 
 #[derive(Bundle, Clone)]
 pub(crate) struct EnemyBundle {
@@ -54,7 +60,10 @@ impl EnemyBundle {
         let texture_atlas_layout = texture_atlas_layout.add(enemy_sprite.layout);
 
         EnemyBundle {
-            marker: Enemy,
+            marker: Enemy {
+                is_random: false,
+                direction_intention: Transform::default(),
+            },
             name: Name::new("Enemy"),
             health: Health(health),
             damage: Damage(damage),

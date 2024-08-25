@@ -13,7 +13,8 @@ use crate::{
     ui::HealthBar,
     util::{
         get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
-        get_power_sprite_based_on_power_type, get_weapon_sprite_based_on_weapon_type,
+        get_power_sprite_based_on_power_type, get_random_chance,
+        get_weapon_sprite_based_on_weapon_type,
     },
     AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage,
@@ -1285,15 +1286,7 @@ pub fn maybe_spawn_health_points_pack(
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
 ) {
-    use rand::{Rng, SeedableRng};
-    use rand_chacha::ChaCha8Rng;
-
-    let mut rand_thread_rng = rand::thread_rng();
-    let n1: u8 = rand_thread_rng.gen();
-
-    const RANDOM_SEED: u64 = 1282831746771;
-    let mut rng = ChaCha8Rng::seed_from_u64(RANDOM_SEED * n1 as u64);
-    let chance = rng.gen::<f32>();
+    let chance = get_random_chance();
 
     if chance > CHANCE_TO_SPAWN_HEALTH_POINTS_PACK {
         spawn_item(

@@ -5,6 +5,15 @@ use bevy::math::bounding::BoundingVolume;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
+pub(crate) fn get_random_chance() -> f32 {
+    let mut rand_thread_rng = rand::thread_rng();
+    let n1: u8 = rand_thread_rng.gen();
+
+    const RANDOM_SEED: u64 = 1282831746771;
+    let mut rng = ChaCha8Rng::seed_from_u64(RANDOM_SEED * n1 as u64);
+    rng.gen::<f32>()
+}
+
 pub(crate) fn get_unit_direction_vector(origin: Vec2, end: Vec2) -> Vec2 {
     let direction_x = end.x - origin.x;
     let direction_y = -(end.y - origin.y);
