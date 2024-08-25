@@ -475,11 +475,14 @@ pub fn on_wave_changed(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
     weapons: Query<(Entity, Option<&Parent>), With<Weapon>>,
-    items: Query<Entity, With<Item>>,
+    items: Query<(Entity, &Item), With<Item>>,
 ) {
     // Despawn items and weapons that were spawned on the map
-    for item in items.iter() {
-        commands.entity(item).despawn();
+    for (item_entity, item) in items.iter() {
+        match item.item_type {
+            ItemTypeEnum::Health(_) => continue,
+            _ => commands.entity(item_entity).despawn(),
+        }
     }
 
     for weapon in weapons.iter() {
