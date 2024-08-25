@@ -89,16 +89,16 @@ impl ItemBundle {
 
 pub fn spawn_item(
     commands: &mut Commands,
-    item_by_level: &ItemByLevel,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
     asset_server: &Res<AssetServer>,
+
+    item_type: ItemTypeEnum,
+    quantity: u32,
 ) {
-    let quantity = &item_by_level.quantity;
-    let item_type = &item_by_level.item.item;
     let scale = Vec3::splat(2.);
 
-    for idx in 1..=*quantity {
+    for idx in 1..=quantity {
         let mut rng = rand::thread_rng();
         let n1: u8 = rng.gen();
         let random_spawning_pos = get_random_vec3(idx as u64, Some(n1 as u64 * ITEM_RANDOM_SEED));

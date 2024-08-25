@@ -100,6 +100,9 @@ pub struct OnUpdatePowerUI {
 }
 
 #[derive(Event)]
+pub struct MaybeSpawnEnergyPack;
+
+#[derive(Event)]
 pub struct GameOver;
 
 #[derive(Event)]
@@ -365,10 +368,11 @@ pub fn on_player_spawned(
     let item_by_level = current_wave_item.unwrap();
     spawn_item(
         &mut commands,
-        item_by_level,
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        item_by_level.item.item.clone(),
+        item_by_level.quantity,
     );
 
     // UI stuff
@@ -471,11 +475,14 @@ pub fn on_wave_changed(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
     weapons: Query<(Entity, Option<&Parent>), With<Weapon>>,
-    items: Query<Entity, With<Item>>,
+    items: Query<(Entity, &Item), With<Item>>,
 ) {
     // Despawn items and weapons that were spawned on the map
-    for item in items.iter() {
-        commands.entity(item).despawn();
+    for (item_entity, item) in items.iter() {
+        match item.item_type {
+            ItemTypeEnum::Health(_) => continue,
+            _ => commands.entity(item_entity).despawn(),
+        }
     }
 
     for weapon in weapons.iter() {
@@ -534,10 +541,11 @@ pub fn on_wave_changed(
     let item_by_level = current_wave_item.unwrap();
     spawn_item(
         &mut commands,
-        item_by_level,
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        item_by_level.item.item.clone(),
+        item_by_level.quantity,
     );
 
     // Add new power to the player
@@ -622,7 +630,9 @@ pub fn remove_outdated_buffs(
                                buff_ui_despawned: Option<ItemTypeEnum>|
      -> bool {
         match &buff_group.item {
-            crate::ItemTypeEnum::Speed(_) | crate::ItemTypeEnum::Armor(_) => false,
+            crate::ItemTypeEnum::Speed(_)
+            | crate::ItemTypeEnum::Armor(_)
+            | crate::ItemTypeEnum::Health(_) => false,
             crate::ItemTypeEnum::Shield(shield) => {
                 if shield.duration_seconds.is_none() {
                     return false;
@@ -1069,6 +1079,7 @@ pub fn on_buff_add_ui(
             ItemTypeEnum::Shield(shield.clone()).clone(),
             &sprites,
         ),
+        _ => return,
     };
 
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -1264,5 +1275,34 @@ pub fn on_window_resize(
     for e in resize_reader.read() {
         window_resolution.x_px = e.width;
         window_resolution.y_px = e.height;
+    }
+}
+
+pub fn maybe_spawn_health_points_pack(
+    _trigger: Trigger<MaybeSpawnEnergyPack>,
+    mut commands: Commands,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    sprites: Res<SpritesResources>,
+    asset_server: Res<AssetServer>,
+) {
+    use rand::{Rng, SeedableRng};
+    use rand_chacha::ChaCha8Rng;
+
+    let mut rand_thread_rng = rand::thread_rng();
+    let n1: u8 = rand_thread_rng.gen();
+
+    const RANDOM_SEED: u64 = 1282831746771;
+    let mut rng = ChaCha8Rng::seed_from_u64(RANDOM_SEED * n1 as u64);
+    let chance = rng.gen::<f32>();
+
+    if chance > CHANCE_TO_SPAWN_HEALTH_POINTS_PACK {
+        spawn_item(
+            &mut commands,
+            &mut texture_atlas_layout,
+            &sprites,
+            &asset_server,
+            ItemTypeEnum::Health(crate::Health(10.)),
+            1,
+        );
     }
 }

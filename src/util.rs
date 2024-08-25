@@ -62,6 +62,7 @@ pub(crate) fn get_item_sprite_based_on_item_type(
         ItemTypeEnum::Speed(_) => sprites.0.lightning.clone(),
         ItemTypeEnum::Armor(_) => sprites.0.shield.clone(),
         ItemTypeEnum::Shield(_) => sprites.0.diamond.clone(),
+        ItemTypeEnum::Health(_) => sprites.0.hp_pack.clone(),
     }
 }
 
