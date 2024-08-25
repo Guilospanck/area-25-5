@@ -67,15 +67,16 @@ as the time passes (cooldown)
 - [x] Fix spawns happening outside screen
 - [x] (BUG) The game starts before hitting start 
 - [x] (BUG-itchio) The screen is not completely showing 
-- [ ] (BUG-itchio) Performance too poor
-	- [ ] Move player based on the resized screen while also
+- [x] (BUG-itchio) Performance too poor
+	- [x] Move player based on the resized screen while also
 	traversing the whole textured background
 	"What if you can update the coordinates of the player to make it be 
 	in sync with the background (so be able to collide stuff), but you 
 	actually don't move the player (so it won't go out of bounds)?"
-- [ ] Change annoying audio
-- [ ] Change all spawns of empty entities to `.spawn_empty()`
-- [ ] Validate circle power is actually dealing damage to enemies
+- [x] Validate circle power is actually dealing damage to enemies
+- [ ] Create an item that will give the player HP
+- [ ] Improve enemy movement towards player
+- [ ] (RELATED) Create a way of enemies not getting too much together
 - [ ] Weapons spawned are too small
 
 Ongoing:
@@ -86,16 +87,15 @@ Ongoing:
 - [-] Spawn more waves
 
 Backlog:
-- [ ] Create a way of enemies not getting too much together
 - [ ] Spawning of enemies can come from outside the screen
 - [ ] Create the concept of enemies throwing magic or bullets as well
 - [ ] Some enemies may be fixed at some place and only cast spells
 - [ ] Add proper audio and game sound
-- [ ] Improve enemy movement towards player
 - [ ] Change speed of ammo
 - [ ] Change speed of laser power
 - [ ] Make weapon spawned on the map bigger
 - [ ] Improve rendering of circle
+- [ ] Change all spawns of empty entities to `.spawn_empty()`
  
 Features:
 - HP bar for some boss at some point

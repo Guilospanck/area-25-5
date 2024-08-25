@@ -177,5 +177,6 @@ fn main() {
         .observe(on_power_found)
         .observe(despawn_powers)
         .observe(update_power_ui)
+        .observe(maybe_spawn_energy_pack)
         .run();
 }

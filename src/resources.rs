@@ -315,5 +315,20 @@ pub fn get_sprites() -> Sprites<'static> {
             }),
             layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
         },
+        hp_pack: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Items/hp_pack.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
+        },
     }
 }

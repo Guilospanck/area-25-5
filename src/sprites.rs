@@ -42,6 +42,7 @@ pub struct Sprites<'a> {
     pub shield: SpriteInfo<'a>,
     pub profile: SpriteInfo<'a>,
     pub diamond: SpriteInfo<'a>,
+    pub hp_pack: SpriteInfo<'a>,
 }
 
 #[derive(Component)]

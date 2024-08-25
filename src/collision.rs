@@ -9,7 +9,8 @@ use crate::{
     util::check_if_collides_with_power_based_on_power_type,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
-    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
+    MaybeSpawnEnergyPack, PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources,
+    Weapon, WeaponFound,
 };
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
@@ -43,7 +44,9 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
 
             match &player_buff.item {
                 // Speed and armor do not deal damage to the enemies
-                ItemTypeEnum::Speed(_) | ItemTypeEnum::Armor(_) => continue,
+                ItemTypeEnum::Speed(_) | ItemTypeEnum::Armor(_) | ItemTypeEnum::Health(_) => {
+                    continue
+                }
                 ItemTypeEnum::Shield(shield) => {
                     if shield.offensive == 0. {
                         continue;
@@ -206,7 +209,7 @@ pub fn check_for_item_collisions(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: Res<SpritesResources>,
 
-    mut player: Query<(&Transform, &mut Speed, &mut Armor, Entity), With<Player>>,
+    mut player: Query<(&Transform, &mut Speed, &mut Armor, Entity, &mut Health), With<Player>>,
     items: Query<(Entity, &Transform, &Item)>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
@@ -214,8 +217,13 @@ pub fn check_for_item_collisions(
         return;
     };
 
-    let Ok((player_transform, mut player_speed, mut player_armor, player_entity)) =
-        player.get_single_mut()
+    let Ok((
+        player_transform,
+        mut player_speed,
+        mut player_armor,
+        player_entity,
+        mut player_health,
+    )) = player.get_single_mut()
     else {
         return;
     };
@@ -241,6 +249,19 @@ pub fn check_for_item_collisions(
                 }
                 ItemTypeEnum::Armor(armor) => {
                     player_armor.0 += armor.0;
+                }
+                ItemTypeEnum::Health(health) => {
+                    let mut new_health = player_health.0 + health.0;
+
+                    if new_health > PLAYER_HEALTH {
+                        new_health = PLAYER_HEALTH;
+                    }
+
+                    player_health.0 = new_health;
+
+                    commands.trigger(PlayerHealthChanged {
+                        health: player_health.0,
+                    });
                 }
                 ItemTypeEnum::Shield(shield) => {
                     // TODO: check for shield type (magical vs physical)
@@ -487,6 +508,8 @@ fn damage_enemy(
         commands.trigger(ScoreChanged {
             score: enemy_damage.0,
         });
+
+        commands.trigger(MaybeSpawnEnergyPack);
     }
 
     commands.trigger(EnemyHealthChanged {
