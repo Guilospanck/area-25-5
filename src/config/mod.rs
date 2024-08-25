@@ -37,7 +37,7 @@ pub(crate) const PLAYER_SPRITE_SIZE: u8 = 32;
 // therefore we must have these so we translate it properly and his head/legs
 // are not outside the screen)
 pub(crate) const PLAYER_X_MARGIN: f32 = 20.;
-pub(crate) const PLAYER_Y_MARGIN: f32 = 80.;
+pub(crate) const PLAYER_Y_MARGIN: f32 = 40.;
 
 pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
 pub(crate) const AMMO_DAMAGE: f32 = 10.0;
@@ -45,18 +45,29 @@ pub(crate) const AMMO_DAMAGE: f32 = 10.0;
 pub(crate) const CAPSULE_LENGTH: f32 = 8.;
 pub(crate) const CAPSULE_RADIUS: f32 = 4.;
 
-pub(crate) const BASE_CAMERA_PROJECTION_SCALE: f32 = 0.5;
 pub(crate) const SCORE_MULTIPLIER: f32 = 0.1;
 
-pub struct CustomWindowResolution {
+pub struct CustomResolution {
     pub x_px: f32,
     pub y_px: f32,
 }
 
-pub const CUSTOM_WINDOW_RESOLUTION: CustomWindowResolution = CustomWindowResolution {
+// This is the normal (scale 1) resolution for the background texture
+// that is rendered by the BaseCamera on the Base Layer.
+pub const BACKGROUND_TEXTURE_RESOLUTION: CustomResolution = CustomResolution {
     x_px: 1920.0,
     y_px: 1080.0,
 };
+
+// This is the initial window resolution when the application opens.
+pub const INITIAL_WINDOW_RESOLUTION: CustomResolution = CustomResolution {
+    x_px: 1600.0,
+    y_px: 900.0,
+};
+
+// This is the scale that we use for the background texture in order to
+// give it a feeling that the map is bigger than normal.
+pub(crate) const BACKGROUND_TEXTURE_SCALE: f32 = 2.0;
 
 pub const CAPSULE_COLLIDER: Vec2 =
     Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);

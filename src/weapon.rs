@@ -118,7 +118,7 @@ pub fn spawn_weapon(
         // The base layer in which weapon is being rendered on is being scaled
         // by BASE_CAMERA_PROJECTION_SCALE, therefore we must change the weapon
         // position to be able to render weapons on the whole background "map"
-        let new_pos = random_spawning_pos / BASE_CAMERA_PROJECTION_SCALE;
+        let new_pos = random_spawning_pos * BACKGROUND_TEXTURE_SCALE;
 
         let bundle = WeaponBundle::new(
             texture_atlas_layout,

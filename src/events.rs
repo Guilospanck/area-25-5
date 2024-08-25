@@ -703,7 +703,7 @@ pub fn expand_circle_of_death(
         let new_outer_radius = circle.outer_circle_radius * 0.2 + circle.outer_circle_radius;
         let new_inner_radius = new_outer_radius - 10.0;
 
-        if new_inner_radius > CUSTOM_WINDOW_RESOLUTION.x_px {
+        if new_inner_radius > BACKGROUND_TEXTURE_RESOLUTION.x_px {
             commands.entity(circle_entity).despawn();
             commands.trigger(DespawnPower(PowerTypeEnum::CircleOfDeath));
             continue;

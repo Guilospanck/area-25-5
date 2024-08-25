@@ -186,10 +186,10 @@ pub fn move_player(
     let mut base_camera_new_pos_y =
         old_camera_pos_y + direction_y * player_speed.0 * time.delta_seconds();
 
-    let limit_x_left = (-CUSTOM_WINDOW_RESOLUTION.x_px) / 2.0;
-    let limit_x_right = (CUSTOM_WINDOW_RESOLUTION.x_px) / 2.0;
-    let limit_y_bottom = (-CUSTOM_WINDOW_RESOLUTION.y_px) / 2.0;
-    let limit_y_top = (CUSTOM_WINDOW_RESOLUTION.y_px) / 2.0;
+    let limit_x_left = (-BACKGROUND_TEXTURE_RESOLUTION.x_px) / 2.0;
+    let limit_x_right = (BACKGROUND_TEXTURE_RESOLUTION.x_px) / 2.0;
+    let limit_y_bottom = (-BACKGROUND_TEXTURE_RESOLUTION.y_px) / 2.0;
+    let limit_y_top = (BACKGROUND_TEXTURE_RESOLUTION.y_px) / 2.0;
 
     if base_camera_new_pos_x < limit_x_left {
         base_camera_new_pos_x = limit_x_left;

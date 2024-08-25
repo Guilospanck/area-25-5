@@ -265,7 +265,7 @@ fn spawn_explosion_power(
     max_value: u32,
     quantity: u32,
 ) {
-    let base_camera_scale = Vec2::splat(BASE_CAMERA_PROJECTION_SCALE).extend(1.);
+    let base_camera_scale = Vec2::splat(BACKGROUND_TEXTURE_SCALE).extend(1.);
 
     for _ in 1..=quantity {
         for idx in 1..=max_value {
@@ -273,7 +273,7 @@ fn spawn_explosion_power(
             let n1: u8 = rng.gen();
             let random_spawning_pos =
                 get_random_vec3(idx as u64, Some(n1 as u64 * POWER_RANDOM_SEED))
-                    / base_camera_scale;
+                    * base_camera_scale;
 
             let mut new_bundle = power_bundle.clone();
             new_bundle.sprite.transform.translation = random_spawning_pos;
@@ -374,9 +374,11 @@ pub fn move_laser_power(
         let mut new_translation_y = transform.translation.y
             + laser_direction.0.y * POWER_MOVE_SPEED * timer.delta_seconds();
 
-        let off_screen_x = !(-CUSTOM_WINDOW_RESOLUTION.x_px..=CUSTOM_WINDOW_RESOLUTION.x_px)
+        let off_screen_x = !(-BACKGROUND_TEXTURE_RESOLUTION.x_px
+            ..=BACKGROUND_TEXTURE_RESOLUTION.x_px)
             .contains(&new_translation_x);
-        let off_screen_y = !(-CUSTOM_WINDOW_RESOLUTION.y_px..=CUSTOM_WINDOW_RESOLUTION.y_px)
+        let off_screen_y = !(-BACKGROUND_TEXTURE_RESOLUTION.y_px
+            ..=BACKGROUND_TEXTURE_RESOLUTION.y_px)
             .contains(&new_translation_y);
 
         if off_screen_x {

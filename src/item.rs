@@ -61,7 +61,7 @@ impl ItemBundle {
         // The base layer in which item is being rendered on is being scaled
         // by BASE_CAMERA_PROJECTION_SCALE, therefore we must change the item
         // position to be able to render items on the whole background "map"
-        let new_pos = pos / BASE_CAMERA_PROJECTION_SCALE;
+        let new_pos = pos * BACKGROUND_TEXTURE_SCALE;
 
         ItemBundle {
             name: Name::new("Item"),

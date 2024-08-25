@@ -220,10 +220,8 @@ pub fn check_for_item_collisions(
         return;
     };
 
-    // the items are being rendered on top of the base layer
-    // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
-    // the units must be changed in order to be able to collide them
-    // properly
+    // This gets the current player position on the world based on his
+    // screen position.
     let player_center = Vec2::new(
         player_transform.translation.x + base_camera_transform.translation.x,
         player_transform.translation.y + base_camera_transform.translation.y,
@@ -307,11 +305,8 @@ pub fn check_for_weapon_collisions(
         return;
     };
 
-    // !!!!!!!!!!!! INFO:
-    // the items are being rendered on top of the base layer
-    // which is scaled by BASE_CAMERA_PROJECTION_SCALE, therefore
-    // the units must be changed in order to be able to collide them
-    // properly
+    // This gets the current player position on the world based on his
+    // screen position.
     let player_center = Vec2::new(
         player_transform.translation.x + base_camera_transform.translation.x,
         player_transform.translation.y + base_camera_transform.translation.y,
@@ -404,9 +399,8 @@ pub fn check_for_power_collisions_with_enemy(
     }
 
     for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
-        // INFO: we need to re-center the coordinate system to be able to collide.
-        // This is in fact actually updating the origin point to which we will
-        // collide (the base camera, BASE_LAYER) with the `power`.
+        // This gets the current enemy position on the world based on his
+        // screen position.
         let enemy_center = Vec2::new(
             enemy_transform.translation.x + base_camera_transform.translation.x,
             enemy_transform.translation.y + base_camera_transform.translation.y,

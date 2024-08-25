@@ -86,7 +86,7 @@ fn setup_tile_sprite(
             transform: Transform {
                 rotation: Quat::default(),
                 translation: Vec3::new(x_offset, y_offset, TILE_Z_INDEX),
-                scale: Vec3::splat(2.),
+                scale: Vec3::splat(BACKGROUND_TEXTURE_SCALE),
             },
             ..default()
         },
@@ -107,11 +107,11 @@ fn render_background_texture(
     let tile = sprites.player_custom_bg.clone();
 
     // number of tiles in a row
-    let x_items = CUSTOM_WINDOW_RESOLUTION.x_px / tile.dimensions.width as f32;
+    let x_items = BACKGROUND_TEXTURE_RESOLUTION.x_px / tile.dimensions.width as f32;
     let x_items: u32 = x_items.ceil() as u32;
 
     // number of tiles in a column
-    let y_items = CUSTOM_WINDOW_RESOLUTION.y_px / tile.dimensions.height as f32;
+    let y_items = BACKGROUND_TEXTURE_RESOLUTION.y_px / tile.dimensions.height as f32;
     let y_items: u32 = y_items.ceil() as u32;
 
     for _ in 0..y_items {
