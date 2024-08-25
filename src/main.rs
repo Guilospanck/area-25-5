@@ -108,9 +108,9 @@ fn main() {
             FixedUpdate,
             (
                 move_ammo,
-                move_enemies_towards_player,
                 animate_sprite,
                 move_laser_power,
+                move_enemies_towards_player,
             )
                 .in_set(MoveSet),
         )
@@ -155,6 +155,7 @@ fn main() {
                 animate_player_buffs.run_if(on_timer(Duration::from_nanos(100))),
                 refill_mana.run_if(on_timer(Duration::from_secs(1))),
                 expand_circle_of_death.run_if(on_timer(Duration::from_millis(100))),
+                change_enemy_direction.run_if(on_timer(Duration::from_secs(5))),
             )
                 .in_set(TimeBasedSet),
         )
