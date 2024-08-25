@@ -74,7 +74,7 @@ as the time passes (cooldown)
 	in sync with the background (so be able to collide stuff), but you 
 	actually don't move the player (so it won't go out of bounds)?"
 - [x] Validate circle power is actually dealing damage to enemies
-- [ ] Create an item that will give the player HP
+- [x] Create an item that will give the player HP
 - [ ] Improve enemy movement towards player
 - [ ] (RELATED) Create a way of enemies not getting too much together
 - [ ] Weapons spawned are too small
