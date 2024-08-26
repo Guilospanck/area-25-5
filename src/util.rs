@@ -94,59 +94,30 @@ pub(crate) fn get_key_code_based_on_power_type(power_type: PowerTypeEnum) -> Key
     }
 }
 
-pub(crate) fn check_if_collides_with_power_based_on_power_type(
-    power_type: PowerTypeEnum,
-    collider: Aabb2d,
-    power_collider: Aabb2d,
-    circle_of_death_query: &Query<&CircleOfDeath, With<CircleOfDeath>>,
-    laser_query: &Query<&Laser, With<Laser>>,
+pub(crate) fn get_pythagorean_distance_to_circle_origin(xp: f32, yp: f32, origin: Vec2) -> f32 {
+    let mut x_distance = xp - origin.x;
+    let mut y_distance = yp - origin.y;
+
+    x_distance = x_distance.powi(2);
+    y_distance = y_distance.powi(2);
+
+    x_distance + y_distance
+}
+
+pub(crate) fn check_inside_annulus(
+    r_min_squared: f32,
+    r_max_squared: f32,
+    distance_min: f32,
+    distance_max: f32,
 ) -> bool {
-    match power_type {
-        PowerTypeEnum::Explosions => power_collider.intersects(&collider),
-        PowerTypeEnum::CircleOfDeath => {
-            for circle_of_death in circle_of_death_query.iter() {
-                let CircleOfDeath {
-                    inner_circle_radius,
-                    outer_circle_radius,
-                } = circle_of_death;
+    let distance_min_inside_annulus =
+        distance_min >= r_min_squared && distance_min <= r_max_squared;
+    let distance_max_inside_annulus =
+        distance_max >= r_min_squared && distance_max <= r_max_squared;
 
-                if (collider.min.x >= *inner_circle_radius
-                    || -collider.min.x >= *inner_circle_radius)
-                    && (collider.max.x <= *outer_circle_radius
-                        || -collider.max.x <= *outer_circle_radius)
-                    && (collider.min.y >= *inner_circle_radius
-                        || -collider.min.y >= *inner_circle_radius)
-                    && (collider.max.y <= *outer_circle_radius
-                        || -collider.max.y <= *outer_circle_radius)
-                {
-                    return true;
-                }
-            }
-            false
-        }
-        PowerTypeEnum::Laser => {
-            let cos_45 = 2.0_f32.sqrt() / 2.;
-            let sin_45 = 2.0_f32.sqrt() / 2.;
+    let some_in_between_is_inside_annulus = (distance_min > r_max_squared
+        && distance_max < r_min_squared)
+        || (distance_min < r_min_squared && distance_max > r_max_squared);
 
-            for laser in laser_query.iter() {
-                let Laser {
-                    center_position, ..
-                } = laser;
-
-                let mut laser_collider = Aabb2d::new(
-                    Vec2::ZERO,
-                    Vec2::new(LASER_POWER_WIDTH / 2., LASER_POWER_HEIGHT / 2.),
-                );
-                let rotation_matrix = Rot2::from_sin_cos(sin_45, cos_45);
-                let translation_matrix = center_position.truncate();
-
-                laser_collider.transform_by(translation_matrix, rotation_matrix);
-
-                if laser_collider.intersects(&collider) {
-                    return true;
-                }
-            }
-            false
-        }
-    }
+    distance_min_inside_annulus || distance_max_inside_annulus || some_in_between_is_inside_annulus
 }

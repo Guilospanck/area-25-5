@@ -1,11 +1,13 @@
 use std::f32::consts::PI;
 
 use crate::{
+    damage_enemy_from_ammo_or_power,
     prelude::*,
     util::{
         get_key_code_based_on_power_type, get_power_sprite_based_on_power_type, get_random_vec3,
     },
-    AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Direction, SpritesResources,
+    AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Direction, Enemy, Health,
+    SpritesResources,
 };
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use rand::Rng;
@@ -14,8 +16,10 @@ use rand::Rng;
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
 pub struct CircleOfDeath {
+    pub origin: Vec2,
     pub inner_circle_radius: f32,
     pub outer_circle_radius: f32,
+    pub damage: f32,
 }
 
 #[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
@@ -25,6 +29,7 @@ pub struct Laser {
     max_bounces: u32,
     current_bounces: u32,
     pub center_position: Vec3,
+    pub damage: f32,
 }
 
 #[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
@@ -220,6 +225,8 @@ pub fn spawn_power(
     power: Power,
     power_damage: Damage,
     player_translation: Vec3,
+
+    enemies: Query<(Entity, &mut Health, &Damage), With<Enemy>>,
 ) {
     let visibility = Visibility::Visible;
 
@@ -247,6 +254,7 @@ pub fn spawn_power(
             power_bundle,
             quantity,
             player_translation,
+            enemies,
         ),
         PowerTypeEnum::Laser => spawn_laser_power(
             commands,
@@ -291,29 +299,41 @@ fn spawn_circle_of_death_power(
     power_bundle: PowerBundle,
     quantity: u32,
     player_translation: Vec3,
+
+    mut enemies: Query<(Entity, &mut Health, &Damage), With<Enemy>>,
 ) {
     let circle = Mesh2dHandle(meshes.add(Annulus::new(40., 50.)));
     let color = Color::srgba(255., 0., 0., 0.8);
 
-    commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: circle,
-            material: materials.add(color),
-            transform: Transform::from_translation(player_translation),
-            ..default()
-        },
-        CircleOfDeath {
-            inner_circle_radius: 40.,
-            outer_circle_radius: 50.,
-        },
-        BASE_LAYER,
-        CleanupWhenPlayerDies,
-    ));
-
     for _ in 1..=quantity {
-        let mut new_bundle = power_bundle.clone();
-        new_bundle.sprite.visibility = Visibility::Hidden;
-        commands.spawn(new_bundle);
+        commands.spawn((
+            MaterialMesh2dBundle {
+                mesh: circle.clone(),
+                material: materials.add(color),
+                transform: Transform::from_translation(player_translation),
+                ..default()
+            },
+            CircleOfDeath {
+                inner_circle_radius: 40.,
+                outer_circle_radius: 50.,
+                damage: power_bundle.damage.0,
+                origin: player_translation.truncate(),
+            },
+            BASE_LAYER,
+            CleanupWhenPlayerDies,
+        ));
+
+        // A circle will always deal damage to ALL enemies on the screen
+        for (enemy_entity, mut enemy_health, enemy_damage) in enemies.iter_mut() {
+            damage_enemy_from_ammo_or_power(
+                commands,
+                None,
+                enemy_entity,
+                &mut enemy_health,
+                power_bundle.damage.0,
+                enemy_damage,
+            );
+        }
     }
 }
 
@@ -334,31 +354,28 @@ fn spawn_laser_power(
     let max_bounces = power_bundle.marker.max_value;
     let current_bounces = 0;
 
-    commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: rectangle,
-            material: materials.add(color),
-            transform: Transform {
-                translation: player_translation,
-                scale: Vec3::ONE,
-                rotation: Quat::from_rotation_z(PI / 4.),
-            },
-            ..default()
-        },
-        Laser {
-            current_bounces,
-            max_bounces,
-            center_position: player_translation,
-        },
-        Direction(direction),
-        BASE_LAYER,
-        CleanupWhenPlayerDies,
-    ));
-
     for _ in 1..=quantity {
-        let mut new_bundle = power_bundle.clone();
-        new_bundle.sprite.visibility = Visibility::Hidden;
-        commands.spawn(new_bundle);
+        commands.spawn((
+            MaterialMesh2dBundle {
+                mesh: rectangle.clone(),
+                material: materials.add(color),
+                transform: Transform {
+                    translation: player_translation,
+                    scale: Vec3::ONE,
+                    rotation: Quat::from_rotation_z(PI / 4.),
+                },
+                ..default()
+            },
+            Laser {
+                current_bounces,
+                max_bounces,
+                center_position: player_translation,
+                damage: power_bundle.damage.0,
+            },
+            Direction(direction),
+            BASE_LAYER,
+            CleanupWhenPlayerDies,
+        ));
     }
 }
 

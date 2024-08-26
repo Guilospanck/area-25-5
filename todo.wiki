@@ -77,6 +77,9 @@ as the time passes (cooldown)
 - [x] Create an item that will give the player HP
 - [x] Improve enemy movement towards player
 - [x] (RELATED) Create a way of enemies not getting too much together
+- [x] (BUG) Circle is just killing all enemies.
+- [ ] (BUG kinda) Remember to generate meta assets for the energy pack before 
+		pushing to Itchio.
 - [ ] Weapons spawned are too small
 
 Ongoing:

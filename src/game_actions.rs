@@ -343,6 +343,8 @@ pub fn power_up(
     mut player_query: Query<(Entity, &mut Mana, &Children, &Transform)>,
     power_query: Query<(&Damage, &Power)>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
+
+    enemies: Query<(Entity, &mut Health, &Damage), With<Enemy>>,
 ) {
     let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
@@ -395,6 +397,7 @@ pub fn power_up(
             power.clone(),
             power_damage.clone(),
             player_translation,
+            enemies,
         );
         Some(power.mana_needed)
     };
