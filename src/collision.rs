@@ -6,12 +6,13 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    util::check_if_collides_with_power_based_on_power_type,
+    util::{check_inside_annulus, get_pythagorean_distance_to_circle_origin},
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
     MaybeSpawnEnergyPack, PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources,
     Weapon, WeaponFound,
 };
+use bevy::math::bounding::BoundingVolume;
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
     mut commands: Commands,
@@ -395,7 +396,7 @@ pub fn check_for_power_collisions_with_enemy(
     player_query: Query<(&Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
 
-    powers_query: Query<(Entity, &Transform, &Damage, &Power), With<Power>>,
+    powers_query: Query<(Entity, &Transform, &Damage), With<Power>>,
     circle_of_death_query: Query<&CircleOfDeath, With<CircleOfDeath>>,
     laser_query: Query<&Laser, With<Laser>>,
 ) {
@@ -434,7 +435,83 @@ pub fn check_for_power_collisions_with_enemy(
             ),
         );
 
-        for (power_entity, power_transform, power_damage, power) in powers_query.iter() {
+        // INFO: We don't need to check for collision for the Circle
+        // because as it does a pass on the whole screen, it will deal
+        // damage to ALL enemies.
+        // This is being done on `spawn_circle_of_death_power`.
+        //
+        // Check for collision for the circle power
+        // for circle_of_death in circle_of_death_query.iter() {
+        //     let CircleOfDeath {
+        //         inner_circle_radius,
+        //         outer_circle_radius,
+        //         damage,
+        //         origin,
+        //     } = circle_of_death;
+        //
+        //     let min_x_enemy = enemy_collider.min.x;
+        //     let max_x_enemy = enemy_collider.max.x;
+        //     let min_y_enemy = enemy_collider.min.y;
+        //     let max_y_enemy = enemy_collider.max.y;
+        //
+        //     let min_distance =
+        //         get_pythagorean_distance_to_circle_origin(min_x_enemy, min_y_enemy, *origin);
+        //     let max_distance =
+        //         get_pythagorean_distance_to_circle_origin(max_x_enemy, max_y_enemy, *origin);
+        //
+        //     let min_radius_squared = inner_circle_radius.powi(2);
+        //     let max_radius_squared = outer_circle_radius.powi(2);
+        //
+        //     if check_inside_annulus(
+        //         min_radius_squared,
+        //         max_radius_squared,
+        //         min_distance,
+        //         max_distance,
+        //     ) {
+        //         damage_enemy_from_ammo_or_power(
+        //             &mut commands,
+        //             None,
+        //             enemy_entity,
+        //             &mut enemy_health,
+        //             *damage,
+        //             enemy_damage,
+        //         );
+        //     }
+        // }
+
+        // Check for collision for the laser power
+        let cos_45 = 2.0_f32.sqrt() / 2.;
+        let sin_45 = 2.0_f32.sqrt() / 2.;
+        for laser in laser_query.iter() {
+            let Laser {
+                center_position,
+                damage,
+                ..
+            } = laser;
+
+            let mut laser_collider = Aabb2d::new(
+                Vec2::ZERO,
+                Vec2::new(LASER_POWER_WIDTH / 2., LASER_POWER_HEIGHT / 2.),
+            );
+            let rotation_matrix = Rot2::from_sin_cos(sin_45, cos_45);
+            let translation_matrix = center_position.truncate();
+
+            laser_collider.transform_by(translation_matrix, rotation_matrix);
+
+            if laser_collider.intersects(&enemy_collider) {
+                damage_enemy_from_ammo_or_power(
+                    &mut commands,
+                    None,
+                    enemy_entity,
+                    &mut enemy_health,
+                    *damage,
+                    enemy_damage,
+                );
+            }
+        }
+
+        // Check for collision for the explosions power
+        for (power_entity, power_transform, power_damage) in powers_query.iter() {
             // if current power is from player, do not collide it
             if current_player_powers_entity.contains(&power_entity) {
                 continue;
@@ -448,26 +525,12 @@ pub fn check_for_power_collisions_with_enemy(
                 ),
             );
 
-            let collides = check_if_collides_with_power_based_on_power_type(
-                power.power_type.clone(),
-                enemy_collider,
-                power_collider,
-                &circle_of_death_query,
-                &laser_query,
-            );
-
-            let mut power_entity_to_be_despawned = None;
-
-            // Only despawns the explosion because the
-            // Laser and Circle have their own way of despawning
-            if power.power_type == PowerTypeEnum::Explosions {
-                power_entity_to_be_despawned = Some(power_entity);
-            }
+            let collides = power_collider.intersects(&enemy_collider);
 
             if collides {
                 damage_enemy_from_ammo_or_power(
                     &mut commands,
-                    power_entity_to_be_despawned,
+                    Some(power_entity),
                     enemy_entity,
                     &mut enemy_health,
                     power_damage.0,
@@ -478,7 +541,7 @@ pub fn check_for_power_collisions_with_enemy(
     }
 }
 
-fn damage_enemy_from_ammo_or_power(
+pub(crate) fn damage_enemy_from_ammo_or_power(
     commands: &mut Commands,
     ammo_or_power_entity: Option<Entity>,
     enemy_entity: Entity,
