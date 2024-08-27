@@ -6,7 +6,10 @@ pub(crate) const ITEM_RANDOM_SEED: u64 = 1937836746771;
 pub(crate) const ITEM_SPRITE_SIZE: u8 = 32;
 pub(crate) const CHANCE_TO_SPAWN_HEALTH_POINTS_PACK: f32 = 0.7;
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub enum ItemStatsType {
@@ -22,13 +25,13 @@ pub struct ItemType<'a> {
     pub item_type: ItemStatsType,
 }
 
-const ITEM_LVL_1: ItemType = ItemType {
+const ITEM_LVL_2: ItemType = ItemType {
     source: "textures/Items/lightning.png",
     item: ItemTypeEnum::Speed(Speed(30.0)),
     item_type: ItemStatsType::Speed,
 };
 
-const ITEM_LVL_2: ItemType = ItemType {
+const ITEM_LVL_1: ItemType = ItemType {
     source: "textures/Items/Diamond.png",
     item: ItemTypeEnum::Shield(Shield {
         offensive: 0.01,

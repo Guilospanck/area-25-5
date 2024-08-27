@@ -39,7 +39,7 @@ pub(crate) const PLAYER_SPRITE_SIZE: u8 = 32;
 pub(crate) const PLAYER_X_MARGIN: f32 = 20.;
 pub(crate) const PLAYER_Y_MARGIN: f32 = 40.;
 
-pub(crate) const AMMO_MOVE_SPEED: f32 = 100.0;
+pub(crate) const AMMO_MOVE_SPEED: f32 = 500.0;
 pub(crate) const AMMO_DAMAGE: f32 = 10.0;
 
 pub(crate) const CAPSULE_LENGTH: f32 = 8.;

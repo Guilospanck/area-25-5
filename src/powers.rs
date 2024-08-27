@@ -347,7 +347,7 @@ fn spawn_laser_power(
     player_translation: Vec3,
 ) {
     let rectangle = Mesh2dHandle(meshes.add(Rectangle::new(LASER_POWER_WIDTH, LASER_POWER_HEIGHT)));
-    let color = Color::srgba(106., 190., 48., 0.8);
+    let color = Color::srgba(48., 255., 48., 0.8);
 
     let direction = Vec3::ONE;
 

@@ -7,7 +7,7 @@ pub(crate) const POWER_MOVE_SPEED: f32 = 100.0;
 // Laser
 pub(crate) const LASER_POWER_WIDTH: f32 = 300.;
 pub(crate) const LASER_POWER_HEIGHT: f32 = 2.;
-pub(crate) const LASER_MOVE_SPEED: f32 = 500.0;
+pub(crate) const LASER_MOVE_SPEED: f32 = 800.0;
 
 #[cfg_attr(
     not(feature = "web"),
@@ -51,7 +51,7 @@ const POWER_LVL_1: PowerType = PowerType {
 };
 
 const POWER_LVL_2: PowerType = PowerType {
-    damage: 10.0,
+    damage: 5.0,
     mana_needed: 10.0,
     power_type: PowerTypeEnum::CircleOfDeath,
     stopping_condition: StoppingCondition::Limit,
