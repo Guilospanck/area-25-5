@@ -347,7 +347,7 @@ fn spawn_laser_power(
     player_translation: Vec3,
 ) {
     let rectangle = Mesh2dHandle(meshes.add(Rectangle::new(LASER_POWER_WIDTH, LASER_POWER_HEIGHT)));
-    let color = Color::srgba(255., 0., 0., 0.8);
+    let color = Color::srgba(48., 255., 48., 0.8);
 
     let direction = Vec3::ONE;
 
@@ -387,9 +387,9 @@ pub fn move_laser_power(
     for (entity, mut transform, mut laser_direction, mut laser) in &mut laser_power_query.iter_mut()
     {
         let mut new_translation_x = transform.translation.x
-            + laser_direction.0.x * POWER_MOVE_SPEED * timer.delta_seconds();
+            + laser_direction.0.x * LASER_MOVE_SPEED * timer.delta_seconds();
         let mut new_translation_y = transform.translation.y
-            + laser_direction.0.y * POWER_MOVE_SPEED * timer.delta_seconds();
+            + laser_direction.0.y * LASER_MOVE_SPEED * timer.delta_seconds();
 
         let off_screen_x = !(-BACKGROUND_TEXTURE_RESOLUTION.x_px
             ..=BACKGROUND_TEXTURE_RESOLUTION.x_px)

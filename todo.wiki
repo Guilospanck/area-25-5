@@ -78,6 +78,7 @@ as the time passes (cooldown)
 - [x] Improve enemy movement towards player
 - [x] (RELATED) Create a way of enemies not getting too much together
 - [x] (BUG) Circle is just killing all enemies.
+- [x] Change speed of laser power
 - [ ] (BUG kinda) Remember to generate meta assets for the energy pack before 
 		pushing to Itchio.
 - [ ] Weapons spawned are too small
@@ -95,7 +96,6 @@ Backlog:
 - [ ] Some enemies may be fixed at some place and only cast spells
 - [ ] Add proper audio and game sound
 - [ ] Change speed of ammo
-- [ ] Change speed of laser power
 - [ ] Make weapon spawned on the map bigger
 - [ ] Improve rendering of circle
 - [ ] Change all spawns of empty entities to `.spawn_empty()`

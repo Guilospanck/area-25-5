@@ -6,9 +6,7 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    util::{check_inside_annulus, get_pythagorean_distance_to_circle_origin},
-    AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
-    CircleOfDeath, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
+    AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
     MaybeSpawnEnergyPack, PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources,
     Weapon, WeaponFound,
 };
@@ -397,7 +395,6 @@ pub fn check_for_power_collisions_with_enemy(
     player_powers_query: Query<(Entity, &Power)>,
 
     powers_query: Query<(Entity, &Transform, &Damage), With<Power>>,
-    circle_of_death_query: Query<&CircleOfDeath, With<CircleOfDeath>>,
     laser_query: Query<&Laser, With<Laser>>,
 ) {
     let number_of_enemies = enemies.iter().len();
@@ -434,50 +431,6 @@ pub fn check_for_power_collisions_with_enemy(
                 ENEMY_COLLISION_BOX_HEIGHT / 2.,
             ),
         );
-
-        // INFO: We don't need to check for collision for the Circle
-        // because as it does a pass on the whole screen, it will deal
-        // damage to ALL enemies.
-        // This is being done on `spawn_circle_of_death_power`.
-        //
-        // Check for collision for the circle power
-        // for circle_of_death in circle_of_death_query.iter() {
-        //     let CircleOfDeath {
-        //         inner_circle_radius,
-        //         outer_circle_radius,
-        //         damage,
-        //         origin,
-        //     } = circle_of_death;
-        //
-        //     let min_x_enemy = enemy_collider.min.x;
-        //     let max_x_enemy = enemy_collider.max.x;
-        //     let min_y_enemy = enemy_collider.min.y;
-        //     let max_y_enemy = enemy_collider.max.y;
-        //
-        //     let min_distance =
-        //         get_pythagorean_distance_to_circle_origin(min_x_enemy, min_y_enemy, *origin);
-        //     let max_distance =
-        //         get_pythagorean_distance_to_circle_origin(max_x_enemy, max_y_enemy, *origin);
-        //
-        //     let min_radius_squared = inner_circle_radius.powi(2);
-        //     let max_radius_squared = outer_circle_radius.powi(2);
-        //
-        //     if check_inside_annulus(
-        //         min_radius_squared,
-        //         max_radius_squared,
-        //         min_distance,
-        //         max_distance,
-        //     ) {
-        //         damage_enemy_from_ammo_or_power(
-        //             &mut commands,
-        //             None,
-        //             enemy_entity,
-        //             &mut enemy_health,
-        //             *damage,
-        //             enemy_damage,
-        //         );
-        //     }
-        // }
 
         // Check for collision for the laser power
         let cos_45 = 2.0_f32.sqrt() / 2.;

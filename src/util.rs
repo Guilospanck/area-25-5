@@ -1,7 +1,6 @@
 use crate::{
-    prelude::*, CircleOfDeath, ItemTypeEnum, Laser, PowerTypeEnum, SpriteInfo, SpritesResources,
+    prelude::*, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources,
 };
-use bevy::math::bounding::BoundingVolume;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -80,9 +79,9 @@ pub(crate) fn get_power_sprite_based_on_power_type(
     sprites: &Res<SpritesResources>,
 ) -> SpriteInfo<'static> {
     match power_type {
-        PowerTypeEnum::Explosions => sprites.0.diamond.clone(),
-        PowerTypeEnum::CircleOfDeath => sprites.0.magic_ball.clone(),
-        PowerTypeEnum::Laser => sprites.0.diamond.clone(),
+        PowerTypeEnum::Explosions => sprites.0.mine_bomb.clone(),
+        PowerTypeEnum::CircleOfDeath => sprites.0.circle_of_death.clone(),
+        PowerTypeEnum::Laser => sprites.0.laser.clone(),
     }
 }
 
@@ -92,32 +91,4 @@ pub(crate) fn get_key_code_based_on_power_type(power_type: PowerTypeEnum) -> Key
         PowerTypeEnum::CircleOfDeath => KeyCode::KeyJ,
         PowerTypeEnum::Laser => KeyCode::KeyH,
     }
-}
-
-pub(crate) fn get_pythagorean_distance_to_circle_origin(xp: f32, yp: f32, origin: Vec2) -> f32 {
-    let mut x_distance = xp - origin.x;
-    let mut y_distance = yp - origin.y;
-
-    x_distance = x_distance.powi(2);
-    y_distance = y_distance.powi(2);
-
-    x_distance + y_distance
-}
-
-pub(crate) fn check_inside_annulus(
-    r_min_squared: f32,
-    r_max_squared: f32,
-    distance_min: f32,
-    distance_max: f32,
-) -> bool {
-    let distance_min_inside_annulus =
-        distance_min >= r_min_squared && distance_min <= r_max_squared;
-    let distance_max_inside_annulus =
-        distance_max >= r_min_squared && distance_max <= r_max_squared;
-
-    let some_in_between_is_inside_annulus = (distance_min > r_max_squared
-        && distance_max < r_min_squared)
-        || (distance_min < r_min_squared && distance_max > r_max_squared);
-
-    distance_min_inside_annulus || distance_max_inside_annulus || some_in_between_is_inside_annulus
 }

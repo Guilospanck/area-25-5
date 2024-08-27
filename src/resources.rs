@@ -77,43 +77,14 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
 pub fn get_sprites() -> Sprites<'static> {
     const PLAYER_PIXEL_SIZE: u32 = 32;
     const PLAYER_ANIMATION_TIMER: f32 = 0.1;
-    // Player tile
-    const PLAYER_TILE_WIDTH: u32 = 95u32;
-    const PLAYER_TILE_HEIGHT: u32 = 95u32;
-    const PLAYER_TILE_OFFSET_X: u32 = 500u32;
-    const PLAYER_TILE_OFFSET_Y: u32 = 623u32;
 
     Sprites {
-        player_tile: SpriteInfo {
-            dimensions: RectangularDimensions {
-                width: PLAYER_TILE_WIDTH,
-                height: PLAYER_TILE_HEIGHT,
-            },
-            source: "textures/Tiles/player.png",
-            animation: None,
-            layout: TextureAtlasLayout::from_grid(
-                UVec2::new(PLAYER_TILE_WIDTH, PLAYER_TILE_HEIGHT),
-                1,
-                1,
-                None,
-                Some(UVec2::new(PLAYER_TILE_OFFSET_X, PLAYER_TILE_OFFSET_Y)),
-            ),
-        },
-        gamestudio_tileset: SpriteInfo {
-            dimensions: RectangularDimensions {
-                width: 1361,
-                height: 763,
-            },
-            source: "textures/Tiles/tileset.png",
-            animation: None,
-            layout: TextureAtlasLayout::from_grid(UVec2::new(1361, 763), 1, 1, None, None),
-        },
-        player_custom_bg: SpriteInfo {
+        level_1_bg: SpriteInfo {
             dimensions: RectangularDimensions {
                 width: 1920,
                 height: 1080,
             },
-            source: "textures/Background/Alien1.png",
+            source: "textures/Background/level_1.png",
             animation: None,
             layout: TextureAtlasLayout::from_grid(UVec2::new(1920, 1080), 1, 1, None, None),
         },
@@ -321,6 +292,51 @@ pub fn get_sprites() -> Sprites<'static> {
                 height: 32,
             },
             source: "textures/Items/hp_pack.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
+        },
+        circle_of_death: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Powers/circle_of_death.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
+        },
+        laser: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Powers/laser.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 0 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(32, 32), 1, 1, None, None),
+        },
+        mine_bomb: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 32,
+                height: 32,
+            },
+            source: "textures/Powers/mine_bomb.png",
             animation: Some(AnimationInfo {
                 indices: AnimationIndices { first: 0, last: 0 },
                 timer: AnimationTimer(Timer::from_seconds(

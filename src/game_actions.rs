@@ -465,7 +465,7 @@ fn _handle_button_click<T: Component>(
                 commands.trigger(RestartGame);
             }
             Interaction::Hovered => {
-                *background_color = Color::srgb(0., 255., 0.).into();
+                *background_color = Color::srgba(26., 50., 27., 0.3).into();
             }
             Interaction::None => {
                 *background_color = Color::BLACK.into();
