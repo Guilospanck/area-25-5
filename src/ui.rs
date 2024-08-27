@@ -1,6 +1,6 @@
 use bevy::{
     color::palettes::css::YELLOW,
-    sprite::{Anchor, MaterialMesh2dBundle, Mesh2dHandle},
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 
 use crate::{prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet};

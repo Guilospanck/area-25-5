@@ -1,7 +1,7 @@
 use crate::{
     prelude::*,
     spawn_health_bar,
-    util::{get_random_chance, get_random_vec3},
+    util::{get_random_vec3},
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health, SpriteInfo, Sprites,
     SpritesResources,
 };

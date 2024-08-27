@@ -27,22 +27,31 @@ impl Default for SpriteInfo<'_> {
 
 #[derive(Component, Debug, Clone)]
 pub struct Sprites<'a> {
-    pub player_tile: SpriteInfo<'a>,
-    pub gamestudio_tileset: SpriteInfo<'a>,
+    // player
     pub player_char_walking: SpriteInfo<'a>,
     pub player_char_idle: SpriteInfo<'a>,
-    pub player_custom_bg: SpriteInfo<'a>,
+    // levels
+    pub level_1_bg: SpriteInfo<'a>,
+    // enemies
     pub enemy_char_idle: SpriteInfo<'a>,
+    // weapons
     pub bow: SpriteInfo<'a>,
-    pub arrow: SpriteInfo<'a>,
     pub wand: SpriteInfo<'a>,
+    // ammos
+    pub arrow: SpriteInfo<'a>,
     pub magic_ball: SpriteInfo<'a>,
+    // items
     pub speed_potion: SpriteInfo<'a>,
     pub lightning: SpriteInfo<'a>,
     pub shield: SpriteInfo<'a>,
-    pub profile: SpriteInfo<'a>,
-    pub diamond: SpriteInfo<'a>,
     pub hp_pack: SpriteInfo<'a>,
+    pub diamond: SpriteInfo<'a>,
+    // ui
+    pub profile: SpriteInfo<'a>,
+    // powers
+    pub mine_bomb: SpriteInfo<'a>,
+    pub laser: SpriteInfo<'a>,
+    pub circle_of_death: SpriteInfo<'a>,
 }
 
 #[derive(Component)]
@@ -105,7 +114,7 @@ fn render_background_texture(
     sprites: &Sprites<'static>,
     asset_server: &Res<AssetServer>,
 ) {
-    let tile = sprites.player_custom_bg.clone();
+    let tile = sprites.level_1_bg.clone();
 
     // number of tiles in a row
     let x_items = BACKGROUND_TEXTURE_RESOLUTION.x_px / tile.dimensions.width as f32;
