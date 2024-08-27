@@ -25,13 +25,13 @@ pub struct ItemType<'a> {
     pub item_type: ItemStatsType,
 }
 
-const ITEM_LVL_2: ItemType = ItemType {
+const ITEM_LVL_1: ItemType = ItemType {
     source: "textures/Items/lightning.png",
     item: ItemTypeEnum::Speed(Speed(30.0)),
     item_type: ItemStatsType::Speed,
 };
 
-const ITEM_LVL_1: ItemType = ItemType {
+const ITEM_LVL_2: ItemType = ItemType {
     source: "textures/Items/Diamond.png",
     item: ItemTypeEnum::Shield(Shield {
         offensive: 0.01,
