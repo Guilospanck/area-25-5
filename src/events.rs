@@ -407,7 +407,7 @@ pub fn on_enemy_health_changed(
                         health,
                         ENEMY_HEALTH,
                         health_bar_translation,
-                        PLAYER_LAYER,
+                        BASE_LAYER,
                     );
 
                     commands

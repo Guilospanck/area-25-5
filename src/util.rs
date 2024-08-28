@@ -1,6 +1,4 @@
-use crate::{
-    prelude::*, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources,
-};
+use crate::{prelude::*, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -90,5 +88,15 @@ pub(crate) fn get_key_code_based_on_power_type(power_type: PowerTypeEnum) -> Key
         PowerTypeEnum::Explosions => KeyCode::KeyL,
         PowerTypeEnum::CircleOfDeath => KeyCode::KeyJ,
         PowerTypeEnum::Laser => KeyCode::KeyH,
+    }
+}
+
+pub(crate) fn get_enemy_sprite_based_on_enemy_class(
+    enemy_class: EnemyClassEnum,
+    sprites: &Res<SpritesResources>,
+) -> SpriteInfo<'static> {
+    match enemy_class {
+        EnemyClassEnum::Orc => sprites.0.orc_idle.clone(),
+        EnemyClassEnum::Mage => sprites.0.mage_idle.clone(),
     }
 }

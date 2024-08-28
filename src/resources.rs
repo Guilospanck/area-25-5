@@ -130,12 +130,33 @@ pub fn get_sprites() -> Sprites<'static> {
                 None,
             ),
         },
-        enemy_char_idle: SpriteInfo {
+        orc_idle: SpriteInfo {
             dimensions: RectangularDimensions {
                 width: PLAYER_PIXEL_SIZE,
                 height: PLAYER_PIXEL_SIZE,
             },
             source: "textures/Enemy/Idle-Sheet.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 3 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(
+                UVec2::new(PLAYER_PIXEL_SIZE, PLAYER_PIXEL_SIZE),
+                4,
+                1,
+                None,
+                None,
+            ),
+        },
+        mage_idle: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: PLAYER_PIXEL_SIZE,
+                height: PLAYER_PIXEL_SIZE,
+            },
+            source: "textures/Astronaut/Astronaut_Idle.png",
             animation: Some(AnimationInfo {
                 indices: AnimationIndices { first: 0, last: 3 },
                 timer: AnimationTimer(Timer::from_seconds(

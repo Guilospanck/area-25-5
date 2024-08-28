@@ -23,6 +23,12 @@ pub fn change_enemy_direction(
     };
 
     for (index, mut enemy) in enemies.iter_mut().enumerate() {
+        // We don't want the mage to move towards player. It's going to be a
+        // range caster.
+        if enemy.class == EnemyClassEnum::Mage {
+            continue;
+        }
+
         let mut signal = 1.;
         if index % 2 != 0 {
             signal = -1.;
@@ -45,10 +51,16 @@ pub fn move_enemies_towards_player(
     // is that rust mutability does not allow a variable to be mutable and
     // immutable at the same time. See https://bevyengine.org/learn/errors/#b0001
     // for more.
-    mut enemies: Query<(&mut Transform, &Enemy), (With<Enemy>, Without<Player>)>,
+    mut enemies: Query<
+        (&mut Transform, &Enemy),
+        (With<Enemy>, Without<Player>, Without<BaseCamera>),
+    >,
     time: Res<Time>,
-    player: Query<(&Transform, &Player)>,
-    window_resolution: Res<WindowResolutionResource>,
+    player: Query<(&Transform, &Player), (With<Player>, Without<BaseCamera>, Without<Enemy>)>,
+    base_camera: Query<
+        (&Transform, &BaseCamera),
+        (With<BaseCamera>, Without<Player>, Without<Enemy>),
+    >,
 ) {
     let mut position = match player.get_single() {
         Ok(player_position) => Vec2::new(
@@ -58,12 +70,31 @@ pub fn move_enemies_towards_player(
         Err(_) => Vec2::splat(0.),
     };
 
-    let limit_x_left = (-window_resolution.x_px + PLAYER_X_MARGIN) / 2.0;
-    let limit_x_right = (window_resolution.x_px - PLAYER_X_MARGIN) / 2.0;
-    let limit_y_bottom = (-window_resolution.y_px + PLAYER_Y_MARGIN) / 2.0;
-    let limit_y_top = (window_resolution.y_px - PLAYER_Y_MARGIN) / 2.0;
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    position = Vec2::new(
+        position.x + base_camera_transform.translation.x,
+        position.y + base_camera_transform.translation.y,
+    );
+
+    let limit_x_left =
+        (-BACKGROUND_TEXTURE_RESOLUTION.x_px * BACKGROUND_TEXTURE_SCALE + PLAYER_X_MARGIN) / 2.0;
+    let limit_x_right =
+        (BACKGROUND_TEXTURE_RESOLUTION.x_px * BACKGROUND_TEXTURE_SCALE - PLAYER_X_MARGIN) / 2.0;
+    let limit_y_bottom =
+        (-BACKGROUND_TEXTURE_RESOLUTION.y_px * BACKGROUND_TEXTURE_SCALE + PLAYER_Y_MARGIN) / 2.0;
+    let limit_y_top =
+        (BACKGROUND_TEXTURE_RESOLUTION.y_px * BACKGROUND_TEXTURE_SCALE - PLAYER_Y_MARGIN) / 2.0;
 
     for (mut transform, enemy) in enemies.iter_mut() {
+        // We don't want the mage to move towards player. It's going to be a
+        // range caster.
+        if enemy.class == EnemyClassEnum::Mage {
+            continue;
+        }
+
         // Enemies have greater speed when charging the player.
         let mut speed = ENEMY_MOVE_SPEED * ENEMY_BOOST_SPEED_WHEN_CHARGING;
 

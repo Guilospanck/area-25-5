@@ -106,7 +106,7 @@ pub fn spawn_weapon(
 ) {
     let weapon_type = &weapon_by_level.weapon.weapon_type;
     let damage = weapon_by_level.weapon.damage;
-    let scale = Vec3::ONE;
+    let scale = Vec3::splat(2.0);
     let direction = Vec3::ZERO;
     let layer = BASE_LAYER;
 

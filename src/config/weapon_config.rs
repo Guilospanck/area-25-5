@@ -2,8 +2,14 @@ use super::*;
 
 pub(crate) const WEAPON_RANDOM_SEED: u64 = 1936836746771;
 pub(crate) const DEFAULT_WEAPON_SPRITE_SOURCE: &str = "textures/Weapon/Bow.png";
+pub(crate) const WEAPON_SPRITE_SIZE: u8 = 32;
+pub(crate) const AMMO_SPRITE_SIZE: u8 = 32;
+pub(crate) const WEAPON_SCALE: f32 = 2.0;
 
-#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Default, Debug, Clone))]
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
 pub enum WeaponTypeEnum {

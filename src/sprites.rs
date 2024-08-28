@@ -33,7 +33,8 @@ pub struct Sprites<'a> {
     // levels
     pub level_1_bg: SpriteInfo<'a>,
     // enemies
-    pub enemy_char_idle: SpriteInfo<'a>,
+    pub orc_idle: SpriteInfo<'a>,
+    pub mage_idle: SpriteInfo<'a>,
     // weapons
     pub bow: SpriteInfo<'a>,
     pub wand: SpriteInfo<'a>,
