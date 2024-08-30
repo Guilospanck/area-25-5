@@ -135,7 +135,7 @@ pub fn move_enemies_towards_player(
     }
 }
 
-pub fn shoot(
+pub fn shoot_at_enemies(
     mut commands: Commands,
     x: f32,
     y: f32,
@@ -162,8 +162,8 @@ pub fn shoot(
     let mut weapon_type = WeaponTypeEnum::default();
 
     for &child in player_children.iter() {
-        if let Ok(weapon_children) = weapon_query.get(child) {
-            weapon_type = weapon_children.weapon_type.clone();
+        if let Ok(weapon) = weapon_query.get(child) {
+            weapon_type = weapon.weapon_type.clone();
         }
     }
 
@@ -192,6 +192,71 @@ pub fn shoot(
     );
 
     commands.spawn(ammo_bundle);
+}
+
+pub fn shoot_at_player(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+
+    player_query: Query<&Transform, With<Player>>,
+    enemies: Query<(Entity, &Transform, &Children), With<Enemy>>,
+    weapon_query: Query<&Weapon>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
+) {
+    let Ok(player_transform) = player_query.get_single() else {
+        return;
+    };
+
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    let player_position = Vec2::new(
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
+    );
+
+    for (enemy_entity, enemy_transform, enemy_children) in enemies.iter() {
+        for &child in enemy_children.iter() {
+            if let Ok(weapon) = weapon_query.get(child) {
+                let enemy_position =
+                    Vec2::new(enemy_transform.translation.x, enemy_transform.translation.y);
+
+                let unit_direction = get_unit_direction_vector(enemy_position, player_position);
+                let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
+                let rotation = Quat::from_rotation_z(angle);
+
+                let weapon_type = weapon.weapon_type.clone();
+                let damage = AMMO_DAMAGE;
+                let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
+                let pos = Vec3::new(
+                    enemy_transform.translation.x + 8.0,
+                    enemy_transform.translation.y,
+                    enemy_transform.translation.z,
+                );
+                let scale = Vec3::ONE;
+                let layer = BASE_LAYER;
+
+                let ammo_bundle = AmmoBundle::new(
+                    &mut texture_atlas_layout,
+                    &sprites,
+                    &asset_server,
+                    scale,
+                    pos,
+                    weapon_type.clone(),
+                    direction,
+                    damage,
+                    rotation,
+                    layer.clone(),
+                    enemy_entity,
+                );
+
+                commands.spawn(ammo_bundle);
+            }
+        }
+    }
 }
 
 pub fn handle_click(

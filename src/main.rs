@@ -108,6 +108,7 @@ fn main() {
             FixedUpdate,
             (
                 move_player_ammo,
+                move_enemy_ammo,
                 animate_sprite,
                 move_laser_power,
                 move_enemies_towards_player,
@@ -156,6 +157,7 @@ fn main() {
                 refill_mana.run_if(on_timer(Duration::from_secs(1))),
                 expand_circle_of_death.run_if(on_timer(Duration::from_millis(50))),
                 change_enemy_direction.run_if(on_timer(Duration::from_secs(5))),
+                shoot_at_player.run_if(on_timer(Duration::from_secs(2))),
             )
                 .in_set(TimeBasedSet),
         )

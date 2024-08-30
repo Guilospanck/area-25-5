@@ -5,8 +5,8 @@ use bevy::{sprite::Mesh2dHandle, window::WindowResized};
 use crate::{
     audio::hit_weapon_audio,
     equip_player_with_power,
-    game_actions::shoot,
-    player::{self, Player},
+    game_actions::shoot_at_enemies,
+    player::Player,
     prelude::*,
     spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
     spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
@@ -128,7 +128,7 @@ pub fn on_mouse_click(
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
 
-    shoot(
+    shoot_at_enemies(
         commands,
         x,
         y,

@@ -142,3 +142,41 @@ pub fn move_player_ammo(
         transform.translation.y = new_translation_y;
     }
 }
+
+pub fn move_enemy_ammo(
+    mut commands: Commands,
+    mut ammos_query: Query<(Entity, &mut Transform, &Direction, &Ammo), With<Ammo>>,
+    player_query: Query<Entity, With<Player>>,
+    timer: Res<Time>,
+) {
+    let Ok(player_entity) = player_query.get_single() else {
+        return;
+    };
+
+    for (entity, mut transform, ammo_direction, ammo) in &mut ammos_query {
+        // Do not move player ammos
+        if ammo.equipped_by == player_entity {
+            continue;
+        }
+
+        let new_translation_x =
+            transform.translation.x + ammo_direction.0.x * AMMO_MOVE_SPEED * timer.delta_seconds();
+        let new_translation_y =
+            transform.translation.y - ammo_direction.0.y * AMMO_MOVE_SPEED * timer.delta_seconds();
+
+        let off_screen_x = !(-BACKGROUND_TEXTURE_RESOLUTION.x_px
+            ..=BACKGROUND_TEXTURE_RESOLUTION.x_px)
+            .contains(&new_translation_x);
+        let off_screen_y = !(-BACKGROUND_TEXTURE_RESOLUTION.y_px
+            ..=BACKGROUND_TEXTURE_RESOLUTION.y_px)
+            .contains(&new_translation_y);
+
+        if off_screen_x || off_screen_y {
+            commands.entity(entity).despawn();
+            return;
+        }
+
+        transform.translation.x = new_translation_x;
+        transform.translation.y = new_translation_y;
+    }
+}
