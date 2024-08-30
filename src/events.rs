@@ -6,7 +6,7 @@ use crate::{
     audio::hit_weapon_audio,
     equip_player_with_power,
     game_actions::shoot,
-    player::Player,
+    player::{self, Player},
     prelude::*,
     spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
     spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
@@ -40,7 +40,9 @@ pub struct PlayerManaChanged {
 }
 
 #[derive(Event)]
-pub struct PlayerSpawned;
+pub struct PlayerSpawned {
+    pub player_entity_id: Entity,
+}
 
 #[derive(Event)]
 pub struct EnemyHealthChanged {
@@ -117,7 +119,7 @@ pub struct ScoreChanged {
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
     commands: Commands,
-    player_query: Query<(&Transform, &Children), With<Player>>,
+    player_query: Query<(Entity, &Transform, &Children), With<Player>>,
     weapon_query: Query<&Weapon>,
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
@@ -302,7 +304,7 @@ pub fn on_player_mana_changed(
 }
 
 pub fn on_player_spawned(
-    _trigger: Trigger<PlayerSpawned>,
+    trigger: Trigger<PlayerSpawned>,
     mut commands: Commands,
     current_wave: Res<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
@@ -316,6 +318,9 @@ pub fn on_player_spawned(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    let event = trigger.event();
+    let player_entity_id = event.player_entity_id;
+
     if *player_state.get() != GameState::Alive {
         next_state.set(GameState::Alive);
     }
@@ -356,6 +361,7 @@ pub fn on_player_spawned(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        player_entity_id,
     );
 
     let current_wave_item = item_waves
@@ -477,7 +483,12 @@ pub fn on_wave_changed(
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
     weapons: Query<(Entity, Option<&Parent>), With<Weapon>>,
     items: Query<(Entity, &Item), With<Item>>,
+    player_query: Query<Entity, With<Player>>,
 ) {
+    let Ok(player_entity) = player_query.get_single() else {
+        return;
+    };
+
     // Despawn items and weapons that were spawned on the map
     for (item_entity, item) in items.iter() {
         match item.item_type {
@@ -529,6 +540,7 @@ pub fn on_wave_changed(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
+        player_entity,
     );
 
     let current_wave_item = item_waves
@@ -916,7 +928,7 @@ pub fn on_weapon_found(
     let ammo_scale = Vec3::ONE;
     let rotation = Quat::default();
 
-    let weapon_type = weapon.0.clone();
+    let weapon_type = weapon.weapon_type.clone();
     let damage = weapon_damage.0;
     let layer = PLAYER_LAYER;
 
@@ -932,6 +944,7 @@ pub fn on_weapon_found(
         damage,
         rotation,
         layer.clone(),
+        *player_entity,
     );
 
     let scale = weapon_scale;
@@ -945,6 +958,7 @@ pub fn on_weapon_found(
         damage,
         weapon_type.clone(),
         layer.clone(),
+        *player_entity,
     );
 
     // despawn current player's weapon

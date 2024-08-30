@@ -139,19 +139,20 @@ pub fn shoot(
     mut commands: Commands,
     x: f32,
     y: f32,
-    player_query: Query<(&Transform, &Children), With<Player>>,
+    player_query: Query<(Entity, &Transform, &Children), With<Player>>,
     weapon_query: Query<&Weapon>,
     asset_server: Res<AssetServer>,
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let player = player_query.get_single();
-    if player.is_err() {
+    let Ok((player_entity, player_transform, player_children)) = player_query.get_single() else {
         return;
-    }
-    let player = player.unwrap();
+    };
 
-    let position = Vec2::new(player.0.translation.x, player.0.translation.y);
+    let position = Vec2::new(
+        player_transform.translation.x,
+        player_transform.translation.y,
+    );
     let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 
     let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
@@ -160,18 +161,18 @@ pub fn shoot(
 
     let mut weapon_type = WeaponTypeEnum::default();
 
-    for &child in player.1.iter() {
+    for &child in player_children.iter() {
         if let Ok(weapon_children) = weapon_query.get(child) {
-            weapon_type = weapon_children.0.clone();
+            weapon_type = weapon_children.weapon_type.clone();
         }
     }
 
     let damage = AMMO_DAMAGE;
     let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
     let pos = Vec3::new(
-        player.0.translation.x + 20.0,
-        player.0.translation.y,
-        player.0.translation.z,
+        player_transform.translation.x + 20.0,
+        player_transform.translation.y,
+        player_transform.translation.z,
     );
     let scale = Vec3::ONE;
     let layer = PLAYER_LAYER;
@@ -187,6 +188,7 @@ pub fn shoot(
         damage,
         rotation,
         layer.clone(),
+        player_entity,
     );
 
     commands.spawn(ammo_bundle);
@@ -334,7 +336,7 @@ pub fn handle_show_player_stats_ui(
 
                 let player_weapon_unwrapped = player_weapon_query.get(child).unwrap();
                 let player_weapon_damage = player_weapon_unwrapped.0;
-                let player_weapon_type = player_weapon_unwrapped.1 .0.clone();
+                let player_weapon_type = player_weapon_unwrapped.1.weapon_type.clone();
                 let weapon_sprite =
                     get_weapon_sprite_based_on_weapon_type(player_weapon_type, &sprites);
 

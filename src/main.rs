@@ -107,7 +107,7 @@ fn main() {
         .add_systems(
             FixedUpdate,
             (
-                move_ammo,
+                move_player_ammo,
                 animate_sprite,
                 move_laser_power,
                 move_enemies_towards_player,

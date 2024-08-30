@@ -5,16 +5,16 @@ use crate::resources::SpritesResources;
 use crate::stats::Damage;
 use crate::stats::Direction;
 use crate::util::get_ammo_sprite_based_on_weapon_type;
-use crate::util::get_random_vec3;
 use crate::CleanupWhenPlayerDies;
+use crate::Player;
 
-#[cfg_attr(
-    not(feature = "web"),
-    derive(Reflect, Component, Default, Debug, Clone)
-)]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
-#[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
-pub struct Ammo(pub WeaponTypeEnum);
+#[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
+pub struct Ammo {
+    pub weapon_type: WeaponTypeEnum,
+    pub equipped_by: Entity,
+}
 
 #[derive(Bundle, Clone)]
 pub(crate) struct AmmoBundle {
@@ -42,6 +42,7 @@ impl AmmoBundle {
         damage: f32,
         rotation: Quat,
         layer: RenderLayers,
+        equipped_by: Entity,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -54,6 +55,7 @@ impl AmmoBundle {
             damage,
             rotation,
             layer,
+            equipped_by,
         )
     }
 
@@ -68,6 +70,7 @@ impl AmmoBundle {
         damage: f32,
         rotation: Quat,
         layer: RenderLayers,
+        equipped_by: Entity,
     ) -> Self {
         let ammo_sprite = get_ammo_sprite_based_on_weapon_type(weapon_type.clone(), sprites);
         let ammo_animation = ammo_sprite.animation.unwrap();
@@ -75,7 +78,10 @@ impl AmmoBundle {
 
         AmmoBundle {
             name: Name::new("Ammo"),
-            marker: Ammo(weapon_type),
+            marker: Ammo {
+                weapon_type,
+                equipped_by,
+            },
             direction: Direction(direction),
             damage: Damage(damage),
             sprite: SpriteBundle {
@@ -99,46 +105,22 @@ impl AmmoBundle {
     }
 }
 
-pub fn spawn_ammo(
-    commands: &mut Commands,
-    weapon_by_level: &WeaponByLevel,
-    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Res<SpritesResources>,
-    asset_server: Res<AssetServer>,
-) {
-    let weapon_type = &weapon_by_level.weapon.weapon_type;
-    let damage = weapon_by_level.weapon.damage;
-    let scale = Vec3::ONE;
-    let direction = Vec3::ZERO;
-    let rotation = Quat::default();
-    let layer = PLAYER_LAYER;
-
-    for idx in 1..=weapon_by_level.quantity {
-        let random_spawning_pos = get_random_vec3(idx as u64, Some(WEAPON_RANDOM_SEED));
-
-        let bundle = AmmoBundle::new(
-            &mut texture_atlas_layout,
-            sprites,
-            &asset_server,
-            scale,
-            random_spawning_pos,
-            weapon_type.clone(),
-            direction,
-            damage,
-            rotation,
-            layer.clone(),
-        );
-
-        commands.spawn(bundle);
-    }
-}
-
-pub fn move_ammo(
+pub fn move_player_ammo(
     mut commands: Commands,
-    mut ammos_query: Query<(Entity, &mut Transform, &Direction), With<Ammo>>,
+    mut ammos_query: Query<(Entity, &mut Transform, &Direction, &Ammo), With<Ammo>>,
+    player_query: Query<Entity, With<Player>>,
     timer: Res<Time>,
 ) {
-    for (entity, mut transform, ammo_direction) in &mut ammos_query {
+    let Ok(player_entity) = player_query.get_single() else {
+        return;
+    };
+
+    for (entity, mut transform, ammo_direction, ammo) in &mut ammos_query {
+        // Do not move enemies ammos
+        if ammo.equipped_by != player_entity {
+            continue;
+        }
+
         let new_translation_x =
             transform.translation.x + ammo_direction.0.x * AMMO_MOVE_SPEED * timer.delta_seconds();
         let new_translation_y =

@@ -2,8 +2,8 @@ use crate::{
     prelude::*,
     spawn_health_bar,
     util::{get_enemy_sprite_based_on_enemy_class, get_random_vec3},
-    AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health, SpriteInfo,
-    SpritesResources,
+    AmmoBundle, AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health,
+    SpriteInfo, SpritesResources, WeaponBundle,
 };
 
 #[derive(Component, Clone)]
@@ -195,6 +195,26 @@ fn spawn_mage_enemy(
     health_bar_translation: Vec3,
     quantity: u32,
 ) {
+    let weapon_damage = ENEMY_AMMO_DAMAGE;
+    let weapon_direction = Vec3::ZERO;
+    let weapon_pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
+    let weapon_scale = Vec3::splat(0.5);
+    let weapon_type = WeaponTypeEnum::Wand;
+    let layer = BASE_LAYER;
+
+    let ammo_scale = Vec3::ONE;
+    let ammo_rotation = Quat::default();
+
+    let health_bar_entity = spawn_health_bar(
+        commands,
+        meshes,
+        materials,
+        health,
+        health,
+        health_bar_translation,
+        layer.clone(),
+    );
+
     for idx in 1..=quantity as usize {
         let random_spawning_pos = get_random_vec3(idx as u64, None);
 
@@ -209,15 +229,42 @@ fn spawn_mage_enemy(
             EnemyClassEnum::Mage,
         );
 
-        let health_bar = spawn_health_bar(
-            commands,
-            meshes,
-            materials,
-            health,
-            health,
-            health_bar_translation,
-            BASE_LAYER,
+        let enemy_mage_entity = commands.spawn(bundle).id();
+
+        let weapon_bundle = WeaponBundle::new(
+            texture_atlas_layout,
+            sprites,
+            asset_server,
+            weapon_scale,
+            weapon_pos,
+            weapon_direction,
+            weapon_damage,
+            weapon_type.clone(),
+            layer.clone(),
+            enemy_mage_entity,
         );
-        commands.spawn(bundle).push_children(&[health_bar]);
+
+        let ammo_bundle = AmmoBundle::new(
+            texture_atlas_layout,
+            sprites,
+            asset_server,
+            ammo_scale,
+            weapon_pos,
+            weapon_type.clone(),
+            weapon_direction,
+            weapon_damage,
+            ammo_rotation,
+            layer.clone(),
+            enemy_mage_entity,
+        );
+
+        commands
+            .entity(enemy_mage_entity)
+            .with_children(|parent| {
+                parent.spawn(weapon_bundle.clone()).with_children(|parent| {
+                    parent.spawn(ammo_bundle.clone());
+                });
+            })
+            .push_children(&[health_bar_entity]);
     }
 }

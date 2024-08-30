@@ -101,7 +101,7 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
 pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    ammos_query: Query<(Entity, &Transform), With<Ammo>>,
+    ammos_query: Query<(Entity, &Transform, &Ammo), With<Ammo>>,
     mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
     player_query: Query<&Children, With<Player>>,
@@ -151,7 +151,13 @@ pub fn check_for_ammo_collisions_with_enemy(
             ),
         );
 
-        for (ammo_entity, ammo_transform) in ammos_query.iter() {
+        for (ammo_entity, ammo_transform, ammo) in ammos_query.iter() {
+            // Do not check for collision with the ammo that the enemy
+            // carries within himself.
+            if ammo.equipped_by == enemy_entity {
+                continue;
+            }
+
             // Do not check for collision with the ammo that the player
             // carries within himself.
             if let Some(player_ammo_unwrapped) = player_ammo {
@@ -390,6 +396,12 @@ pub fn check_for_weapon_collisions(
     for (weapon_entity, weapon, weapon_damage, weapon_transform) in
         weapons_not_from_player_query.iter()
     {
+        // Do not collide with weapons that can only be equipped
+        // by enemies
+        if weapon.equipped_by != player_entity {
+            continue;
+        }
+
         // if the weapon belongs to the player, do not check for collision
         if weapon_entity == player_weapon_entity {
             continue;

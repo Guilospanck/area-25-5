@@ -115,6 +115,11 @@ pub(crate) fn spawn_player(
     let weapon_type = WeaponTypeEnum::Bow;
     let layer = PLAYER_LAYER;
 
+    let scale = Vec3::ONE;
+    let rotation = Quat::default();
+
+    let player_entity_id = commands.spawn(player).id();
+
     let weapon_bundle = WeaponBundle::new(
         &mut texture_atlas_layout,
         &sprites_resources,
@@ -123,13 +128,10 @@ pub(crate) fn spawn_player(
         pos,
         direction,
         damage,
-        weapon_type,
+        weapon_type.clone(),
         layer.clone(),
+        player_entity_id,
     );
-
-    let scale = Vec3::ONE;
-    let weapon_type = WeaponTypeEnum::default();
-    let rotation = Quat::default();
 
     let ammo_bundle = AmmoBundle::new(
         &mut texture_atlas_layout,
@@ -142,9 +144,8 @@ pub(crate) fn spawn_player(
         damage,
         rotation,
         layer.clone(),
+        player_entity_id,
     );
-
-    let player_entity_id = commands.spawn(player).id();
 
     let health_bar_translation = Vec3::new(2.0, 12.0, 0.0);
     let health_bar = spawn_health_bar(
@@ -166,5 +167,5 @@ pub(crate) fn spawn_player(
         })
         .push_children(&[health_bar]);
 
-    commands.trigger(PlayerSpawned);
+    commands.trigger(PlayerSpawned { player_entity_id });
 }
