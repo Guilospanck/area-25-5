@@ -294,6 +294,7 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 ..default()
             },
             OVERLAY_LAYER,
+            CleanupWhenPlayerDies,
         ))
         .with_children(|parent| {
             parent.spawn(current_wave_text);
@@ -336,6 +337,7 @@ fn spawn_score_points_ui(commands: &mut Commands, asset_server: &Res<AssetServer
                 ..default()
             },
             OVERLAY_LAYER,
+            CleanupWhenPlayerDies,
         ))
         .with_children(|parent| {
             parent.spawn(current_wave_text);
@@ -352,7 +354,7 @@ fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServe
 
     let current_wave_text = (
         TextBundle {
-            text: Text::from_section("01:00", text_style),
+            text: Text::from_section("00:30", text_style),
             style: Style { ..default() },
             ..default()
         },
@@ -373,6 +375,7 @@ fn spawn_current_timer_ui(commands: &mut Commands, asset_server: &Res<AssetServe
                 ..default()
             },
             OVERLAY_LAYER,
+            CleanupWhenPlayerDies,
         ))
         .with_children(|parent| {
             parent.spawn(current_wave_text);
@@ -396,6 +399,7 @@ pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
             },
             OVERLAY_LAYER,
             ContainerBuffsUI,
+            CleanupWhenPlayerDies,
         ))
         .with_children(|parent| {
             parent.spawn_empty();
@@ -535,6 +539,7 @@ pub(crate) fn spawn_power_ui_root_node(commands: &mut Commands) {
             },
             OVERLAY_LAYER,
             PowerUIRootNode,
+            CleanupWhenPlayerDies,
         ))
         .with_children(|parent| {
             parent.spawn_empty();

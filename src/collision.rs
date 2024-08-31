@@ -107,8 +107,6 @@ pub fn check_for_ammo_collisions_with_enemy(
     player_query: Query<&Children, With<Player>>,
     player_weapon_query: Query<(&Children, &Weapon, &Damage)>,
     player_ammo_query: Query<(Entity, &Ammo)>,
-
-    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -117,10 +115,6 @@ pub fn check_for_ammo_collisions_with_enemy(
     }
 
     let Ok(player_children) = player_query.get_single() else {
-        return;
-    };
-
-    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
     };
 
@@ -168,10 +162,7 @@ pub fn check_for_ammo_collisions_with_enemy(
 
             // This gets the current ammo position on the world based on his
             // screen position.
-            let ammo_center = Vec2::new(
-                ammo_transform.translation.x + base_camera_transform.translation.x,
-                ammo_transform.translation.y + base_camera_transform.translation.y,
-            );
+            let ammo_center = Vec2::new(ammo_transform.translation.x, ammo_transform.translation.y);
             let ammo_collider = Aabb2d::new(ammo_center, Vec2::splat(AMMO_SPRITE_SIZE as f32 / 2.));
 
             if ammo_collider.intersects(&enemy_collider) {

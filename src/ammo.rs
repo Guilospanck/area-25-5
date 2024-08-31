@@ -126,11 +126,11 @@ pub fn move_player_ammo(
         let new_translation_y =
             transform.translation.y - ammo_direction.0.y * AMMO_MOVE_SPEED * timer.delta_seconds();
 
-        let off_screen_x = !(-BACKGROUND_TEXTURE_RESOLUTION.x_px / 2.0
-            ..=BACKGROUND_TEXTURE_RESOLUTION.x_px / 2.0)
+        let off_screen_x = !(-BACKGROUND_TEXTURE_RESOLUTION.x_px
+            ..=BACKGROUND_TEXTURE_RESOLUTION.x_px)
             .contains(&new_translation_x);
-        let off_screen_y = !(-BACKGROUND_TEXTURE_RESOLUTION.y_px / 2.0
-            ..=BACKGROUND_TEXTURE_RESOLUTION.y_px / 2.0)
+        let off_screen_y = !(-BACKGROUND_TEXTURE_RESOLUTION.y_px
+            ..=BACKGROUND_TEXTURE_RESOLUTION.y_px)
             .contains(&new_translation_y);
 
         if off_screen_x || off_screen_y {

@@ -87,7 +87,6 @@ fn main() {
                 setup_menu_camera,
                 setup_resources,
                 setup_sprite,
-                setup_ui,
             )
                 .chain(),
         )
@@ -98,6 +97,7 @@ fn main() {
                 cleanup_system::<GameOverOverlay>,
                 cleanup_system::<GameWonOverlay>,
                 cleanup_system::<CleanupWhenPlayerDies>,
+                setup_ui,
                 reset_initial_state,
                 setup_player,
             )

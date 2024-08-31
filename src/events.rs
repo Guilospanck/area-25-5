@@ -16,7 +16,7 @@ use crate::{
         get_power_sprite_based_on_power_type, get_random_chance,
         get_weapon_sprite_based_on_weapon_type,
     },
-    AmmoBundle, Armor, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
+    AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage,
     Enemy, EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
     PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerSpriteUI, PowerUI,
@@ -124,6 +124,7 @@ pub fn on_mouse_click(
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
     let event = trigger.event();
     let Vec2 { x, y } = event.pos;
@@ -137,6 +138,7 @@ pub fn on_mouse_click(
         asset_server,
         &sprites,
         &mut texture_atlas_layout,
+        base_camera,
     );
 }
 

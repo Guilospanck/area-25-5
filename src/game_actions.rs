@@ -144,14 +144,19 @@ pub fn shoot_at_enemies(
     asset_server: Res<AssetServer>,
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
     let Ok((player_entity, player_transform, player_children)) = player_query.get_single() else {
         return;
     };
 
-    let position = Vec2::new(
-        player_transform.translation.x,
-        player_transform.translation.y,
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    let mut position = Vec2::new(
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
     );
     let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 
@@ -170,20 +175,16 @@ pub fn shoot_at_enemies(
     }
 
     let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
-    let pos = Vec3::new(
-        player_transform.translation.x + 20.0,
-        player_transform.translation.y,
-        player_transform.translation.z,
-    );
+    position.x += 20.0;
     let scale = Vec3::ONE;
-    let layer = PLAYER_LAYER;
+    let layer = BASE_LAYER;
 
     let ammo_bundle = AmmoBundle::new(
         texture_atlas_layout,
         sprites,
         &asset_server,
         scale,
-        pos,
+        position.extend(1.0),
         weapon_type.clone(),
         direction,
         weapon_damage,
@@ -261,7 +262,7 @@ pub fn shoot_at_player(
 
 pub fn handle_click(
     mouse_button_input: Res<ButtonInput<MouseButton>>,
-    camera: Query<(&Camera, &GlobalTransform, &PlayerCamera)>,
+    camera: Query<(&Camera, &GlobalTransform, &BaseCamera)>,
     windows: Query<&Window>,
     mut commands: Commands,
 ) {
