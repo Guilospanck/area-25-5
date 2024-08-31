@@ -159,6 +159,7 @@ fn main() {
                 expand_circle_of_death.run_if(on_timer(Duration::from_millis(50))),
                 change_enemy_direction.run_if(on_timer(Duration::from_secs(5))),
                 shoot_at_player.run_if(on_timer(Duration::from_secs(2))),
+                make_boss_spawn_enemies.run_if(on_timer(Duration::from_secs(10))),
             )
                 .in_set(TimeBasedSet),
         )

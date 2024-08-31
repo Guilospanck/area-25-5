@@ -6,6 +6,7 @@ use crate::stats::Damage;
 use crate::stats::Direction;
 use crate::util::get_random_vec3;
 use crate::util::get_weapon_sprite_based_on_weapon_type;
+use crate::util::EquippedTypeEnum;
 use crate::CleanupWhenPlayerDies;
 use rand::Rng;
 
@@ -15,6 +16,7 @@ use rand::Rng;
 pub struct Weapon {
     pub weapon_type: WeaponTypeEnum,
     pub equipped_by: Entity,
+    pub equipped_type: EquippedTypeEnum,
 }
 
 #[derive(Bundle, Clone)]
@@ -43,6 +45,7 @@ impl WeaponBundle {
         weapon_type: WeaponTypeEnum,
         layer: RenderLayers,
         equipped_by: Entity,
+        equipped_type: EquippedTypeEnum,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -55,6 +58,7 @@ impl WeaponBundle {
             weapon_type,
             layer,
             equipped_by,
+            equipped_type,
         )
     }
 
@@ -69,6 +73,7 @@ impl WeaponBundle {
         weapon_type: WeaponTypeEnum,
         layer: RenderLayers,
         equipped_by: Entity,
+        equipped_type: EquippedTypeEnum,
     ) -> Self {
         let weapon_sprite = get_weapon_sprite_based_on_weapon_type(weapon_type.clone(), sprites);
         let weapon_animation = weapon_sprite.animation.unwrap();
@@ -79,6 +84,7 @@ impl WeaponBundle {
             marker: Weapon {
                 weapon_type,
                 equipped_by,
+                equipped_type,
             },
             direction: Direction(direction),
             damage: Damage(damage),
@@ -110,6 +116,7 @@ pub fn spawn_weapon(
     sprites: &Res<SpritesResources>,
     asset_server: &Res<AssetServer>,
     equipped_by: Entity,
+    equipped_type: EquippedTypeEnum,
 ) {
     let weapon_type = &weapon_by_level.weapon.weapon_type;
     let damage = weapon_by_level.weapon.damage;
@@ -138,6 +145,7 @@ pub fn spawn_weapon(
             weapon_type.clone(),
             layer.clone(),
             equipped_by,
+            equipped_type.clone(),
         );
 
         commands.spawn(bundle);

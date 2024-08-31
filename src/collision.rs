@@ -6,6 +6,7 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
+    util::EquippedTypeEnum,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser, MaybeSpawnEnergyPack,
     PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
@@ -160,6 +161,11 @@ pub fn check_for_ammo_collisions_with_enemy(
                 if player_ammo_unwrapped.0 == ammo_entity {
                     continue;
                 }
+            }
+
+            // Do not check for enemy ammo collision with other enemies
+            if ammo.equipped_type == EquippedTypeEnum::Enemy {
+                continue;
             }
 
             // This gets the current ammo position on the world based on his

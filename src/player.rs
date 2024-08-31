@@ -131,6 +131,7 @@ pub(crate) fn spawn_player(
         weapon_type.clone(),
         layer.clone(),
         player_entity_id,
+        crate::util::EquippedTypeEnum::Player,
     );
 
     let ammo_bundle = AmmoBundle::new(
@@ -145,6 +146,7 @@ pub(crate) fn spawn_player(
         rotation,
         layer.clone(),
         player_entity_id,
+        crate::util::EquippedTypeEnum::Player,
     );
 
     let health_bar_translation = Vec3::new(2.0, 12.0, 0.0);

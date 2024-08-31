@@ -365,6 +365,7 @@ pub fn on_player_spawned(
         &sprites,
         &asset_server,
         player_entity_id,
+        crate::util::EquippedTypeEnum::Player,
     );
 
     let current_wave_item = item_waves
@@ -577,6 +578,7 @@ pub fn on_wave_changed(
         &sprites,
         &asset_server,
         player_entity,
+        crate::util::EquippedTypeEnum::Player,
     );
 
     let current_wave_item = item_waves
@@ -981,6 +983,7 @@ pub fn on_weapon_found(
         rotation,
         layer.clone(),
         *player_entity,
+        crate::util::EquippedTypeEnum::Player,
     );
 
     let scale = weapon_scale;
@@ -995,6 +998,7 @@ pub fn on_weapon_found(
         weapon_type.clone(),
         layer.clone(),
         *player_entity,
+        crate::util::EquippedTypeEnum::Player,
     );
 
     // despawn current player's weapon

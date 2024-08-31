@@ -128,6 +128,7 @@ pub fn spawn_enemy(
             scale,
             health_bar_translation,
             quantity,
+            None,
         ),
         EnemyClassEnum::Mage => spawn_mage_enemy(
             commands,
@@ -146,7 +147,7 @@ pub fn spawn_enemy(
     }
 }
 
-fn spawn_orc_enemy(
+pub(crate) fn spawn_orc_enemy(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     sprites: &Res<SpritesResources>,
@@ -159,15 +160,16 @@ fn spawn_orc_enemy(
     scale: Vec3,
     health_bar_translation: Vec3,
     quantity: u32,
+    spawning_position: Option<Vec3>,
 ) {
     for idx in 1..=quantity as usize {
-        let random_spawning_pos = get_random_vec3(idx as u64, None);
+        let spawning_pos = spawning_position.unwrap_or(get_random_vec3(idx as u64, None));
 
         let bundle = EnemyBundle::idle(
             texture_atlas_layout,
             asset_server,
             sprites,
-            random_spawning_pos,
+            spawning_pos,
             health,
             damage,
             scale,
@@ -175,12 +177,14 @@ fn spawn_orc_enemy(
             health,
         );
 
+        let max_health = health;
+
         let health_bar = spawn_health_bar(
             commands,
             meshes,
             materials,
             health,
-            health,
+            max_health,
             health_bar_translation,
             BASE_LAYER,
         );
@@ -240,6 +244,7 @@ fn spawn_mage_enemy(
             weapon_type.clone(),
             layer.clone(),
             enemy_mage_entity,
+            crate::util::EquippedTypeEnum::Enemy,
         );
 
         let ammo_bundle = AmmoBundle::new(
@@ -254,6 +259,7 @@ fn spawn_mage_enemy(
             ammo_rotation,
             layer.clone(),
             enemy_mage_entity,
+            crate::util::EquippedTypeEnum::Enemy,
         );
 
         let health_bar_entity = spawn_health_bar(
@@ -328,6 +334,7 @@ pub(crate) fn spawn_boss_orc(
             weapon_type.clone(),
             layer.clone(),
             enemy_mage_entity,
+            crate::util::EquippedTypeEnum::Enemy,
         );
 
         let ammo_bundle = AmmoBundle::new(
@@ -342,6 +349,7 @@ pub(crate) fn spawn_boss_orc(
             ammo_rotation,
             layer.clone(),
             enemy_mage_entity,
+            crate::util::EquippedTypeEnum::Enemy,
         );
 
         let health_bar_entity = spawn_health_bar(

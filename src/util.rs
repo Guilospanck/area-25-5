@@ -2,6 +2,17 @@ use crate::{prelude::*, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResource
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Debug, Clone, PartialEq, Eq)
+)]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Debug, Clone, PartialEq, Eq))]
+pub enum EquippedTypeEnum {
+    Player,
+    Enemy,
+}
+
 pub(crate) fn get_random_chance() -> f32 {
     let mut rand_thread_rng = rand::thread_rng();
     let n1: u8 = rand_thread_rng.gen();
