@@ -3,10 +3,10 @@ use crate::{
     events::ShootBullets,
     player::Player,
     prelude::*,
-    spawn_player_stats_ui, spawn_power,
+    spawn_orc_enemy, spawn_player_stats_ui, spawn_power,
     util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
-    AmmoBundle, Armor, BaseCamera, Damage, Health, Mana, PlayAgainButton, PlayerCamera,
-    PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
+    AmmoBundle, Armor, BaseCamera, CurrentBoss, Damage, Health, Mana, PlayAgainButton,
+    PlayerCamera, PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
     SpritesResources, StartGameButton, Weapon, WindowResolutionResource,
 };
 
@@ -191,6 +191,7 @@ pub fn shoot_at_enemies(
         rotation,
         layer.clone(),
         player_entity,
+        crate::util::EquippedTypeEnum::Player,
     );
 
     commands.spawn(ammo_bundle);
@@ -252,11 +253,57 @@ pub fn shoot_at_player(
                     rotation,
                     layer.clone(),
                     enemy_entity,
+                    crate::util::EquippedTypeEnum::Enemy,
                 );
 
                 commands.spawn(ammo_bundle);
             }
         }
+    }
+}
+
+pub fn make_boss_spawn_enemies(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+
+    current_boss: Res<CurrentBoss>,
+    enemies: Query<(&Transform, &Enemy), With<Enemy>>,
+) {
+    if current_boss.0.is_none() {
+        return;
+    }
+
+    let creep_health = ENEMY_HEALTH;
+    let creep_damage = 25.0;
+    let creep_scale = Vec3::splat(2.5);
+    let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
+    let quantity = 1;
+
+    for (enemy_transform, enemy) in enemies.iter() {
+        if enemy.class != EnemyClassEnum::BossOrc {
+            continue;
+        }
+
+        let spawning_position = enemy_transform.translation;
+
+        spawn_orc_enemy(
+            &mut commands,
+            &asset_server,
+            &sprites,
+            &mut texture_atlas_layout,
+            &mut meshes,
+            &mut materials,
+            creep_health,
+            creep_damage,
+            creep_scale,
+            health_bar_translation,
+            quantity,
+            Some(spawning_position),
+        );
     }
 }
 
@@ -443,7 +490,7 @@ pub fn power_up(
     power_query: Query<(&Damage, &Power)>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 
-    enemies: Query<(Entity, &mut Health, &Damage), With<Enemy>>,
+    enemies: Query<(Entity, &mut Health, &Damage, &Enemy), With<Enemy>>,
 ) {
     let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;

@@ -5,6 +5,7 @@ use crate::resources::SpritesResources;
 use crate::stats::Damage;
 use crate::stats::Direction;
 use crate::util::get_ammo_sprite_based_on_weapon_type;
+use crate::util::EquippedTypeEnum;
 use crate::CleanupWhenPlayerDies;
 use crate::Player;
 
@@ -14,6 +15,7 @@ use crate::Player;
 pub struct Ammo {
     pub weapon_type: WeaponTypeEnum,
     pub equipped_by: Entity,
+    pub equipped_type: EquippedTypeEnum,
 }
 
 #[derive(Bundle, Clone)]
@@ -43,6 +45,7 @@ impl AmmoBundle {
         rotation: Quat,
         layer: RenderLayers,
         equipped_by: Entity,
+        equipped_type: EquippedTypeEnum,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -56,6 +59,7 @@ impl AmmoBundle {
             rotation,
             layer,
             equipped_by,
+            equipped_type,
         )
     }
 
@@ -71,6 +75,7 @@ impl AmmoBundle {
         rotation: Quat,
         layer: RenderLayers,
         equipped_by: Entity,
+        equipped_type: EquippedTypeEnum,
     ) -> Self {
         let ammo_sprite = get_ammo_sprite_based_on_weapon_type(weapon_type.clone(), sprites);
         let ammo_animation = ammo_sprite.animation.unwrap();
@@ -81,6 +86,7 @@ impl AmmoBundle {
             marker: Ammo {
                 weapon_type,
                 equipped_by,
+                equipped_type,
             },
             direction: Direction(direction),
             damage: Damage(damage),

@@ -226,7 +226,7 @@ pub fn spawn_power(
     power_damage: Damage,
     player_translation: Vec3,
 
-    enemies: Query<(Entity, &mut Health, &Damage), With<Enemy>>,
+    enemies: Query<(Entity, &mut Health, &Damage, &Enemy), With<Enemy>>,
 ) {
     let visibility = Visibility::Visible;
 
@@ -300,7 +300,7 @@ fn spawn_circle_of_death_power(
     quantity: u32,
     player_translation: Vec3,
 
-    mut enemies: Query<(Entity, &mut Health, &Damage), With<Enemy>>,
+    mut enemies: Query<(Entity, &mut Health, &Damage, &Enemy), With<Enemy>>,
 ) {
     let circle = Mesh2dHandle(meshes.add(Annulus::new(40., 50.)));
     let color = Color::srgba(255., 0., 0., 0.8);
@@ -324,7 +324,7 @@ fn spawn_circle_of_death_power(
         ));
 
         // A circle will always deal damage to ALL enemies on the screen
-        for (enemy_entity, mut enemy_health, enemy_damage) in enemies.iter_mut() {
+        for (enemy_entity, mut enemy_health, enemy_damage, enemy) in enemies.iter_mut() {
             damage_enemy_from_ammo_or_power(
                 commands,
                 None,
@@ -332,6 +332,7 @@ fn spawn_circle_of_death_power(
                 &mut enemy_health,
                 power_bundle.damage.0,
                 enemy_damage,
+                enemy.max_health,
             );
         }
     }

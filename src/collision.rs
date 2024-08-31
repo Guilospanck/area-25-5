@@ -6,6 +6,7 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
+    util::EquippedTypeEnum,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser, MaybeSpawnEnergyPack,
     PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
@@ -14,7 +15,7 @@ use bevy::math::bounding::BoundingVolume;
 
 pub fn check_for_offensive_buff_collisions_with_enemy(
     mut commands: Commands,
-    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
+    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage, &Enemy), With<Enemy>>,
 
     player_query: Query<(&Transform, &Children), With<Player>>,
     player_buff_group_query: Query<(&Children, &BuffGroup)>,
@@ -70,7 +71,7 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
                     let buff_collider =
                         Aabb2d::new(buff_center, Vec2::splat(BUFF_SPRITE_SIZE as f32 / 2.));
 
-                    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in
+                    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage, enemy) in
                         enemies.iter_mut()
                     {
                         let enemy_collider = Aabb2d::new(
@@ -88,6 +89,7 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
                                 &mut enemy_health,
                                 damage,
                                 enemy_damage,
+                                enemy.max_health,
                             );
                             continue;
                         }
@@ -102,7 +104,7 @@ pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     ammos_query: Query<(Entity, &Transform, &Ammo), With<Ammo>>,
-    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
+    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage, &Enemy), With<Enemy>>,
 
     player_query: Query<&Children, With<Player>>,
     player_weapon_query: Query<(&Children, &Weapon, &Damage)>,
@@ -136,7 +138,8 @@ pub fn check_for_ammo_collisions_with_enemy(
     };
     let player_weapon_damage = player_weapon.2;
 
-    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
+    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage, enemy) in enemies.iter_mut()
+    {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
             Vec2::new(
@@ -160,6 +163,11 @@ pub fn check_for_ammo_collisions_with_enemy(
                 }
             }
 
+            // Do not check for enemy ammo collision with other enemies
+            if ammo.equipped_type == EquippedTypeEnum::Enemy {
+                continue;
+            }
+
             // This gets the current ammo position on the world based on his
             // screen position.
             let ammo_center = Vec2::new(ammo_transform.translation.x, ammo_transform.translation.y);
@@ -174,6 +182,7 @@ pub fn check_for_ammo_collisions_with_enemy(
                     &mut enemy_health,
                     player_weapon_damage.0,
                     enemy_damage,
+                    enemy.max_health,
                 );
                 continue;
             }
@@ -470,7 +479,7 @@ pub fn check_for_weapon_collisions(
 
 pub fn check_for_power_collisions_with_enemy(
     mut commands: Commands,
-    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
+    mut enemies: Query<(Entity, &Transform, &mut Health, &Damage, &Enemy), With<Enemy>>,
 
     player_query: Query<(&Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
@@ -494,7 +503,8 @@ pub fn check_for_power_collisions_with_enemy(
         }
     }
 
-    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
+    for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage, enemy) in enemies.iter_mut()
+    {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
             Vec2::new(
@@ -530,6 +540,7 @@ pub fn check_for_power_collisions_with_enemy(
                     &mut enemy_health,
                     *damage,
                     enemy_damage,
+                    enemy.max_health,
                 );
             }
         }
@@ -559,6 +570,7 @@ pub fn check_for_power_collisions_with_enemy(
                     &mut enemy_health,
                     power_damage.0,
                     enemy_damage,
+                    enemy.max_health,
                 );
             }
         }
@@ -572,11 +584,19 @@ pub(crate) fn damage_enemy_from_ammo_or_power(
     enemy_health: &mut Health,
     damage: f32,
     enemy_damage: &Damage,
+    enemy_max_health: f32,
 ) {
     if let Some(entity) = ammo_or_power_entity {
         commands.entity(entity).despawn();
     }
-    damage_enemy(commands, enemy_entity, enemy_health, damage, enemy_damage);
+    damage_enemy(
+        commands,
+        enemy_entity,
+        enemy_health,
+        damage,
+        enemy_damage,
+        enemy_max_health,
+    );
 }
 
 fn damage_enemy(
@@ -585,6 +605,7 @@ fn damage_enemy(
     enemy_health: &mut Health,
     damage: f32,
     enemy_damage: &Damage,
+    enemy_max_health: f32,
 ) {
     enemy_health.0 -= damage;
 
@@ -601,6 +622,7 @@ fn damage_enemy(
 
     commands.trigger(EnemyHealthChanged {
         health: enemy_health.0,
+        max_health: enemy_max_health,
         entity: enemy_entity,
     });
 }

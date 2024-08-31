@@ -14,6 +14,7 @@ pub(crate) const ENEMY_AMMO_DAMAGE: f32 = 5.0;
 pub enum EnemyClassEnum {
     Orc,
     Mage,
+    BossOrc,
 }
 
 pub struct EnemyType {
@@ -22,6 +23,13 @@ pub struct EnemyType {
     pub scale: Vec3,
     pub class: EnemyClassEnum,
 }
+
+pub(crate) const BOSS_LVL_1: EnemyType = EnemyType {
+    damage: 50.0,
+    health: ENEMY_HEALTH * 5.0,
+    scale: Vec3::splat(5.0),
+    class: EnemyClassEnum::BossOrc,
+};
 
 const ENEMY_LVL_1: EnemyType = EnemyType {
     damage: 5.0,
