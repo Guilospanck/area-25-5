@@ -2,8 +2,7 @@ use crate::{
     prelude::*,
     spawn_health_bar,
     util::{get_enemy_sprite_based_on_enemy_class, get_random_vec3},
-    AmmoBundle, AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health,
-    SpriteInfo, SpritesResources, WeaponBundle,
+    AmmoBundle, AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health, SpritesResources, WeaponBundle,
 };
 
 #[derive(Component, Clone)]

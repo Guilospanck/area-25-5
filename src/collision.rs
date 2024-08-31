@@ -190,6 +190,55 @@ pub fn check_for_ammo_collisions_with_enemy(
     }
 }
 
+pub fn check_for_ammo_collisions_with_player(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    ammos_query: Query<(Entity, &Transform, &Ammo, &Damage), With<Ammo>>,
+    mut player_query: Query<(Entity, &Transform, &mut Health, &Armor), With<Player>>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
+) {
+    let Ok((player_entity, player_transform, mut player_health, player_armor)) =
+        player_query.get_single_mut()
+    else {
+        return;
+    };
+
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    // This gets the current player position on the world based on his
+    // screen position.
+    let player_center = Vec2::new(
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
+    );
+    let player_collider = Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
+
+    for (ammo_entity, ammo_transform, ammo, ammo_damage) in ammos_query.iter() {
+        // Do not check for collision with the ammo that the player
+        // carries within himself.
+        if ammo.equipped_by == player_entity {
+            continue;
+        }
+
+        let ammo_center = Vec2::new(ammo_transform.translation.x, ammo_transform.translation.y);
+        let ammo_collider = Aabb2d::new(ammo_center, Vec2::splat(AMMO_SPRITE_SIZE as f32 / 2.));
+
+        if ammo_collider.intersects(&player_collider) {
+            hit_enemy_audio(&asset_server, &mut commands);
+            damage_player(
+                &mut commands,
+                &mut player_health,
+                player_armor.0,
+                ammo_damage.0,
+            );
+            commands.entity(ammo_entity).despawn_recursive();
+            continue;
+        }
+    }
+}
+
 pub fn check_for_player_collisions_to_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,

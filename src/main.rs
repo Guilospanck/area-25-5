@@ -134,6 +134,7 @@ fn main() {
                 check_for_item_collisions,
                 check_for_weapon_collisions,
                 check_for_offensive_buff_collisions_with_enemy,
+                check_for_ammo_collisions_with_player,
             )
                 .in_set(CollisionSet),
         )

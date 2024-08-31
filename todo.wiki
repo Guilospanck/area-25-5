@@ -85,8 +85,9 @@ as the time passes (cooldown)
 - [x] Make weapon spawned on the map bigger
 - [x] Change all spawns of empty entities to `.spawn_empty()`
 - [x] Spawning of enemies can come from outside the screen
-- [ ] Create the concept of enemies throwing magic or bullets as well
-- [ ] Some enemies may be fixed at some place and only cast spells
+- [x] Create the concept of enemies throwing magic or bullets as well
+	- [x] Add collision ammos from enemy to player
+- [ ] Create Boss
 - [ ] Remove audio until we have proper sound
 
 Ongoing:
@@ -99,7 +100,6 @@ Ongoing:
 Backlog:
 - [ ] Add proper audio and game sound
 - [ ] Improve rendering of circle
-- [ ] HP bar for some boss at some point
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
