@@ -1,6 +1,7 @@
 use crate::{
-    prelude::*, CurrentScore, CurrentTime, CurrentTimeChanged, CurrentTimeUI, CurrentWave,
-    CurrentWaveUI, PlayerHealthChanged, PlayerProfileUISet, ScoreChanged,
+    prelude::*, CurrentBoss, CurrentGameLevel, CurrentScore, CurrentTime, CurrentTimeChanged,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, PlayerHealthChanged, PlayerProfileUISet,
+    ScoreChanged,
 };
 
 #[derive(Component, Clone)]
@@ -14,11 +15,17 @@ pub fn cleanup_system<T: Component>(mut commands: Commands, q: Query<Entity, Wit
 
 pub fn reset_initial_state(
     mut commands: Commands,
+    mut current_boss: ResMut<CurrentBoss>,
+    mut current_game_level: ResMut<CurrentGameLevel>,
     mut current_wave: ResMut<CurrentWave>,
     mut current_time: ResMut<CurrentTime>,
     mut current_score: ResMut<CurrentScore>,
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
 ) {
+    // INFO: maybe create an event for this
+    current_boss.0 = None;
+    current_game_level.0 = 1;
+
     // Update UI
     current_wave.0 = 1u16;
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {

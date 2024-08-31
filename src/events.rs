@@ -8,8 +8,8 @@ use crate::{
     game_actions::shoot_at_enemies,
     player::Player,
     prelude::*,
-    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
-    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
+    spawn_boss_orc, spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item,
+    spawn_mana_ui_bar, spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
@@ -17,11 +17,11 @@ use crate::{
         get_weapon_sprite_based_on_weapon_type,
     },
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
-    ContainerBuffsUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage,
-    Enemy, EnemyWaves, GameState, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
-    PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerSpriteUI, PowerUI,
-    PowerUIRootNode, PowerWaves, ScoreUI, Speed, SpritesResources, Weapon, WeaponBundle, WeaponUI,
-    WeaponWaves, WindowResolutionResource,
+    ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentScore, CurrentTime, CurrentTimeUI,
+    CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, HealthBarUI, Item,
+    ItemTypeEnum, ItemWaves, Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
+    PowerLevelUI, PowerSpriteUI, PowerUI, PowerUIRootNode, PowerWaves, ScoreUI, Speed,
+    SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -48,6 +48,7 @@ pub struct PlayerSpawned {
 pub struct EnemyHealthChanged {
     pub health: f32,
     pub entity: Entity,
+    pub max_health: f32,
 }
 
 #[derive(Event)]
@@ -400,6 +401,7 @@ pub fn on_enemy_health_changed(
     let event = trigger.event();
     let health = event.health;
     let enemy_entity = event.entity;
+    let max_health = event.max_health;
 
     let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
     for (entity, children) in enemy_query.iter() {
@@ -413,7 +415,7 @@ pub fn on_enemy_health_changed(
                         &mut meshes,
                         &mut materials,
                         health,
-                        ENEMY_HEALTH,
+                        max_health,
                         health_bar_translation,
                         BASE_LAYER,
                     );
@@ -435,10 +437,18 @@ pub fn on_enemy_health_changed(
 pub fn on_all_enemies_died(
     _trigger: Trigger<AllEnemiesDied>,
     mut commands: Commands,
+    mut current_boss: ResMut<CurrentBoss>,
+    mut current_game_level: ResMut<CurrentGameLevel>,
     mut current_wave: ResMut<CurrentWave>,
     mut current_time: ResMut<CurrentTime>,
     mut next_state: ResMut<NextState<GameState>>,
     player_state: Res<State<GameState>>,
+
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     // Add multiplier to score based on the time left
     let mut seconds = current_time.seconds;
@@ -449,9 +459,33 @@ pub fn on_all_enemies_died(
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
     if new_wave as usize > NUMBER_OF_WAVES {
-        if *player_state.get() != GameState::Won {
-            next_state.set(GameState::Won);
+        let boss = BOSS_LVL_1;
+        let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
+        let quantity = 1;
+
+        if current_boss.0.is_some() {
+            if *player_state.get() != GameState::Won {
+                next_state.set(GameState::Won);
+            }
+            return;
         }
+
+        spawn_boss_orc(
+            &mut commands,
+            &asset_server,
+            &sprites,
+            &mut texture_atlas_layout,
+            &mut meshes,
+            &mut materials,
+            boss.health,
+            boss.damage,
+            boss.scale,
+            health_bar_translation,
+            quantity,
+        );
+
+        current_boss.0 = Some(1);
+
         return;
     }
     current_wave.0 = new_wave;

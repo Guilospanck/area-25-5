@@ -88,6 +88,8 @@ as the time passes (cooldown)
 - [x] Create the concept of enemies throwing magic or bullets as well
 	- [x] Add collision ammos from enemy to player
 - [ ] Create Boss
+- [ ] Change enemy/items/weapons etc "by_level" to "by_wave" (a level contains lots of waves)
+- [ ] Spawn enemy mage using wrong damage
 - [ ] Remove audio until we have proper sound
 
 Ongoing:

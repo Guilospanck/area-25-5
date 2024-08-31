@@ -9,6 +9,12 @@ use crate::{
 pub struct PlayerHitAudioTimeout(pub Timer);
 
 #[derive(Resource)]
+pub struct CurrentGameLevel(pub u16);
+
+#[derive(Resource)]
+pub struct CurrentBoss(pub Option<u16>);
+
+#[derive(Resource)]
 pub struct CurrentWave(pub u16);
 
 #[derive(Resource)]
@@ -54,6 +60,8 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
     let window = windows.single();
 
     commands.insert_resource(CurrentWave(1));
+    commands.insert_resource(CurrentBoss(None));
+    commands.insert_resource(CurrentGameLevel(1));
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
     commands.insert_resource(ItemWaves(ITEMS_PER_WAVE));

@@ -11,6 +11,7 @@ pub struct Enemy {
     pub is_random: bool,
     pub direction_intention: Transform,
     pub class: EnemyClassEnum,
+    pub max_health: f32,
 }
 
 #[derive(Bundle, Clone)]
@@ -37,6 +38,7 @@ impl EnemyBundle {
         damage: f32,
         scale: Vec3,
         class: EnemyClassEnum,
+        max_health: f32,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -47,6 +49,7 @@ impl EnemyBundle {
             damage,
             scale,
             class,
+            max_health,
         )
     }
 
@@ -59,6 +62,7 @@ impl EnemyBundle {
         damage: f32,
         scale: Vec3,
         class: EnemyClassEnum,
+        max_health: f32,
     ) -> Self {
         let enemy_sprite = get_enemy_sprite_based_on_enemy_class(class.clone(), sprites);
         let enemy_animation = enemy_sprite.animation.unwrap();
@@ -69,6 +73,7 @@ impl EnemyBundle {
                 is_random: false,
                 direction_intention: Transform::default(),
                 class,
+                max_health,
             },
             name: Name::new("Enemy"),
             health: Health(health),
@@ -137,6 +142,7 @@ pub fn spawn_enemy(
             health_bar_translation,
             quantity,
         ),
+        _ => (),
     }
 }
 
@@ -166,6 +172,7 @@ fn spawn_orc_enemy(
             damage,
             scale,
             EnemyClassEnum::Orc,
+            health,
         );
 
         let health_bar = spawn_health_bar(
@@ -217,6 +224,7 @@ fn spawn_mage_enemy(
             damage,
             scale,
             EnemyClassEnum::Mage,
+            health,
         );
 
         let enemy_mage_entity = commands.spawn(bundle).id();
@@ -243,6 +251,94 @@ fn spawn_mage_enemy(
             weapon_type.clone(),
             weapon_direction,
             weapon_damage,
+            ammo_rotation,
+            layer.clone(),
+            enemy_mage_entity,
+        );
+
+        let health_bar_entity = spawn_health_bar(
+            commands,
+            meshes,
+            materials,
+            health,
+            health,
+            health_bar_translation,
+            layer.clone(),
+        );
+
+        commands
+            .entity(enemy_mage_entity)
+            .with_children(|parent| {
+                parent.spawn(weapon_bundle.clone()).with_children(|parent| {
+                    parent.spawn(ammo_bundle.clone());
+                });
+            })
+            .push_children(&[health_bar_entity]);
+    }
+}
+
+pub(crate) fn spawn_boss_orc(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    sprites: &Res<SpritesResources>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+
+    health: f32,
+    damage: f32,
+    scale: Vec3,
+    health_bar_translation: Vec3,
+    quantity: u32,
+) {
+    let weapon_direction = Vec3::ZERO;
+    let weapon_pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
+    let weapon_scale = Vec3::splat(0.5);
+    let weapon_type = WeaponTypeEnum::Wand;
+    let layer = BASE_LAYER;
+
+    let ammo_scale = Vec3::ONE;
+    let ammo_rotation = Quat::default();
+
+    for idx in 1..=quantity as usize {
+        let random_spawning_pos = get_random_vec3(idx as u64, None);
+
+        let bundle = EnemyBundle::idle(
+            texture_atlas_layout,
+            asset_server,
+            sprites,
+            random_spawning_pos,
+            health,
+            damage,
+            scale,
+            EnemyClassEnum::BossOrc,
+            health,
+        );
+
+        let enemy_mage_entity = commands.spawn(bundle).id();
+
+        let weapon_bundle = WeaponBundle::new(
+            texture_atlas_layout,
+            sprites,
+            asset_server,
+            weapon_scale,
+            weapon_pos,
+            weapon_direction,
+            damage,
+            weapon_type.clone(),
+            layer.clone(),
+            enemy_mage_entity,
+        );
+
+        let ammo_bundle = AmmoBundle::new(
+            texture_atlas_layout,
+            sprites,
+            asset_server,
+            ammo_scale,
+            weapon_pos,
+            weapon_type.clone(),
+            weapon_direction,
+            damage,
             ammo_rotation,
             layer.clone(),
             enemy_mage_entity,

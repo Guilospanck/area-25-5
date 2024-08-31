@@ -98,5 +98,6 @@ pub(crate) fn get_enemy_sprite_based_on_enemy_class(
     match enemy_class {
         EnemyClassEnum::Orc => sprites.0.orc_idle.clone(),
         EnemyClassEnum::Mage => sprites.0.mage_idle.clone(),
+        EnemyClassEnum::BossOrc => sprites.0.orc_idle.clone(),
     }
 }
