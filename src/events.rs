@@ -120,7 +120,7 @@ pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
     commands: Commands,
     player_query: Query<(Entity, &Transform, &Children), With<Player>>,
-    weapon_query: Query<&Weapon>,
+    weapon_query: Query<(&Weapon, &Damage)>,
     asset_server: Res<AssetServer>,
     sprites: Res<SpritesResources>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
