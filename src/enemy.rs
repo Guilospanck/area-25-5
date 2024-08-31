@@ -2,7 +2,8 @@ use crate::{
     prelude::*,
     spawn_health_bar,
     util::{get_enemy_sprite_based_on_enemy_class, get_random_vec3},
-    AmmoBundle, AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health, SpritesResources, WeaponBundle,
+    AmmoBundle, AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, Damage, Health,
+    SpritesResources, WeaponBundle,
 };
 
 #[derive(Component, Clone)]
@@ -204,16 +205,6 @@ fn spawn_mage_enemy(
     let ammo_scale = Vec3::ONE;
     let ammo_rotation = Quat::default();
 
-    let health_bar_entity = spawn_health_bar(
-        commands,
-        meshes,
-        materials,
-        health,
-        health,
-        health_bar_translation,
-        layer.clone(),
-    );
-
     for idx in 1..=quantity as usize {
         let random_spawning_pos = get_random_vec3(idx as u64, None);
 
@@ -255,6 +246,16 @@ fn spawn_mage_enemy(
             ammo_rotation,
             layer.clone(),
             enemy_mage_entity,
+        );
+
+        let health_bar_entity = spawn_health_bar(
+            commands,
+            meshes,
+            materials,
+            health,
+            health,
+            health_bar_translation,
+            layer.clone(),
         );
 
         commands
