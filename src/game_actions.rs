@@ -140,7 +140,7 @@ pub fn shoot_at_enemies(
     x: f32,
     y: f32,
     player_query: Query<(Entity, &Transform, &Children), With<Player>>,
-    weapon_query: Query<&Weapon>,
+    weapon_query: Query<(&Weapon, &Damage)>,
     asset_server: Res<AssetServer>,
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
@@ -160,14 +160,15 @@ pub fn shoot_at_enemies(
     let rotation = Quat::from_rotation_z(angle);
 
     let mut weapon_type = WeaponTypeEnum::default();
+    let mut weapon_damage = AMMO_DAMAGE;
 
     for &child in player_children.iter() {
-        if let Ok(weapon) = weapon_query.get(child) {
+        if let Ok((weapon, damage)) = weapon_query.get(child) {
             weapon_type = weapon.weapon_type.clone();
+            weapon_damage = damage.0;
         }
     }
 
-    let damage = AMMO_DAMAGE;
     let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
     let pos = Vec3::new(
         player_transform.translation.x + 20.0,
@@ -185,7 +186,7 @@ pub fn shoot_at_enemies(
         pos,
         weapon_type.clone(),
         direction,
-        damage,
+        weapon_damage,
         rotation,
         layer.clone(),
         player_entity,
@@ -202,7 +203,7 @@ pub fn shoot_at_player(
 
     player_query: Query<&Transform, With<Player>>,
     enemies: Query<(Entity, &Transform, &Children), With<Enemy>>,
-    weapon_query: Query<&Weapon>,
+    weapon_query: Query<(&Weapon, &Damage)>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
     let Ok(player_transform) = player_query.get_single() else {
@@ -220,7 +221,7 @@ pub fn shoot_at_player(
 
     for (enemy_entity, enemy_transform, enemy_children) in enemies.iter() {
         for &child in enemy_children.iter() {
-            if let Ok(weapon) = weapon_query.get(child) {
+            if let Ok((weapon, weapon_damage)) = weapon_query.get(child) {
                 let enemy_position =
                     Vec2::new(enemy_transform.translation.x, enemy_transform.translation.y);
 
@@ -229,7 +230,6 @@ pub fn shoot_at_player(
                 let rotation = Quat::from_rotation_z(angle);
 
                 let weapon_type = weapon.weapon_type.clone();
-                let damage = AMMO_DAMAGE;
                 let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
                 let pos = Vec3::new(
                     enemy_transform.translation.x + 8.0,
@@ -247,7 +247,7 @@ pub fn shoot_at_player(
                     pos,
                     weapon_type.clone(),
                     direction,
-                    damage,
+                    weapon_damage.0,
                     rotation,
                     layer.clone(),
                     enemy_entity,
