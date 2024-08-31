@@ -130,7 +130,7 @@ pub fn get_sprites() -> Sprites<'static> {
                 None,
             ),
         },
-        enemy_char_idle: SpriteInfo {
+        orc_idle: SpriteInfo {
             dimensions: RectangularDimensions {
                 width: PLAYER_PIXEL_SIZE,
                 height: PLAYER_PIXEL_SIZE,
@@ -150,6 +150,21 @@ pub fn get_sprites() -> Sprites<'static> {
                 None,
                 None,
             ),
+        },
+        mage_idle: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 24,
+                height: 24,
+            },
+            source: "textures/Astronaut/Astronaut_Idle.png",
+            animation: Some(AnimationInfo {
+                indices: AnimationIndices { first: 0, last: 5 },
+                timer: AnimationTimer(Timer::from_seconds(
+                    PLAYER_ANIMATION_TIMER,
+                    TimerMode::Repeating,
+                )),
+            }),
+            layout: TextureAtlasLayout::from_grid(UVec2::new(24, 24), 6, 1, None, None),
         },
         bow: SpriteInfo {
             dimensions: RectangularDimensions {

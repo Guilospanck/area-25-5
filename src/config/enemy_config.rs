@@ -7,9 +7,13 @@ pub(crate) const ENEMY_HEALTH: f32 = 100.0;
 pub(crate) const ENEMY_COLLISION_BOX_WIDTH: f32 = 19.;
 pub(crate) const ENEMY_COLLISION_BOX_HEIGHT: f32 = 32.;
 pub(crate) const ENEMY_RANDOM_SEED: u64 = 1987836746771;
+// Mage
+pub(crate) const ENEMY_AMMO_DAMAGE: f32 = 5.0;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EnemyClassEnum {
     Orc,
+    Mage,
 }
 
 pub struct EnemyType {
@@ -22,8 +26,8 @@ pub struct EnemyType {
 const ENEMY_LVL_1: EnemyType = EnemyType {
     damage: 5.0,
     health: ENEMY_HEALTH,
-    scale: Vec3::splat(1.0),
-    class: EnemyClassEnum::Orc,
+    scale: Vec3::splat(2.0),
+    class: EnemyClassEnum::Mage,
 };
 const ENEMY_LVL_2: EnemyType = EnemyType {
     damage: 10.0,

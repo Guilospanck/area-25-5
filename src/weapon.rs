@@ -9,13 +9,13 @@ use crate::util::get_weapon_sprite_based_on_weapon_type;
 use crate::CleanupWhenPlayerDies;
 use rand::Rng;
 
-#[cfg_attr(
-    not(feature = "web"),
-    derive(Reflect, Component, Default, Debug, Clone)
-)]
+#[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
-#[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
-pub struct Weapon(pub WeaponTypeEnum);
+#[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
+pub struct Weapon {
+    pub weapon_type: WeaponTypeEnum,
+    pub equipped_by: Entity,
+}
 
 #[derive(Bundle, Clone)]
 pub(crate) struct WeaponBundle {
@@ -42,6 +42,7 @@ impl WeaponBundle {
         damage: f32,
         weapon_type: WeaponTypeEnum,
         layer: RenderLayers,
+        equipped_by: Entity,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -53,6 +54,7 @@ impl WeaponBundle {
             damage,
             weapon_type,
             layer,
+            equipped_by,
         )
     }
 
@@ -66,6 +68,7 @@ impl WeaponBundle {
         damage: f32,
         weapon_type: WeaponTypeEnum,
         layer: RenderLayers,
+        equipped_by: Entity,
     ) -> Self {
         let weapon_sprite = get_weapon_sprite_based_on_weapon_type(weapon_type.clone(), sprites);
         let weapon_animation = weapon_sprite.animation.unwrap();
@@ -73,7 +76,10 @@ impl WeaponBundle {
 
         WeaponBundle {
             name: Name::new("Weapon"),
-            marker: Weapon(weapon_type),
+            marker: Weapon {
+                weapon_type,
+                equipped_by,
+            },
             direction: Direction(direction),
             damage: Damage(damage),
             sprite: SpriteBundle {
@@ -103,10 +109,11 @@ pub fn spawn_weapon(
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
     asset_server: &Res<AssetServer>,
+    equipped_by: Entity,
 ) {
     let weapon_type = &weapon_by_level.weapon.weapon_type;
     let damage = weapon_by_level.weapon.damage;
-    let scale = Vec3::ONE;
+    let scale = Vec3::splat(2.0);
     let direction = Vec3::ZERO;
     let layer = BASE_LAYER;
 
@@ -130,6 +137,7 @@ pub fn spawn_weapon(
             damage,
             weapon_type.clone(),
             layer.clone(),
+            equipped_by,
         );
 
         commands.spawn(bundle);

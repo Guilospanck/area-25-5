@@ -398,7 +398,7 @@ pub(crate) fn spawn_container_buffs_ui(commands: &mut Commands) {
             ContainerBuffsUI,
         ))
         .with_children(|parent| {
-            parent.spawn(());
+            parent.spawn_empty();
         });
 }
 

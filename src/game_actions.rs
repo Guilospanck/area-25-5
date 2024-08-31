@@ -23,6 +23,12 @@ pub fn change_enemy_direction(
     };
 
     for (index, mut enemy) in enemies.iter_mut().enumerate() {
+        // We don't want the mage to move towards player. It's going to be a
+        // range caster.
+        if enemy.class == EnemyClassEnum::Mage {
+            continue;
+        }
+
         let mut signal = 1.;
         if index % 2 != 0 {
             signal = -1.;
@@ -45,10 +51,16 @@ pub fn move_enemies_towards_player(
     // is that rust mutability does not allow a variable to be mutable and
     // immutable at the same time. See https://bevyengine.org/learn/errors/#b0001
     // for more.
-    mut enemies: Query<(&mut Transform, &Enemy), (With<Enemy>, Without<Player>)>,
+    mut enemies: Query<
+        (&mut Transform, &Enemy),
+        (With<Enemy>, Without<Player>, Without<BaseCamera>),
+    >,
     time: Res<Time>,
-    player: Query<(&Transform, &Player)>,
-    window_resolution: Res<WindowResolutionResource>,
+    player: Query<(&Transform, &Player), (With<Player>, Without<BaseCamera>, Without<Enemy>)>,
+    base_camera: Query<
+        (&Transform, &BaseCamera),
+        (With<BaseCamera>, Without<Player>, Without<Enemy>),
+    >,
 ) {
     let mut position = match player.get_single() {
         Ok(player_position) => Vec2::new(
@@ -58,12 +70,31 @@ pub fn move_enemies_towards_player(
         Err(_) => Vec2::splat(0.),
     };
 
-    let limit_x_left = (-window_resolution.x_px + PLAYER_X_MARGIN) / 2.0;
-    let limit_x_right = (window_resolution.x_px - PLAYER_X_MARGIN) / 2.0;
-    let limit_y_bottom = (-window_resolution.y_px + PLAYER_Y_MARGIN) / 2.0;
-    let limit_y_top = (window_resolution.y_px - PLAYER_Y_MARGIN) / 2.0;
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    position = Vec2::new(
+        position.x + base_camera_transform.translation.x,
+        position.y + base_camera_transform.translation.y,
+    );
+
+    let limit_x_left =
+        (-BACKGROUND_TEXTURE_RESOLUTION.x_px * BACKGROUND_TEXTURE_SCALE + PLAYER_X_MARGIN) / 2.0;
+    let limit_x_right =
+        (BACKGROUND_TEXTURE_RESOLUTION.x_px * BACKGROUND_TEXTURE_SCALE - PLAYER_X_MARGIN) / 2.0;
+    let limit_y_bottom =
+        (-BACKGROUND_TEXTURE_RESOLUTION.y_px * BACKGROUND_TEXTURE_SCALE + PLAYER_Y_MARGIN) / 2.0;
+    let limit_y_top =
+        (BACKGROUND_TEXTURE_RESOLUTION.y_px * BACKGROUND_TEXTURE_SCALE - PLAYER_Y_MARGIN) / 2.0;
 
     for (mut transform, enemy) in enemies.iter_mut() {
+        // We don't want the mage to move towards player. It's going to be a
+        // range caster.
+        if enemy.class == EnemyClassEnum::Mage {
+            continue;
+        }
+
         // Enemies have greater speed when charging the player.
         let mut speed = ENEMY_MOVE_SPEED * ENEMY_BOOST_SPEED_WHEN_CHARGING;
 
@@ -104,23 +135,24 @@ pub fn move_enemies_towards_player(
     }
 }
 
-pub fn shoot(
+pub fn shoot_at_enemies(
     mut commands: Commands,
     x: f32,
     y: f32,
-    player_query: Query<(&Transform, &Children), With<Player>>,
+    player_query: Query<(Entity, &Transform, &Children), With<Player>>,
     weapon_query: Query<&Weapon>,
     asset_server: Res<AssetServer>,
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let player = player_query.get_single();
-    if player.is_err() {
+    let Ok((player_entity, player_transform, player_children)) = player_query.get_single() else {
         return;
-    }
-    let player = player.unwrap();
+    };
 
-    let position = Vec2::new(player.0.translation.x, player.0.translation.y);
+    let position = Vec2::new(
+        player_transform.translation.x,
+        player_transform.translation.y,
+    );
     let unit_direction = get_unit_direction_vector(position, Vec2::new(x, y));
 
     let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
@@ -129,18 +161,18 @@ pub fn shoot(
 
     let mut weapon_type = WeaponTypeEnum::default();
 
-    for &child in player.1.iter() {
-        if let Ok(weapon_children) = weapon_query.get(child) {
-            weapon_type = weapon_children.0.clone();
+    for &child in player_children.iter() {
+        if let Ok(weapon) = weapon_query.get(child) {
+            weapon_type = weapon.weapon_type.clone();
         }
     }
 
     let damage = AMMO_DAMAGE;
     let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
     let pos = Vec3::new(
-        player.0.translation.x + 20.0,
-        player.0.translation.y,
-        player.0.translation.z,
+        player_transform.translation.x + 20.0,
+        player_transform.translation.y,
+        player_transform.translation.z,
     );
     let scale = Vec3::ONE;
     let layer = PLAYER_LAYER;
@@ -156,9 +188,75 @@ pub fn shoot(
         damage,
         rotation,
         layer.clone(),
+        player_entity,
     );
 
     commands.spawn(ammo_bundle);
+}
+
+pub fn shoot_at_player(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+
+    player_query: Query<&Transform, With<Player>>,
+    enemies: Query<(Entity, &Transform, &Children), With<Enemy>>,
+    weapon_query: Query<&Weapon>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
+) {
+    let Ok(player_transform) = player_query.get_single() else {
+        return;
+    };
+
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    let player_position = Vec2::new(
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
+    );
+
+    for (enemy_entity, enemy_transform, enemy_children) in enemies.iter() {
+        for &child in enemy_children.iter() {
+            if let Ok(weapon) = weapon_query.get(child) {
+                let enemy_position =
+                    Vec2::new(enemy_transform.translation.x, enemy_transform.translation.y);
+
+                let unit_direction = get_unit_direction_vector(enemy_position, player_position);
+                let angle = unit_direction.y.atan2(unit_direction.x) * -1.;
+                let rotation = Quat::from_rotation_z(angle);
+
+                let weapon_type = weapon.weapon_type.clone();
+                let damage = AMMO_DAMAGE;
+                let direction = Vec3::new(unit_direction.x, unit_direction.y, 1.0);
+                let pos = Vec3::new(
+                    enemy_transform.translation.x + 8.0,
+                    enemy_transform.translation.y,
+                    enemy_transform.translation.z,
+                );
+                let scale = Vec3::ONE;
+                let layer = BASE_LAYER;
+
+                let ammo_bundle = AmmoBundle::new(
+                    &mut texture_atlas_layout,
+                    &sprites,
+                    &asset_server,
+                    scale,
+                    pos,
+                    weapon_type.clone(),
+                    direction,
+                    damage,
+                    rotation,
+                    layer.clone(),
+                    enemy_entity,
+                );
+
+                commands.spawn(ammo_bundle);
+            }
+        }
+    }
 }
 
 pub fn handle_click(
@@ -303,7 +401,7 @@ pub fn handle_show_player_stats_ui(
 
                 let player_weapon_unwrapped = player_weapon_query.get(child).unwrap();
                 let player_weapon_damage = player_weapon_unwrapped.0;
-                let player_weapon_type = player_weapon_unwrapped.1 .0.clone();
+                let player_weapon_type = player_weapon_unwrapped.1.weapon_type.clone();
                 let weapon_sprite =
                     get_weapon_sprite_based_on_weapon_type(player_weapon_type, &sprites);
 

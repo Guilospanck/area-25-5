@@ -6,9 +6,9 @@ use crate::{
     item::Item,
     player::Player,
     prelude::*,
-    AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle, Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser,
-    MaybeSpawnEnergyPack, PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources,
-    Weapon, WeaponFound,
+    AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
+    Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser, MaybeSpawnEnergyPack,
+    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
 };
 use bevy::math::bounding::BoundingVolume;
 
@@ -19,6 +19,8 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
     player_query: Query<(&Transform, &Children), With<Player>>,
     player_buff_group_query: Query<(&Children, &BuffGroup)>,
     player_buff_query: Query<(&Transform, &Buff)>,
+
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -26,6 +28,10 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
     }
 
     let Ok((player_transform, player_children)) = player_query.get_single() else {
+        return;
+    };
+
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
     };
 
@@ -54,11 +60,15 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
                     let damage = shield.offensive;
                     let transform = player_transform.translation.truncate()
                         + player_buff_transform.translation.truncate();
-                    let buff_collider = Aabb2d::new(
-                        transform,
-                        // TODO: make this a config
-                        Vec2::new(8., 8.),
+
+                    // This gets the current buff position on the world based on his
+                    // screen position.
+                    let buff_center = Vec2::new(
+                        transform.x + base_camera_transform.translation.x,
+                        transform.y + base_camera_transform.translation.y,
                     );
+                    let buff_collider =
+                        Aabb2d::new(buff_center, Vec2::splat(BUFF_SPRITE_SIZE as f32 / 2.));
 
                     for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in
                         enemies.iter_mut()
@@ -91,12 +101,14 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
 pub fn check_for_ammo_collisions_with_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    ammos_query: Query<(Entity, &Transform), With<Ammo>>,
+    ammos_query: Query<(Entity, &Transform, &Ammo), With<Ammo>>,
     mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
     player_query: Query<&Children, With<Player>>,
     player_weapon_query: Query<(&Children, &Weapon, &Damage)>,
     player_ammo_query: Query<(Entity, &Ammo)>,
+
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
     let number_of_enemies = enemies.iter().len();
     if number_of_enemies == 0 {
@@ -105,6 +117,10 @@ pub fn check_for_ammo_collisions_with_enemy(
     }
 
     let Ok(player_children) = player_query.get_single() else {
+        return;
+    };
+
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
     };
 
@@ -135,7 +151,13 @@ pub fn check_for_ammo_collisions_with_enemy(
             ),
         );
 
-        for (ammo_entity, ammo_transform) in ammos_query.iter() {
+        for (ammo_entity, ammo_transform, ammo) in ammos_query.iter() {
+            // Do not check for collision with the ammo that the enemy
+            // carries within himself.
+            if ammo.equipped_by == enemy_entity {
+                continue;
+            }
+
             // Do not check for collision with the ammo that the player
             // carries within himself.
             if let Some(player_ammo_unwrapped) = player_ammo {
@@ -144,9 +166,13 @@ pub fn check_for_ammo_collisions_with_enemy(
                 }
             }
 
-            // TODO: turn this half size into config
-            let ammo_collider =
-                Aabb2d::new(ammo_transform.translation.truncate(), Vec2::new(16., 16.));
+            // This gets the current ammo position on the world based on his
+            // screen position.
+            let ammo_center = Vec2::new(
+                ammo_transform.translation.x + base_camera_transform.translation.x,
+                ammo_transform.translation.y + base_camera_transform.translation.y,
+            );
+            let ammo_collider = Aabb2d::new(ammo_center, Vec2::splat(AMMO_SPRITE_SIZE as f32 / 2.));
 
             if ammo_collider.intersects(&enemy_collider) {
                 hit_enemy_audio(&asset_server, &mut commands);
@@ -164,6 +190,55 @@ pub fn check_for_ammo_collisions_with_enemy(
     }
 }
 
+pub fn check_for_ammo_collisions_with_player(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    ammos_query: Query<(Entity, &Transform, &Ammo, &Damage), With<Ammo>>,
+    mut player_query: Query<(Entity, &Transform, &mut Health, &Armor), With<Player>>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
+) {
+    let Ok((player_entity, player_transform, mut player_health, player_armor)) =
+        player_query.get_single_mut()
+    else {
+        return;
+    };
+
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    // This gets the current player position on the world based on his
+    // screen position.
+    let player_center = Vec2::new(
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
+    );
+    let player_collider = Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
+
+    for (ammo_entity, ammo_transform, ammo, ammo_damage) in ammos_query.iter() {
+        // Do not check for collision with the ammo that the player
+        // carries within himself.
+        if ammo.equipped_by == player_entity {
+            continue;
+        }
+
+        let ammo_center = Vec2::new(ammo_transform.translation.x, ammo_transform.translation.y);
+        let ammo_collider = Aabb2d::new(ammo_center, Vec2::splat(AMMO_SPRITE_SIZE as f32 / 2.));
+
+        if ammo_collider.intersects(&player_collider) {
+            hit_enemy_audio(&asset_server, &mut commands);
+            damage_player(
+                &mut commands,
+                &mut player_health,
+                player_armor.0,
+                ammo_damage.0,
+            );
+            commands.entity(ammo_entity).despawn_recursive();
+            continue;
+        }
+    }
+}
+
 pub fn check_for_player_collisions_to_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -171,12 +246,23 @@ pub fn check_for_player_collisions_to_enemy(
     mut audio_timeout: ResMut<PlayerHitAudioTimeout>,
     mut enemies: Query<(&Transform, &Damage), With<Enemy>>,
     mut player: Query<(&Transform, &mut Health, &Armor), With<Player>>,
+    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
     let Ok((player_transform, mut player_health, player_armor)) = player.get_single_mut() else {
         return;
     };
 
-    let player_collider = Aabb2d::new(player_transform.translation.truncate(), CAPSULE_COLLIDER);
+    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
+        return;
+    };
+
+    // This gets the current player position on the world based on his
+    // screen position.
+    let player_center = Vec2::new(
+        player_transform.translation.x + base_camera_transform.translation.x,
+        player_transform.translation.y + base_camera_transform.translation.y,
+    );
+    let player_collider = Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
 
     for (enemy_transform, enemy_damage) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
@@ -359,6 +445,12 @@ pub fn check_for_weapon_collisions(
     for (weapon_entity, weapon, weapon_damage, weapon_transform) in
         weapons_not_from_player_query.iter()
     {
+        // Do not collide with weapons that can only be equipped
+        // by enemies
+        if weapon.equipped_by != player_entity {
+            continue;
+        }
+
         // if the weapon belongs to the player, do not check for collision
         if weapon_entity == player_weapon_entity {
             continue;
@@ -366,7 +458,7 @@ pub fn check_for_weapon_collisions(
 
         let weapon_collider = Aabb2d::new(
             weapon_transform.translation.truncate(),
-            CAPSULE_COLLIDER + 5.,
+            Vec2::splat(WEAPON_SPRITE_SIZE as f32 * WEAPON_SCALE),
         );
 
         // if we interact with a weapon on the map,
@@ -389,8 +481,6 @@ pub fn check_for_power_collisions_with_enemy(
     mut commands: Commands,
     mut enemies: Query<(Entity, &Transform, &mut Health, &Damage), With<Enemy>>,
 
-    base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
-
     player_query: Query<(&Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
 
@@ -401,10 +491,6 @@ pub fn check_for_power_collisions_with_enemy(
     if number_of_enemies == 0 {
         return;
     }
-
-    let Ok((base_camera_transform, _)) = base_camera.get_single() else {
-        return;
-    };
 
     let Ok((player_children, _)) = player_query.get_single() else {
         return;
@@ -418,14 +504,8 @@ pub fn check_for_power_collisions_with_enemy(
     }
 
     for (enemy_entity, enemy_transform, mut enemy_health, enemy_damage) in enemies.iter_mut() {
-        // This gets the current enemy position on the world based on his
-        // screen position.
-        let enemy_center = Vec2::new(
-            enemy_transform.translation.x + base_camera_transform.translation.x,
-            enemy_transform.translation.y + base_camera_transform.translation.y,
-        );
         let enemy_collider = Aabb2d::new(
-            enemy_center,
+            enemy_transform.translation.truncate(),
             Vec2::new(
                 ENEMY_COLLISION_BOX_WIDTH / 2.,
                 ENEMY_COLLISION_BOX_HEIGHT / 2.,

@@ -107,7 +107,8 @@ fn main() {
         .add_systems(
             FixedUpdate,
             (
-                move_ammo,
+                move_player_ammo,
+                move_enemy_ammo,
                 animate_sprite,
                 move_laser_power,
                 move_enemies_towards_player,
@@ -133,6 +134,7 @@ fn main() {
                 check_for_item_collisions,
                 check_for_weapon_collisions,
                 check_for_offensive_buff_collisions_with_enemy,
+                check_for_ammo_collisions_with_player,
             )
                 .in_set(CollisionSet),
         )
@@ -156,6 +158,7 @@ fn main() {
                 refill_mana.run_if(on_timer(Duration::from_secs(1))),
                 expand_circle_of_death.run_if(on_timer(Duration::from_millis(50))),
                 change_enemy_direction.run_if(on_timer(Duration::from_secs(5))),
+                shoot_at_player.run_if(on_timer(Duration::from_secs(2))),
             )
                 .in_set(TimeBasedSet),
         )
