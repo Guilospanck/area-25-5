@@ -58,7 +58,10 @@ pub struct AllEnemiesDied;
 pub struct CurrentWaveChanged;
 
 #[derive(Event)]
-pub struct CurrentTimeChanged;
+pub struct UpdateTimeUI;
+
+#[derive(Event)]
+pub struct SetupNewTime;
 
 #[derive(Event)]
 pub struct PlayerProfileUISet;
@@ -441,7 +444,7 @@ pub fn on_all_enemies_died(
     mut current_boss: ResMut<CurrentBoss>,
     mut current_game_level: ResMut<CurrentGameLevel>,
     mut current_wave: ResMut<CurrentWave>,
-    mut current_time: ResMut<CurrentTime>,
+    current_time: Res<CurrentTime>,
     mut next_state: ResMut<NextState<GameState>>,
     player_state: Res<State<GameState>>,
 
@@ -457,87 +460,70 @@ pub fn on_all_enemies_died(
     let score = SCORE_MULTIPLIER * seconds as f32;
     commands.trigger(ScoreChanged { score });
 
-    // Update and cap current wave
+    // Update current wave
     let new_wave = current_wave.0 + 1;
-    if new_wave as usize > NUMBER_OF_WAVES {
-        // If current boss exists, it means that we just defeated it.
-        if current_boss.0.is_some() {
-            // check level
-            let new_level = current_game_level.0 + 1;
-            // We spawned all possible levels and waves
-            if new_level as usize > NUMBER_OF_LEVELS {
-                if *player_state.get() != GameState::Won {
-                    next_state.set(GameState::Won);
-                }
-                return;
+
+    if new_wave as usize <= NUMBER_OF_WAVES {
+        // update current wave
+        current_wave.0 = new_wave;
+        commands.trigger(CurrentWaveChanged);
+
+        // Setup new time
+        commands.trigger(SetupNewTime);
+        return;
+    }
+
+    // If current boss exists, it means that we just defeated it.
+    if current_boss.0.is_some() {
+        // check level
+        let new_level = current_game_level.0 + 1;
+
+        // We spawned all possible levels and waves
+        if new_level as usize > NUMBER_OF_LEVELS {
+            if *player_state.get() != GameState::Won {
+                next_state.set(GameState::Won);
             }
-
-            // increase level
-            current_game_level.0 = new_level;
-
-            // reset current boss
-            current_boss.0 = None;
-
-            // reset current wave
-            let new_wave = 1;
-            current_wave.0 = new_wave;
-            commands.trigger(CurrentWaveChanged);
-
-            // Update current time
-            let mut seconds: u16 = new_wave * 30;
-            let mod_seconds = seconds % 60;
-            let minutes: u16 = seconds / 60;
-            if mod_seconds == 0 {
-                seconds = 0;
-            } else {
-                seconds = mod_seconds;
-            }
-            *current_time = CurrentTime { minutes, seconds };
-            commands.trigger(CurrentTimeChanged);
-
             return;
         }
 
-        let boss = BOSS_LVL_1;
-        let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
-        let quantity = 1;
+        // increase level
+        current_game_level.0 = new_level;
 
-        // TODO: spawn boss based on level
-        spawn_boss_orc(
-            &mut commands,
-            &asset_server,
-            &sprites,
-            &mut texture_atlas_layout,
-            &mut meshes,
-            &mut materials,
-            boss.health,
-            boss.base_damage,
-            boss.scale,
-            health_bar_translation,
-            quantity,
-        );
+        // reset current boss
+        current_boss.0 = None;
 
-        current_boss.0 = Some(current_game_level.0);
+        // reset current wave
+        let new_wave = 1;
+        current_wave.0 = new_wave;
+        commands.trigger(CurrentWaveChanged);
+
+        // Setup new time
+        commands.trigger(SetupNewTime);
 
         return;
     }
 
-    println!("Wave changed. New wave: {new_wave}");
+    let boss = BOSS_LVL_1;
+    let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
+    let quantity = 1;
 
-    current_wave.0 = new_wave;
-    commands.trigger(CurrentWaveChanged);
+    // TODO: spawn boss based on level
+    spawn_boss_orc(
+        &mut commands,
+        &asset_server,
+        &sprites,
+        &mut texture_atlas_layout,
+        &mut meshes,
+        &mut materials,
+        boss.health,
+        boss.base_damage,
+        boss.scale,
+        health_bar_translation,
+        quantity,
+    );
 
-    // Update current time
-    let mut seconds: u16 = new_wave * 30;
-    let mod_seconds = seconds % 60;
-    let minutes: u16 = seconds / 60;
-    if mod_seconds == 0 {
-        seconds = 0;
-    } else {
-        seconds = mod_seconds;
-    }
-    *current_time = CurrentTime { minutes, seconds };
-    commands.trigger(CurrentTimeChanged);
+    // update current boss
+    current_boss.0 = Some(current_game_level.0);
 }
 
 pub fn on_wave_changed(
@@ -712,7 +698,7 @@ pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>)
     }
 
     *current_time = CurrentTime { minutes, seconds };
-    commands.trigger(CurrentTimeChanged);
+    commands.trigger(UpdateTimeUI);
 }
 
 pub fn remove_outdated_buffs(
@@ -924,11 +910,32 @@ pub fn animate_player_buffs(
     }
 }
 
-pub fn on_current_time_changed(
-    _trigger: Trigger<CurrentTimeChanged>,
+pub fn setup_new_time(
+    _trigger: Trigger<SetupNewTime>,
+    mut commands: Commands,
+    mut current_time: ResMut<CurrentTime>,
+    current_wave: Res<CurrentWave>,
+) {
+    // Update current time
+    let mut seconds: u16 = current_wave.0 * 30;
+    let mod_seconds = seconds % 60;
+    let minutes: u16 = seconds / 60;
+    if mod_seconds == 0 {
+        seconds = 0;
+    } else {
+        seconds = mod_seconds;
+    }
+    *current_time = CurrentTime { minutes, seconds };
+
+    commands.trigger(UpdateTimeUI);
+}
+
+pub fn update_time_ui(
+    _trigger: Trigger<UpdateTimeUI>,
     current_time: Res<CurrentTime>,
     mut current_time_ui: Query<(&mut Text, &CurrentTimeUI), Without<CurrentWaveUI>>,
 ) {
+    // Update UI
     if let Ok((mut text, _)) = current_time_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value =
             format!("{:02}:{:02}", current_time.minutes, current_time.seconds);
