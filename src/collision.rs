@@ -76,9 +76,10 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
                     {
                         let enemy_collider = Aabb2d::new(
                             enemy_transform.translation.truncate(),
+                            // TODO: maybe this is not right. Check it
                             Vec2::new(
-                                ENEMY_COLLISION_BOX_WIDTH * enemy_transform.scale.x / 2.,
-                                ENEMY_COLLISION_BOX_HEIGHT * enemy_transform.scale.y / 2.,
+                                enemy.width_collider * enemy_transform.scale.x / 2.,
+                                enemy.height_collider * enemy_transform.scale.y / 2.,
                             ),
                         );
 
@@ -142,10 +143,7 @@ pub fn check_for_ammo_collisions_with_enemy(
     {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
-            Vec2::new(
-                ENEMY_COLLISION_BOX_WIDTH / 2.,
-                ENEMY_COLLISION_BOX_HEIGHT / 2.,
-            ),
+            Vec2::new(enemy.width_collider / 2., enemy.height_collider / 2.),
         );
 
         for (ammo_entity, ammo_transform, ammo) in ammos_query.iter() {
@@ -244,7 +242,7 @@ pub fn check_for_player_collisions_to_enemy(
     asset_server: Res<AssetServer>,
     time: Res<Time>,
     mut audio_timeout: ResMut<PlayerHitAudioTimeout>,
-    mut enemies: Query<(&Transform, &Damage), With<Enemy>>,
+    mut enemies: Query<(&Transform, &Damage, &Enemy), With<Enemy>>,
     mut player: Query<(&Transform, &mut Health, &Armor), With<Player>>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
@@ -264,13 +262,10 @@ pub fn check_for_player_collisions_to_enemy(
     );
     let player_collider = Aabb2d::new(player_center, Vec2::splat(PLAYER_SPRITE_SIZE as f32 / 2.));
 
-    for (enemy_transform, enemy_damage) in enemies.iter_mut() {
+    for (enemy_transform, enemy_damage, enemy) in enemies.iter_mut() {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
-            Vec2::new(
-                ENEMY_COLLISION_BOX_WIDTH / 2.,
-                ENEMY_COLLISION_BOX_HEIGHT / 2.,
-            ),
+            Vec2::new(enemy.width_collider / 2., enemy.height_collider / 2.),
         );
 
         if player_collider.intersects(&enemy_collider) {
@@ -507,10 +502,7 @@ pub fn check_for_power_collisions_with_enemy(
     {
         let enemy_collider = Aabb2d::new(
             enemy_transform.translation.truncate(),
-            Vec2::new(
-                ENEMY_COLLISION_BOX_WIDTH / 2.,
-                ENEMY_COLLISION_BOX_HEIGHT / 2.,
-            ),
+            Vec2::new(enemy.width_collider / 2., enemy.height_collider / 2.),
         );
 
         // Check for collision for the laser power

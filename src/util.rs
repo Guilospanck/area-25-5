@@ -110,5 +110,16 @@ pub(crate) fn get_enemy_sprite_based_on_enemy_class(
         EnemyClassEnum::Orc => sprites.0.orc_idle.clone(),
         EnemyClassEnum::Mage => sprites.0.mage_idle.clone(),
         EnemyClassEnum::BossOrc => sprites.0.orc_idle.clone(),
+        EnemyClassEnum::BossMage => sprites.0.mage_idle.clone(),
+        EnemyClassEnum::BossAlien => sprites.0.profile.clone(),
+    }
+}
+
+pub(crate) fn get_boss_type_based_on_game_level(game_level: u16) -> EnemyType {
+    match game_level {
+        1 => BOSS_LVL_1,
+        2 => BOSS_LVL_2,
+        3 => BOSS_LVL_3,
+        _ => todo!(),
     }
 }

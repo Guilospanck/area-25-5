@@ -8,12 +8,12 @@ use crate::{
     game_actions::shoot_at_enemies,
     player::Player,
     prelude::*,
-    spawn_boss_orc, spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item,
-    spawn_mana_ui_bar, spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
+    spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
+    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
-        get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
-        get_power_sprite_based_on_power_type, get_random_chance,
+        get_boss_type_based_on_game_level, get_item_sprite_based_on_item_type,
+        get_key_code_based_on_power_type, get_power_sprite_based_on_power_type, get_random_chance,
         get_weapon_sprite_based_on_weapon_type,
     },
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
@@ -58,7 +58,10 @@ pub struct AllEnemiesDied;
 pub struct CurrentWaveChanged;
 
 #[derive(Event)]
-pub struct CurrentTimeChanged;
+pub struct UpdateTimeUI;
+
+#[derive(Event)]
+pub struct SetupNewTime;
 
 #[derive(Event)]
 pub struct PlayerProfileUISet;
@@ -331,7 +334,7 @@ pub fn on_player_spawned(
     let current_wave_enemy = enemy_waves
         .0
         .iter()
-        .find(|enemy| enemy.level == current_wave.0 as usize);
+        .find(|enemy| enemy.wave == current_wave.0 as usize);
     if current_wave_enemy.is_none() {
         println!("NO ENEMY MATCHING WAVE FOUND!!!");
         return;
@@ -351,7 +354,7 @@ pub fn on_player_spawned(
     let current_wave_weapon = weapon_waves
         .0
         .iter()
-        .find(|weapon| weapon.level == current_wave.0 as usize);
+        .find(|weapon| weapon.wave == current_wave.0 as usize);
     if current_wave_weapon.is_none() {
         println!("NO WEAPON MATCHING WAVE FOUND!!!");
         return;
@@ -382,7 +385,7 @@ pub fn on_player_spawned(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        item_by_level.item.item.clone(),
+        item_by_level.item.item_type.clone(),
         item_by_level.quantity,
     );
 
@@ -441,7 +444,7 @@ pub fn on_all_enemies_died(
     mut current_boss: ResMut<CurrentBoss>,
     mut current_game_level: ResMut<CurrentGameLevel>,
     mut current_wave: ResMut<CurrentWave>,
-    mut current_time: ResMut<CurrentTime>,
+    current_time: Res<CurrentTime>,
     mut next_state: ResMut<NextState<GameState>>,
     player_state: Res<State<GameState>>,
 
@@ -457,56 +460,75 @@ pub fn on_all_enemies_died(
     let score = SCORE_MULTIPLIER * seconds as f32;
     commands.trigger(ScoreChanged { score });
 
-    // Update and cap current wave
+    // Update current wave
     let new_wave = current_wave.0 + 1;
-    if new_wave as usize > NUMBER_OF_WAVES {
-        let boss = BOSS_LVL_1;
-        let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
-        let quantity = 1;
 
-        if current_boss.0.is_some() {
+    if new_wave as usize <= NUMBER_OF_WAVES {
+        // update current wave
+        current_wave.0 = new_wave;
+        commands.trigger(CurrentWaveChanged);
+
+        // Setup new time
+        commands.trigger(SetupNewTime);
+        return;
+    }
+
+    // If current boss exists, it means that we just defeated it.
+    if current_boss.0.is_some() {
+        // check level
+        let new_level = current_game_level.0 + 1;
+
+        // We spawned all possible levels and waves
+        if new_level as usize > NUMBER_OF_LEVELS {
             if *player_state.get() != GameState::Won {
                 next_state.set(GameState::Won);
             }
             return;
         }
 
-        spawn_boss_orc(
-            &mut commands,
-            &asset_server,
-            &sprites,
-            &mut texture_atlas_layout,
-            &mut meshes,
-            &mut materials,
-            boss.health,
-            boss.damage,
-            boss.scale,
-            health_bar_translation,
-            quantity,
-        );
+        // increase level
+        current_game_level.0 = new_level;
 
-        current_boss.0 = Some(1);
+        // reset current boss
+        current_boss.0 = None;
+
+        // reset current wave
+        let new_wave = 1;
+        current_wave.0 = new_wave;
+        commands.trigger(CurrentWaveChanged);
+
+        // Setup new time
+        commands.trigger(SetupNewTime);
 
         return;
     }
-    current_wave.0 = new_wave;
-    commands.trigger(CurrentWaveChanged);
 
-    // Update current time
-    let mut seconds: u16 = new_wave * 30;
-    let mod_seconds = seconds % 60;
-    let minutes: u16 = seconds / 60;
-    if mod_seconds == 0 {
-        seconds = 0;
-    } else {
-        seconds = mod_seconds;
-    }
-    *current_time = CurrentTime { minutes, seconds };
-    commands.trigger(CurrentTimeChanged);
+    let boss = get_boss_type_based_on_game_level(current_game_level.0);
+    let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
+    let quantity = 1;
+
+    spawn_boss(
+        &mut commands,
+        &asset_server,
+        &sprites,
+        &mut texture_atlas_layout,
+        &mut meshes,
+        &mut materials,
+        boss.health,
+        boss.base_damage,
+        boss.scale,
+        health_bar_translation,
+        quantity,
+        boss.class,
+    );
+
+    // update current boss
+    current_boss.0 = Some(current_game_level.0);
 }
 
 pub fn on_wave_changed(
     _trigger: Trigger<CurrentWaveChanged>,
+    current_game_level: Res<CurrentGameLevel>,
     current_wave: Res<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
@@ -544,18 +566,25 @@ pub fn on_wave_changed(
     let current_wave_enemy = enemy_waves
         .0
         .iter()
-        .find(|enemy| enemy.level == current_wave.0 as usize);
+        .find(|enemy| enemy.wave == current_wave.0 as usize)
+        .cloned();
     if current_wave_enemy.is_none() {
         println!("NO ENEMY MATCHING WAVE FOUND!!!");
         return;
     }
-    let enemy_by_level = current_wave_enemy.unwrap();
+    let mut enemy_by_level = current_wave_enemy.unwrap();
+
+    // increase base damage of all wave enemies based on current level
+    let base_damage_multiplier =
+        ENEMY_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL * current_game_level.0 as f32 + 1.0;
+    enemy_by_level.enemy.base_damage *= base_damage_multiplier;
+
     spawn_enemy(
         &mut commands,
         &asset_server,
         &sprites,
         &mut texture_atlas_layout,
-        enemy_by_level,
+        &enemy_by_level,
         &mut meshes,
         &mut materials,
     );
@@ -564,16 +593,22 @@ pub fn on_wave_changed(
     let current_wave_weapon = weapon_waves
         .0
         .iter()
-        .find(|weapon| weapon.level == current_wave.0 as usize);
+        .find(|weapon| weapon.wave == current_wave.0 as usize)
+        .cloned();
     if current_wave_weapon.is_none() {
         println!("NO WEAPON MATCHING WAVE FOUND!!!");
         return;
     }
-    let weapon_by_level = current_wave_weapon.unwrap();
+    let mut weapon_by_level = current_wave_weapon.unwrap();
+
+    // increase base damage of all wave weapons based on current level
+    let base_damage_multiplier =
+        WEAPON_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL * current_game_level.0 as f32 + 1.0;
+    weapon_by_level.weapon.base_damage *= base_damage_multiplier;
 
     spawn_weapon(
         &mut commands,
-        weapon_by_level,
+        &weapon_by_level,
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
@@ -595,7 +630,7 @@ pub fn on_wave_changed(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        item_by_level.item.item.clone(),
+        item_by_level.item.item_type.clone(),
         item_by_level.quantity,
     );
 
@@ -663,7 +698,7 @@ pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>)
     }
 
     *current_time = CurrentTime { minutes, seconds };
-    commands.trigger(CurrentTimeChanged);
+    commands.trigger(UpdateTimeUI);
 }
 
 pub fn remove_outdated_buffs(
@@ -875,11 +910,32 @@ pub fn animate_player_buffs(
     }
 }
 
-pub fn on_current_time_changed(
-    _trigger: Trigger<CurrentTimeChanged>,
+pub fn setup_new_time(
+    _trigger: Trigger<SetupNewTime>,
+    mut commands: Commands,
+    mut current_time: ResMut<CurrentTime>,
+    current_wave: Res<CurrentWave>,
+) {
+    // Update current time
+    let mut seconds: u16 = current_wave.0 * 30;
+    let mod_seconds = seconds % 60;
+    let minutes: u16 = seconds / 60;
+    if mod_seconds == 0 {
+        seconds = 0;
+    } else {
+        seconds = mod_seconds;
+    }
+    *current_time = CurrentTime { minutes, seconds };
+
+    commands.trigger(UpdateTimeUI);
+}
+
+pub fn update_time_ui(
+    _trigger: Trigger<UpdateTimeUI>,
     current_time: Res<CurrentTime>,
     mut current_time_ui: Query<(&mut Text, &CurrentTimeUI), Without<CurrentWaveUI>>,
 ) {
+    // Update UI
     if let Ok((mut text, _)) = current_time_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value =
             format!("{:02}:{:02}", current_time.minutes, current_time.seconds);

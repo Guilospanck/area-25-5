@@ -111,7 +111,7 @@ impl WeaponBundle {
 
 pub fn spawn_weapon(
     commands: &mut Commands,
-    weapon_by_level: &WeaponByLevel,
+    weapon_by_level: &WeaponByWave,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
     sprites: &Res<SpritesResources>,
     asset_server: &Res<AssetServer>,
@@ -119,7 +119,7 @@ pub fn spawn_weapon(
     equipped_type: EquippedTypeEnum,
 ) {
     let weapon_type = &weapon_by_level.weapon.weapon_type;
-    let damage = weapon_by_level.weapon.damage;
+    let damage = weapon_by_level.weapon.base_damage;
     let scale = Vec3::splat(2.0);
     let direction = Vec3::ZERO;
     let layer = BASE_LAYER;

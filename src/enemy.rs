@@ -12,6 +12,8 @@ pub struct Enemy {
     pub direction_intention: Transform,
     pub class: EnemyClassEnum,
     pub max_health: f32,
+    pub width_collider: f32,
+    pub height_collider: f32,
 }
 
 #[derive(Bundle, Clone)]
@@ -39,6 +41,8 @@ impl EnemyBundle {
         scale: Vec3,
         class: EnemyClassEnum,
         max_health: f32,
+        width_collider: f32,
+        height_collider: f32,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -50,6 +54,8 @@ impl EnemyBundle {
             scale,
             class,
             max_health,
+            width_collider,
+            height_collider,
         )
     }
 
@@ -63,6 +69,8 @@ impl EnemyBundle {
         scale: Vec3,
         class: EnemyClassEnum,
         max_health: f32,
+        width_collider: f32,
+        height_collider: f32,
     ) -> Self {
         let enemy_sprite = get_enemy_sprite_based_on_enemy_class(class.clone(), sprites);
         let enemy_animation = enemy_sprite.animation.unwrap();
@@ -74,6 +82,8 @@ impl EnemyBundle {
                 direction_intention: Transform::default(),
                 class,
                 max_health,
+                width_collider,
+                height_collider,
             },
             name: Name::new("Enemy"),
             health: Health(health),
@@ -104,12 +114,12 @@ pub fn spawn_enemy(
     asset_server: &Res<AssetServer>,
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-    enemy_by_level: &EnemyByLevel,
+    enemy_by_level: &EnemyByWave,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) {
     let health = enemy_by_level.enemy.health;
-    let damage = enemy_by_level.enemy.damage;
+    let damage = enemy_by_level.enemy.base_damage;
     let scale = enemy_by_level.enemy.scale;
     let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
     let enemy_class = enemy_by_level.enemy.class.clone();
@@ -175,6 +185,8 @@ pub(crate) fn spawn_orc_enemy(
             scale,
             EnemyClassEnum::Orc,
             health,
+            ENEMY_COLLISION_BOX_WIDTH,
+            ENEMY_COLLISION_BOX_HEIGHT,
         );
 
         let max_health = health;
@@ -206,7 +218,6 @@ fn spawn_mage_enemy(
     health_bar_translation: Vec3,
     quantity: u32,
 ) {
-    let weapon_damage = ENEMY_AMMO_DAMAGE;
     let weapon_direction = Vec3::ZERO;
     let weapon_pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
     let weapon_scale = Vec3::splat(0.5);
@@ -229,6 +240,8 @@ fn spawn_mage_enemy(
             scale,
             EnemyClassEnum::Mage,
             health,
+            ENEMY_COLLISION_BOX_WIDTH,
+            ENEMY_COLLISION_BOX_HEIGHT,
         );
 
         let enemy_mage_entity = commands.spawn(bundle).id();
@@ -240,7 +253,7 @@ fn spawn_mage_enemy(
             weapon_scale,
             weapon_pos,
             weapon_direction,
-            weapon_damage,
+            damage,
             weapon_type.clone(),
             layer.clone(),
             enemy_mage_entity,
@@ -255,7 +268,7 @@ fn spawn_mage_enemy(
             weapon_pos,
             weapon_type.clone(),
             weapon_direction,
-            weapon_damage,
+            damage,
             ammo_rotation,
             layer.clone(),
             enemy_mage_entity,
@@ -283,7 +296,7 @@ fn spawn_mage_enemy(
     }
 }
 
-pub(crate) fn spawn_boss_orc(
+pub(crate) fn spawn_boss(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     sprites: &Res<SpritesResources>,
@@ -296,6 +309,7 @@ pub(crate) fn spawn_boss_orc(
     scale: Vec3,
     health_bar_translation: Vec3,
     quantity: u32,
+    boss_class: EnemyClassEnum,
 ) {
     let weapon_direction = Vec3::ZERO;
     let weapon_pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
@@ -317,8 +331,10 @@ pub(crate) fn spawn_boss_orc(
             health,
             damage,
             scale,
-            EnemyClassEnum::BossOrc,
+            boss_class.clone(),
             health,
+            ENEMY_COLLISION_BOX_WIDTH * BOSS_SCALE,
+            ENEMY_COLLISION_BOX_HEIGHT * BOSS_SCALE,
         );
 
         let enemy_mage_entity = commands.spawn(bundle).id();

@@ -173,7 +173,7 @@ fn main() {
         .observe(on_restart_click)
         .observe(on_score_changed)
         .observe(on_wave_changed)
-        .observe(on_current_time_changed)
+        .observe(update_time_ui)
         .observe(on_buff_added)
         .observe(on_buff_add_ui)
         .observe(on_buff_remove_ui)

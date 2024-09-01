@@ -6,6 +6,9 @@ pub(crate) const WEAPON_SPRITE_SIZE: u8 = 32;
 pub(crate) const AMMO_SPRITE_SIZE: u8 = 32;
 pub(crate) const WEAPON_SCALE: f32 = 2.0;
 
+// Each level the base damage of all weapons is updated
+pub(crate) const WEAPON_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL: f32 = 0.2;
+
 #[cfg_attr(
     not(feature = "web"),
     derive(Reflect, Component, Default, Debug, Clone)
@@ -18,78 +21,80 @@ pub enum WeaponTypeEnum {
     Wand,
 }
 
+#[derive(Debug, Clone)]
 pub struct WeaponType<'a> {
-    pub damage: f32,
+    pub base_damage: f32,
     pub source: &'a str,
     pub ammo_source: &'a str,
     pub weapon_type: WeaponTypeEnum,
 }
 
-const WEAPON_LVL_1: WeaponType = WeaponType {
-    damage: 10.0,
+#[derive(Debug, Clone)]
+pub struct WeaponByWave<'a> {
+    pub wave: usize,
+    pub weapon: WeaponType<'a>,
+    pub quantity: u32,
+}
+
+const WEAPON_WAVE_1: WeaponType = WeaponType {
+    base_damage: 10.0,
     source: "textures/Weapon/Wand.png",
     ammo_source: "textures/Weapon/MagicBall.png",
     weapon_type: WeaponTypeEnum::Wand,
 };
 
-const WEAPON_LVL_2: WeaponType = WeaponType {
-    damage: 20.0,
+const WEAPON_WAVE_2: WeaponType = WeaponType {
+    base_damage: 20.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,
 };
 
-const WEAPON_LVL_3: WeaponType = WeaponType {
-    damage: 30.0,
+const WEAPON_WAVE_3: WeaponType = WeaponType {
+    base_damage: 30.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,
 };
 
-const WEAPON_LVL_4: WeaponType = WeaponType {
-    damage: 40.0,
+const WEAPON_WAVE_4: WeaponType = WeaponType {
+    base_damage: 40.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,
 };
 
-const WEAPON_LVL_5: WeaponType = WeaponType {
-    damage: 50.0,
+const WEAPON_WAVE_5: WeaponType = WeaponType {
+    base_damage: 50.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,
 };
 
-pub struct WeaponByLevel<'a> {
-    pub level: usize,
-    pub weapon: WeaponType<'a>,
-    pub quantity: u32,
-}
-
-pub const WEAPONS_PER_WAVE: [WeaponByLevel; NUMBER_OF_WAVES] = [
-    WeaponByLevel {
-        level: 1,
-        weapon: WEAPON_LVL_1,
+pub const WEAPONS_PER_WAVE: [WeaponByWave; NUMBER_OF_WAVES] = [
+    WeaponByWave {
+        wave: 1,
+        weapon: WEAPON_WAVE_1,
+        quantity: 10,
+    },
+    WeaponByWave {
+        wave: 2,
+        weapon: WEAPON_WAVE_2,
         quantity: 1,
     },
-    WeaponByLevel {
-        level: 2,
-        weapon: WEAPON_LVL_2,
+    WeaponByWave {
+        wave: 3,
+        weapon: WEAPON_WAVE_3,
         quantity: 1,
     },
-    WeaponByLevel {
-        level: 3,
-        weapon: WEAPON_LVL_3,
+    WeaponByWave {
+        wave: 4,
+        weapon: WEAPON_WAVE_4,
         quantity: 1,
     },
-    WeaponByLevel {
-        level: 4,
-        weapon: WEAPON_LVL_4,
-        quantity: 1,
-    },
-    WeaponByLevel {
-        level: 5,
-        weapon: WEAPON_LVL_5,
+    WeaponByWave {
+        wave: 5,
+        weapon: WEAPON_WAVE_5,
         quantity: 1,
     },
 ];
