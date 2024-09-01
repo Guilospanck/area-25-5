@@ -12,6 +12,8 @@ pub struct Enemy {
     pub direction_intention: Transform,
     pub class: EnemyClassEnum,
     pub max_health: f32,
+    pub width_collider: f32,
+    pub height_collider: f32,
 }
 
 #[derive(Bundle, Clone)]
@@ -39,6 +41,8 @@ impl EnemyBundle {
         scale: Vec3,
         class: EnemyClassEnum,
         max_health: f32,
+        width_collider: f32,
+        height_collider: f32,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -50,6 +54,8 @@ impl EnemyBundle {
             scale,
             class,
             max_health,
+            width_collider,
+            height_collider,
         )
     }
 
@@ -63,6 +69,8 @@ impl EnemyBundle {
         scale: Vec3,
         class: EnemyClassEnum,
         max_health: f32,
+        width_collider: f32,
+        height_collider: f32,
     ) -> Self {
         let enemy_sprite = get_enemy_sprite_based_on_enemy_class(class.clone(), sprites);
         let enemy_animation = enemy_sprite.animation.unwrap();
@@ -74,6 +82,8 @@ impl EnemyBundle {
                 direction_intention: Transform::default(),
                 class,
                 max_health,
+                width_collider,
+                height_collider,
             },
             name: Name::new("Enemy"),
             health: Health(health),
@@ -175,6 +185,8 @@ pub(crate) fn spawn_orc_enemy(
             scale,
             EnemyClassEnum::Orc,
             health,
+            ENEMY_COLLISION_BOX_WIDTH,
+            ENEMY_COLLISION_BOX_HEIGHT,
         );
 
         let max_health = health;
@@ -229,6 +241,8 @@ fn spawn_mage_enemy(
             scale,
             EnemyClassEnum::Mage,
             health,
+            ENEMY_COLLISION_BOX_WIDTH,
+            ENEMY_COLLISION_BOX_HEIGHT,
         );
 
         let enemy_mage_entity = commands.spawn(bundle).id();
@@ -319,6 +333,8 @@ pub(crate) fn spawn_boss_orc(
             scale,
             EnemyClassEnum::BossOrc,
             health,
+            ENEMY_COLLISION_BOX_WIDTH * ORC_BOSS_SCALE,
+            ENEMY_COLLISION_BOX_HEIGHT * ORC_BOSS_SCALE,
         );
 
         let enemy_mage_entity = commands.spawn(bundle).id();

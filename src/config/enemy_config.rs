@@ -9,6 +9,8 @@ pub(crate) const ENEMY_COLLISION_BOX_HEIGHT: f32 = 32.;
 pub(crate) const ENEMY_RANDOM_SEED: u64 = 1987836746771;
 // Mage
 pub(crate) const ENEMY_AMMO_DAMAGE: f32 = 5.0;
+// Orc Boss
+pub(crate) const ORC_BOSS_SCALE: f32 = 5.0;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EnemyClassEnum {
@@ -26,7 +28,7 @@ pub struct EnemyType {
 
 pub(crate) const BOSS_LVL_1: EnemyType = EnemyType {
     damage: 50.0,
-    health: ENEMY_HEALTH * 5.0,
+    health: ENEMY_HEALTH * ORC_BOSS_SCALE,
     scale: Vec3::splat(5.0),
     class: EnemyClassEnum::BossOrc,
 };
