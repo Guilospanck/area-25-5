@@ -218,7 +218,6 @@ fn spawn_mage_enemy(
     health_bar_translation: Vec3,
     quantity: u32,
 ) {
-    let weapon_damage = ENEMY_AMMO_DAMAGE;
     let weapon_direction = Vec3::ZERO;
     let weapon_pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
     let weapon_scale = Vec3::splat(0.5);
@@ -254,7 +253,7 @@ fn spawn_mage_enemy(
             weapon_scale,
             weapon_pos,
             weapon_direction,
-            weapon_damage,
+            damage,
             weapon_type.clone(),
             layer.clone(),
             enemy_mage_entity,
@@ -269,7 +268,7 @@ fn spawn_mage_enemy(
             weapon_pos,
             weapon_type.clone(),
             weapon_direction,
-            weapon_damage,
+            damage,
             ammo_rotation,
             layer.clone(),
             enemy_mage_entity,

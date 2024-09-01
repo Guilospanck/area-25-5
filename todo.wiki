@@ -90,7 +90,7 @@ as the time passes (cooldown)
 - [x] Remove audio until we have proper sound
 - [x] Create Boss
 - [x] FIX: Change boss box collider (it is too small now)
-- [ ] FIX: Spawn enemy mage using wrong damage
+- [x] FIX: Spawn enemy mage using wrong damage
 - [ ] Change enemy/items/weapons etc "by_level" to "by_wave" (a level contains lots of waves)
 
 Ongoing:
