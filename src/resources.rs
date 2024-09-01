@@ -27,13 +27,13 @@ pub struct CurrentTime {
 }
 
 #[derive(Resource)]
-pub struct EnemyWaves(pub [EnemyByLevel; NUMBER_OF_WAVES]);
+pub struct EnemyWaves(pub [EnemyByWave; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
-pub struct WeaponWaves(pub [WeaponByLevel<'static>; NUMBER_OF_WAVES]);
+pub struct WeaponWaves(pub [WeaponByWave<'static>; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
-pub struct ItemWaves(pub [ItemByLevel<'static>; NUMBER_OF_WAVES]);
+pub struct ItemWaves(pub [ItemByWave<'static>; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
 pub struct PowerWaves(pub [PowerByLevel; NUMBER_OF_WAVES]);

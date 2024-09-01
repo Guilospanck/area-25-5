@@ -331,7 +331,7 @@ pub fn on_player_spawned(
     let current_wave_enemy = enemy_waves
         .0
         .iter()
-        .find(|enemy| enemy.level == current_wave.0 as usize);
+        .find(|enemy| enemy.wave == current_wave.0 as usize);
     if current_wave_enemy.is_none() {
         println!("NO ENEMY MATCHING WAVE FOUND!!!");
         return;
@@ -351,7 +351,7 @@ pub fn on_player_spawned(
     let current_wave_weapon = weapon_waves
         .0
         .iter()
-        .find(|weapon| weapon.level == current_wave.0 as usize);
+        .find(|weapon| weapon.wave == current_wave.0 as usize);
     if current_wave_weapon.is_none() {
         println!("NO WEAPON MATCHING WAVE FOUND!!!");
         return;
@@ -382,7 +382,7 @@ pub fn on_player_spawned(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        item_by_level.item.item.clone(),
+        item_by_level.item.item_type.clone(),
         item_by_level.quantity,
     );
 
@@ -479,7 +479,7 @@ pub fn on_all_enemies_died(
             &mut meshes,
             &mut materials,
             boss.health,
-            boss.damage,
+            boss.base_damage,
             boss.scale,
             health_bar_translation,
             quantity,
@@ -507,6 +507,7 @@ pub fn on_all_enemies_died(
 
 pub fn on_wave_changed(
     _trigger: Trigger<CurrentWaveChanged>,
+    current_game_level: Res<CurrentGameLevel>,
     current_wave: Res<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
@@ -544,18 +545,25 @@ pub fn on_wave_changed(
     let current_wave_enemy = enemy_waves
         .0
         .iter()
-        .find(|enemy| enemy.level == current_wave.0 as usize);
+        .find(|enemy| enemy.wave == current_wave.0 as usize)
+        .cloned();
     if current_wave_enemy.is_none() {
         println!("NO ENEMY MATCHING WAVE FOUND!!!");
         return;
     }
-    let enemy_by_level = current_wave_enemy.unwrap();
+    let mut enemy_by_level = current_wave_enemy.unwrap();
+
+    // increase base damage of all wave enemies based on current level
+    let base_damage_multiplier =
+        ENEMY_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL * current_game_level.0 as f32 + 1.0;
+    enemy_by_level.enemy.base_damage *= base_damage_multiplier;
+
     spawn_enemy(
         &mut commands,
         &asset_server,
         &sprites,
         &mut texture_atlas_layout,
-        enemy_by_level,
+        &enemy_by_level,
         &mut meshes,
         &mut materials,
     );
@@ -564,16 +572,22 @@ pub fn on_wave_changed(
     let current_wave_weapon = weapon_waves
         .0
         .iter()
-        .find(|weapon| weapon.level == current_wave.0 as usize);
+        .find(|weapon| weapon.wave == current_wave.0 as usize)
+        .cloned();
     if current_wave_weapon.is_none() {
         println!("NO WEAPON MATCHING WAVE FOUND!!!");
         return;
     }
-    let weapon_by_level = current_wave_weapon.unwrap();
+    let mut weapon_by_level = current_wave_weapon.unwrap();
+
+    // increase base damage of all wave weapons based on current level
+    let base_damage_multiplier =
+        WEAPON_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL * current_game_level.0 as f32 + 1.0;
+    weapon_by_level.weapon.base_damage *= base_damage_multiplier;
 
     spawn_weapon(
         &mut commands,
-        weapon_by_level,
+        &weapon_by_level,
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
@@ -595,7 +609,7 @@ pub fn on_wave_changed(
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        item_by_level.item.item.clone(),
+        item_by_level.item.item_type.clone(),
         item_by_level.quantity,
     );
 

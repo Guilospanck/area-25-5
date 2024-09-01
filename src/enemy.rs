@@ -114,12 +114,12 @@ pub fn spawn_enemy(
     asset_server: &Res<AssetServer>,
     sprites: &Res<SpritesResources>,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-    enemy_by_level: &EnemyByLevel,
+    enemy_by_level: &EnemyByWave,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) {
     let health = enemy_by_level.enemy.health;
-    let damage = enemy_by_level.enemy.damage;
+    let damage = enemy_by_level.enemy.base_damage;
     let scale = enemy_by_level.enemy.scale;
     let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
     let enemy_class = enemy_by_level.enemy.class.clone();
