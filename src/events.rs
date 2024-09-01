@@ -460,17 +460,49 @@ pub fn on_all_enemies_died(
     // Update and cap current wave
     let new_wave = current_wave.0 + 1;
     if new_wave as usize > NUMBER_OF_WAVES {
+        // If current boss exists, it means that we just defeated it.
+        if current_boss.0.is_some() {
+            // check level
+            let new_level = current_game_level.0 + 1;
+            // We spawned all possible levels and waves
+            if new_level as usize > NUMBER_OF_LEVELS {
+                if *player_state.get() != GameState::Won {
+                    next_state.set(GameState::Won);
+                }
+                return;
+            }
+
+            // increase level
+            current_game_level.0 = new_level;
+
+            // reset current boss
+            current_boss.0 = None;
+
+            // reset current wave
+            let new_wave = 1;
+            current_wave.0 = new_wave;
+            commands.trigger(CurrentWaveChanged);
+
+            // Update current time
+            let mut seconds: u16 = new_wave * 30;
+            let mod_seconds = seconds % 60;
+            let minutes: u16 = seconds / 60;
+            if mod_seconds == 0 {
+                seconds = 0;
+            } else {
+                seconds = mod_seconds;
+            }
+            *current_time = CurrentTime { minutes, seconds };
+            commands.trigger(CurrentTimeChanged);
+
+            return;
+        }
+
         let boss = BOSS_LVL_1;
         let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
         let quantity = 1;
 
-        if current_boss.0.is_some() {
-            if *player_state.get() != GameState::Won {
-                next_state.set(GameState::Won);
-            }
-            return;
-        }
-
+        // TODO: spawn boss based on level
         spawn_boss_orc(
             &mut commands,
             &asset_server,
@@ -485,10 +517,13 @@ pub fn on_all_enemies_died(
             quantity,
         );
 
-        current_boss.0 = Some(1);
+        current_boss.0 = Some(current_game_level.0);
 
         return;
     }
+
+    println!("Wave changed. New wave: {new_wave}");
+
     current_wave.0 = new_wave;
     commands.trigger(CurrentWaveChanged);
 
