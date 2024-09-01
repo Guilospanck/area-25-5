@@ -8,12 +8,12 @@ use crate::{
     game_actions::shoot_at_enemies,
     player::Player,
     prelude::*,
-    spawn_boss_orc, spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item,
-    spawn_mana_ui_bar, spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
+    spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
+    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
-        get_item_sprite_based_on_item_type, get_key_code_based_on_power_type,
-        get_power_sprite_based_on_power_type, get_random_chance,
+        get_boss_type_based_on_game_level, get_item_sprite_based_on_item_type,
+        get_key_code_based_on_power_type, get_power_sprite_based_on_power_type, get_random_chance,
         get_weapon_sprite_based_on_weapon_type,
     },
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
@@ -503,12 +503,11 @@ pub fn on_all_enemies_died(
         return;
     }
 
-    let boss = BOSS_LVL_1;
+    let boss = get_boss_type_based_on_game_level(current_game_level.0);
     let health_bar_translation = Vec3::new(2.0, 15.0, 0.0);
     let quantity = 1;
 
-    // TODO: spawn boss based on level
-    spawn_boss_orc(
+    spawn_boss(
         &mut commands,
         &asset_server,
         &sprites,
@@ -520,6 +519,7 @@ pub fn on_all_enemies_died(
         boss.scale,
         health_bar_translation,
         quantity,
+        boss.class,
     );
 
     // update current boss

@@ -91,7 +91,10 @@ as the time passes (cooldown)
 - [x] Create Boss
 - [x] FIX: Change boss box collider (it is too small now)
 - [x] FIX: Spawn enemy mage using wrong damage
-- [ ] Change enemy/items/weapons etc "by_level" to "by_wave" (a level contains lots of waves)
+- [x] Change enemy/items/weapons etc "by_level" to "by_wave" (a level contains lots of waves)
+- [ ] Change Item stats based on level
+- [ ] Create different specific characteristics for each boss
+
 
 Ongoing:
 - [-] Spawn different weapons (Still need more)

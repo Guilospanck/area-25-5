@@ -8,7 +8,7 @@ pub(crate) const ENEMY_COLLISION_BOX_WIDTH: f32 = 19.;
 pub(crate) const ENEMY_COLLISION_BOX_HEIGHT: f32 = 32.;
 pub(crate) const ENEMY_RANDOM_SEED: u64 = 1987836746771;
 // Orc Boss
-pub(crate) const ORC_BOSS_SCALE: f32 = 5.0;
+pub(crate) const BOSS_SCALE: f32 = 5.0;
 
 // Each level the base damage of all enemies is updated
 pub(crate) const ENEMY_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL: f32 = 0.1;
@@ -18,6 +18,8 @@ pub enum EnemyClassEnum {
     Orc,
     Mage,
     BossOrc,
+    BossMage,
+    BossAlien,
 }
 
 #[derive(Debug, Clone)]
@@ -37,9 +39,23 @@ pub struct EnemyByWave {
 
 pub(crate) const BOSS_LVL_1: EnemyType = EnemyType {
     base_damage: 50.0,
-    health: ENEMY_HEALTH * ORC_BOSS_SCALE,
-    scale: Vec3::splat(5.0),
+    health: ENEMY_HEALTH * BOSS_SCALE,
+    scale: Vec3::splat(BOSS_SCALE),
     class: EnemyClassEnum::BossOrc,
+};
+
+pub(crate) const BOSS_LVL_2: EnemyType = EnemyType {
+    base_damage: 100.0,
+    health: ENEMY_HEALTH * BOSS_SCALE * 2.,
+    scale: Vec3::splat(BOSS_SCALE),
+    class: EnemyClassEnum::BossMage,
+};
+
+pub(crate) const BOSS_LVL_3: EnemyType = EnemyType {
+    base_damage: 150.0,
+    health: ENEMY_HEALTH * BOSS_SCALE * 3.,
+    scale: Vec3::splat(BOSS_SCALE),
+    class: EnemyClassEnum::BossAlien,
 };
 
 const ENEMY_WAVE_1: EnemyType = EnemyType {

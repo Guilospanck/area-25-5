@@ -296,7 +296,7 @@ fn spawn_mage_enemy(
     }
 }
 
-pub(crate) fn spawn_boss_orc(
+pub(crate) fn spawn_boss(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     sprites: &Res<SpritesResources>,
@@ -309,6 +309,7 @@ pub(crate) fn spawn_boss_orc(
     scale: Vec3,
     health_bar_translation: Vec3,
     quantity: u32,
+    boss_class: EnemyClassEnum,
 ) {
     let weapon_direction = Vec3::ZERO;
     let weapon_pos = Vec3::new(8.0, 0.0, CHAR_Z_INDEX);
@@ -330,10 +331,10 @@ pub(crate) fn spawn_boss_orc(
             health,
             damage,
             scale,
-            EnemyClassEnum::BossOrc,
+            boss_class.clone(),
             health,
-            ENEMY_COLLISION_BOX_WIDTH * ORC_BOSS_SCALE,
-            ENEMY_COLLISION_BOX_HEIGHT * ORC_BOSS_SCALE,
+            ENEMY_COLLISION_BOX_WIDTH * BOSS_SCALE,
+            ENEMY_COLLISION_BOX_HEIGHT * BOSS_SCALE,
         );
 
         let enemy_mage_entity = commands.spawn(bundle).id();
