@@ -183,5 +183,6 @@ fn main() {
         .observe(despawn_powers)
         .observe(update_power_ui)
         .observe(maybe_spawn_health_points_pack)
+        .observe(setup_new_time)
         .run();
 }
