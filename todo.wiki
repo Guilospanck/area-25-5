@@ -92,8 +92,8 @@ as the time passes (cooldown)
 - [x] FIX: Change boss box collider (it is too small now)
 - [x] FIX: Spawn enemy mage using wrong damage
 - [x] Change enemy/items/weapons etc "by_level" to "by_wave" (a level contains lots of waves)
-- [ ] Change Item stats based on level
-- [ ] Create different specific characteristics for each boss
+- [x] Change Item stats based on level
+- [ ] Fix number resolution profile ui stats for the damage
 
 
 Ongoing:
@@ -106,6 +106,7 @@ Ongoing:
 Backlog:
 - [ ] Add proper audio and game sound
 - [ ] Improve rendering of circle
+- [ ] Create different specific characteristics for each boss
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
@@ -114,6 +115,8 @@ MAYBE
 - [ ] (Maybe) Change collision from capsule to Ammo and Weapon sizes
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] (Maybe) Maybe despawn shields when they hit opponent
+- [ ] Add a pause screen
+- [ ] Suicide bomb
 
 HISTORY:
 When you finish, it says: "You're half done"
