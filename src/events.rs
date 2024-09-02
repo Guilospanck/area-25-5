@@ -374,19 +374,21 @@ pub fn on_player_spawned(
     let current_wave_item = item_waves
         .0
         .iter()
-        .find(|item| item.level == current_wave.0 as usize);
+        .find(|item| item.wave == current_wave.0 as usize);
     if current_wave_item.is_none() {
         println!("NO ITEM MATCHING WAVE FOUND!!!");
         return;
     }
-    let item_by_level = current_wave_item.unwrap();
+    let item_by_wave = current_wave_item.unwrap();
+    let current_game_level = 1;
     spawn_item(
         &mut commands,
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        item_by_level.item.item_type.clone(),
-        item_by_level.quantity,
+        item_by_wave.item.item_type.clone(),
+        item_by_wave.quantity,
+        current_game_level,
     );
 
     // UI stuff
@@ -540,7 +542,7 @@ pub fn on_wave_changed(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
-    weapons: Query<(Entity, Option<&Parent>), With<Weapon>>,
+    weapons: Query<(Entity, Option<&Parent>, &Damage), With<Weapon>>,
     items: Query<(Entity, &Item), With<Item>>,
     player_query: Query<Entity, With<Player>>,
 ) {
@@ -556,11 +558,20 @@ pub fn on_wave_changed(
         }
     }
 
+    let mut optional_players_current_damage: Option<&Damage> = None;
+
     for weapon in weapons.iter() {
         if weapon.1.is_none() {
             commands.entity(weapon.0).despawn();
+        } else {
+            optional_players_current_damage = Some(weapon.2);
         }
     }
+
+    let Some(player_current_damage) = optional_players_current_damage else {
+        println!("Could not find player's current weapon with its damage");
+        return;
+    };
 
     // Spawn more different enemies
     let current_wave_enemy = enemy_waves
@@ -604,7 +615,13 @@ pub fn on_wave_changed(
     // increase base damage of all wave weapons based on current level
     let base_damage_multiplier =
         WEAPON_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL * current_game_level.0 as f32 + 1.0;
+
     weapon_by_level.weapon.base_damage *= base_damage_multiplier;
+    // Cap weapon_base_damage to minimum of the current weapon damage
+    // carried by the player + the base_damage_multiplier
+    if weapon_by_level.weapon.base_damage < player_current_damage.0 {
+        weapon_by_level.weapon.base_damage = player_current_damage.0 * base_damage_multiplier;
+    }
 
     spawn_weapon(
         &mut commands,
@@ -619,19 +636,20 @@ pub fn on_wave_changed(
     let current_wave_item = item_waves
         .0
         .iter()
-        .find(|item| item.level == current_wave.0 as usize);
+        .find(|item| item.wave == current_wave.0 as usize);
     if current_wave_item.is_none() {
         println!("NO ITEM MATCHING WAVE FOUND!!!");
         return;
     }
-    let item_by_level = current_wave_item.unwrap();
+    let item_by_wave = current_wave_item.unwrap();
     spawn_item(
         &mut commands,
         &mut texture_atlas_layout,
         &sprites,
         &asset_server,
-        item_by_level.item.item_type.clone(),
-        item_by_level.quantity,
+        item_by_wave.item.item_type.clone(),
+        item_by_wave.quantity,
+        current_game_level.0,
     );
 
     // Add new power to the player
@@ -641,6 +659,8 @@ pub fn on_wave_changed(
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
     }
+
+    println!("Game level changed to {}", current_game_level.0);
 }
 
 pub fn on_game_over(
@@ -1394,9 +1414,12 @@ pub fn maybe_spawn_health_points_pack(
     mut commands: Commands,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: Res<SpritesResources>,
+    current_game_level: Res<CurrentGameLevel>,
     asset_server: Res<AssetServer>,
 ) {
     let chance = get_random_chance();
+    let quantity = 1;
+    let level = current_game_level.0;
 
     if chance > CHANCE_TO_SPAWN_HEALTH_POINTS_PACK {
         spawn_item(
@@ -1405,7 +1428,8 @@ pub fn maybe_spawn_health_points_pack(
             &sprites,
             &asset_server,
             ItemTypeEnum::Health(crate::Health(10.)),
-            1,
+            quantity,
+            level,
         );
     }
 }

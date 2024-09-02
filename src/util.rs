@@ -1,4 +1,7 @@
-use crate::{prelude::*, ItemTypeEnum, PowerTypeEnum, SpriteInfo, SpritesResources};
+use crate::{
+    prelude::*, Armor, Health, ItemTypeEnum, PowerTypeEnum, Shield, Speed, SpriteInfo,
+    SpritesResources,
+};
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -121,5 +124,40 @@ pub(crate) fn get_boss_type_based_on_game_level(game_level: u16) -> EnemyType {
         2 => BOSS_LVL_2,
         3 => BOSS_LVL_3,
         _ => todo!(),
+    }
+}
+
+pub(crate) fn get_item_based_on_game_level(item_type: ItemTypeEnum, level: u16) -> ItemTypeEnum {
+    let multiplier = ITEM_BASE_MULTIPLIER_BASED_ON_LEVEL * level as f32 + 1.0;
+
+    match item_type {
+        ItemTypeEnum::Speed(Speed(speed)) => {
+            let new_speed = speed * multiplier;
+            ItemTypeEnum::Speed(crate::Speed(new_speed))
+        }
+        ItemTypeEnum::Shield(Shield {
+            offensive,
+            defensive,
+            shield_type,
+            duration_seconds,
+        }) => {
+            let new_offensive = offensive * multiplier;
+            let new_defensive = defensive * multiplier;
+
+            ItemTypeEnum::Shield(Shield {
+                offensive: new_offensive,
+                defensive: new_defensive,
+                shield_type,
+                duration_seconds,
+            })
+        }
+        ItemTypeEnum::Armor(Armor(armor)) => {
+            let new_armor = armor * multiplier;
+            ItemTypeEnum::Armor(crate::Armor(new_armor))
+        }
+        ItemTypeEnum::Health(Health(health)) => {
+            let new_health = health * multiplier;
+            ItemTypeEnum::Health(crate::Health(new_health))
+        }
     }
 }

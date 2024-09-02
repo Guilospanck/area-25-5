@@ -5,6 +5,7 @@ use super::*;
 pub(crate) const ITEM_RANDOM_SEED: u64 = 1937836746771;
 pub(crate) const ITEM_SPRITE_SIZE: u8 = 32;
 pub(crate) const CHANCE_TO_SPAWN_HEALTH_POINTS_PACK: f32 = 0.7;
+pub(crate) const ITEM_BASE_MULTIPLIER_BASED_ON_LEVEL: f32 = 0.2;
 
 #[cfg_attr(
     not(feature = "web"),
@@ -28,7 +29,7 @@ pub struct ItemType<'a> {
 
 #[derive(Debug, Clone)]
 pub struct ItemByWave<'a> {
-    pub level: usize,
+    pub wave: usize,
     pub item: ItemType<'a>,
     pub quantity: u32,
 }
@@ -75,27 +76,27 @@ const ITEM_WAVE_5: ItemType = ItemType {
 
 pub const ITEMS_PER_WAVE: [ItemByWave; NUMBER_OF_WAVES] = [
     ItemByWave {
-        level: 1,
+        wave: 1,
         item: ITEM_WAVE_1,
-        quantity: 10,
+        quantity: 3,
     },
     ItemByWave {
-        level: 2,
+        wave: 2,
         item: ITEM_WAVE_2,
         quantity: 2,
     },
     ItemByWave {
-        level: 3,
+        wave: 3,
         item: ITEM_WAVE_3,
         quantity: 2,
     },
     ItemByWave {
-        level: 4,
+        wave: 4,
         item: ITEM_WAVE_4,
-        quantity: 1,
+        quantity: 2,
     },
     ItemByWave {
-        level: 5,
+        wave: 5,
         item: ITEM_WAVE_5,
         quantity: 3,
     },

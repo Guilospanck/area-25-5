@@ -7,7 +7,7 @@ pub(crate) const AMMO_SPRITE_SIZE: u8 = 32;
 pub(crate) const WEAPON_SCALE: f32 = 2.0;
 
 // Each level the base damage of all weapons is updated
-pub(crate) const WEAPON_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL: f32 = 0.2;
+pub(crate) const WEAPON_BASE_DAMAGE_MULTIPLIER_BASED_ON_LEVEL: f32 = 0.05;
 
 #[cfg_attr(
     not(feature = "web"),
@@ -44,28 +44,28 @@ const WEAPON_WAVE_1: WeaponType = WeaponType {
 };
 
 const WEAPON_WAVE_2: WeaponType = WeaponType {
-    base_damage: 20.0,
+    base_damage: 15.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,
 };
 
 const WEAPON_WAVE_3: WeaponType = WeaponType {
-    base_damage: 30.0,
+    base_damage: 20.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,
 };
 
 const WEAPON_WAVE_4: WeaponType = WeaponType {
-    base_damage: 40.0,
+    base_damage: 25.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,
 };
 
 const WEAPON_WAVE_5: WeaponType = WeaponType {
-    base_damage: 50.0,
+    base_damage: 30.0,
     source: "textures/Weapon/Bow.png",
     ammo_source: "textures/Weapon/Arrow.png",
     weapon_type: WeaponTypeEnum::Bow,

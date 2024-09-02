@@ -1,6 +1,6 @@
 use crate::{
     prelude::*,
-    util::{get_item_sprite_based_on_item_type, get_random_vec3},
+    util::{get_item_based_on_game_level, get_item_sprite_based_on_item_type, get_random_vec3},
     AnimationIndices, AnimationTimer, CleanupWhenPlayerDies, ItemTypeEnum, SpritesResources,
 };
 use rand::Rng;
@@ -95,8 +95,11 @@ pub fn spawn_item(
 
     item_type: ItemTypeEnum,
     quantity: u32,
+    level: u16,
 ) {
     let scale = Vec3::splat(2.);
+
+    let item_type_based_on_level = get_item_based_on_game_level(item_type, level);
 
     for idx in 1..=quantity {
         let mut rng = rand::thread_rng();
@@ -109,7 +112,7 @@ pub fn spawn_item(
             asset_server,
             scale,
             random_spawning_pos,
-            item_type.clone(),
+            item_type_based_on_level.clone(),
         );
 
         commands.spawn(bundle);
