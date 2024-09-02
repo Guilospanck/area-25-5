@@ -75,7 +75,7 @@ pub const WEAPONS_PER_WAVE: [WeaponByWave; NUMBER_OF_WAVES] = [
     WeaponByWave {
         wave: 1,
         weapon: WEAPON_WAVE_1,
-        quantity: 10,
+        quantity: 1,
     },
     WeaponByWave {
         wave: 2,
