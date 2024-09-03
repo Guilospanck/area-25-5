@@ -8,8 +8,8 @@ use crate::{
     game_actions::shoot_at_enemies,
     player::Player,
     prelude::*,
-    spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
-    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
+    render_background_texture, spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar,
+    spawn_item, spawn_mana_ui_bar, spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_boss_type_based_on_game_level, get_item_sprite_based_on_item_type,
@@ -21,7 +21,8 @@ use crate::{
     CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, HealthBarUI, Item,
     ItemTypeEnum, ItemWaves, Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
     PowerLevelUI, PowerSpriteUI, PowerUI, PowerUIRootNode, PowerWaves, ScoreUI, Speed,
-    SpritesResources, Weapon, WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
+    SpritesResources, TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
+    WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -119,6 +120,9 @@ pub struct RestartGame;
 pub struct ScoreChanged {
     pub score: f32,
 }
+
+#[derive(Event)]
+pub struct ChangeBackgroundTexture;
 
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
@@ -493,6 +497,9 @@ pub fn on_all_enemies_died(
 
         // reset current boss
         current_boss.0 = None;
+
+        // update texture background
+        commands.trigger(ChangeBackgroundTexture);
 
         // reset current wave
         let new_wave = 1;
@@ -1432,4 +1439,26 @@ pub fn maybe_spawn_health_points_pack(
             level,
         );
     }
+}
+
+pub fn change_background_texture(
+    _trigger: Trigger<ChangeBackgroundTexture>,
+    mut commands: Commands,
+    current_game_level: Res<CurrentGameLevel>,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    background_query: Query<Entity, With<TileBackground>>,
+) {
+    background_query.iter().for_each(|e| {
+        commands.entity(e).despawn_recursive();
+    });
+
+    render_background_texture(
+        &mut commands,
+        &mut texture_atlas_layout,
+        &asset_server,
+        &sprites,
+        current_game_level.0,
+    );
 }

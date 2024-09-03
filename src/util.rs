@@ -161,3 +161,15 @@ pub(crate) fn get_item_based_on_game_level(item_type: ItemTypeEnum, level: u16) 
         }
     }
 }
+
+pub(crate) fn get_background_texture_based_on_game_level(
+    game_level: u16,
+    sprites: &Res<SpritesResources>,
+) -> SpriteInfo<'static> {
+    match game_level {
+        1 => sprites.0.level_1_bg.clone(),
+        2 => sprites.0.level_2_bg.clone(),
+        3 => sprites.0.level_3_bg.clone(),
+        _ => unimplemented!(),
+    }
+}

@@ -96,6 +96,24 @@ pub fn get_sprites() -> Sprites<'static> {
             animation: None,
             layout: TextureAtlasLayout::from_grid(UVec2::new(1920, 1080), 1, 1, None, None),
         },
+        level_2_bg: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 1920,
+                height: 1080,
+            },
+            source: "textures/Background/level_2.png",
+            animation: None,
+            layout: TextureAtlasLayout::from_grid(UVec2::new(1920, 1080), 1, 1, None, None),
+        },
+        level_3_bg: SpriteInfo {
+            dimensions: RectangularDimensions {
+                width: 1920,
+                height: 1080,
+            },
+            source: "textures/Background/level_3.png",
+            animation: None,
+            layout: TextureAtlasLayout::from_grid(UVec2::new(1920, 1080), 1, 1, None, None),
+        },
         player_char_idle: SpriteInfo {
             dimensions: RectangularDimensions {
                 width: PLAYER_PIXEL_SIZE,

@@ -1,4 +1,7 @@
-use crate::{animation::AnimationInfo, prelude::*, SpritesResources};
+use crate::{
+    animation::AnimationInfo, prelude::*, util::get_background_texture_based_on_game_level,
+    CurrentGameLevel, SpritesResources,
+};
 
 #[derive(Clone, Debug, Default)]
 pub struct RectangularDimensions {
@@ -32,6 +35,8 @@ pub struct Sprites<'a> {
     pub player_char_idle: SpriteInfo<'a>,
     // levels
     pub level_1_bg: SpriteInfo<'a>,
+    pub level_2_bg: SpriteInfo<'a>,
+    pub level_3_bg: SpriteInfo<'a>,
     // enemies
     pub orc_idle: SpriteInfo<'a>,
     pub mage_idle: SpriteInfo<'a>,
@@ -56,7 +61,7 @@ pub struct Sprites<'a> {
 }
 
 #[derive(Component)]
-struct TileBackground;
+pub struct TileBackground;
 
 #[derive(Bundle)]
 struct TileBundle {
@@ -71,12 +76,14 @@ pub fn setup_sprite(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
+    current_game_level: Res<CurrentGameLevel>,
 ) {
     render_background_texture(
         &mut commands,
         &mut texture_atlas_layout,
-        &sprites.0,
         &asset_server,
+        &sprites,
+        current_game_level.0,
     );
 }
 
@@ -109,13 +116,14 @@ fn setup_tile_sprite(
     });
 }
 
-fn render_background_texture(
+pub(crate) fn render_background_texture(
     commands: &mut Commands,
     texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
-    sprites: &Sprites<'static>,
     asset_server: &Res<AssetServer>,
+    sprites: &Res<SpritesResources>,
+    game_level: u16,
 ) {
-    let tile = sprites.level_1_bg.clone();
+    let tile = get_background_texture_based_on_game_level(game_level, sprites);
 
     // number of tiles in a row
     let x_items = BACKGROUND_TEXTURE_RESOLUTION.x_px / tile.dimensions.width as f32;

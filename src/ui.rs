@@ -772,7 +772,7 @@ pub fn spawn_player_stats_ui(
 
     let weapon_text_node = text_node(
         "Damage",
-        &format!("{current_weapon_damage_value}"),
+        &format!("{:.2}", current_weapon_damage_value),
         commands,
         None,
     );
