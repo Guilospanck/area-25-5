@@ -19,6 +19,9 @@ pub struct ManaBarUI;
 pub struct CurrentWaveUI;
 
 #[derive(Component)]
+pub struct CurrentGameLevelUI;
+
+#[derive(Component)]
 pub struct ScoreUI;
 
 #[derive(Component)]
@@ -287,7 +290,7 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 style: Style {
                     width: Val::Percent(100.0),
                     position_type: PositionType::Absolute,
-                    top: Val::Px(10.),
+                    top: Val::Px(40.),
                     left: Val::Px(300.),
                     ..default()
                 },
@@ -298,6 +301,44 @@ fn current_wave(commands: &mut Commands, asset_server: &Res<AssetServer>) {
         ))
         .with_children(|parent| {
             parent.spawn(current_wave_text);
+        });
+}
+
+fn current_game_level(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 20.0,
+        color: Color::Srgba(YELLOW),
+    };
+
+    let current_game_level_text = (
+        TextBundle {
+            text: Text::from_section("Level #1", text_style),
+            style: Style { ..default() },
+            ..default()
+        },
+        CurrentGameLevelUI,
+        OVERLAY_LAYER,
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.),
+                    left: Val::Px(300.),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            CleanupWhenPlayerDies,
+        ))
+        .with_children(|parent| {
+            parent.spawn(current_game_level_text);
         });
 }
 
@@ -808,6 +849,7 @@ pub fn spawn_player_stats_ui(
 }
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    current_game_level(&mut commands, &asset_server);
     current_wave(&mut commands, &asset_server);
     spawn_score_points_ui(&mut commands, &asset_server);
     spawn_current_timer_ui(&mut commands, &asset_server);

@@ -5,8 +5,7 @@ use crate::{
     prelude::*,
     spawn_orc_enemy, spawn_player_stats_ui, spawn_power,
     util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
-    AmmoBundle, Armor, BaseCamera, CurrentBoss, Damage, Health, Mana, PlayAgainButton,
-    PlayerCamera, PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
+    AmmoBundle, Armor, BaseCamera, CurrentBoss, Damage, Health, Mana, PlayAgainButton, PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
     SpritesResources, StartGameButton, Weapon, WindowResolutionResource,
 };
 

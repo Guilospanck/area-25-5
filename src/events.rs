@@ -17,10 +17,10 @@ use crate::{
         get_weapon_sprite_based_on_weapon_type,
     },
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
-    ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentScore, CurrentTime, CurrentTimeUI,
-    CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, HealthBarUI, Item,
-    ItemTypeEnum, ItemWaves, Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
-    PowerLevelUI, PowerSpriteUI, PowerUI, PowerUIRootNode, PowerWaves, ScoreUI, Speed,
+    ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, HealthBarUI,
+    Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode,
+    Power, PowerLevelUI, PowerSpriteUI, PowerUI, PowerUIRootNode, PowerWaves, ScoreUI, Speed,
     SpritesResources, TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
     WindowResolutionResource,
 };
@@ -56,7 +56,7 @@ pub struct EnemyHealthChanged {
 pub struct AllEnemiesDied;
 
 #[derive(Event)]
-pub struct CurrentWaveChanged;
+pub struct CurrentWaveChanged(pub u16);
 
 #[derive(Event)]
 pub struct UpdateTimeUI;
@@ -123,6 +123,9 @@ pub struct ScoreChanged {
 
 #[derive(Event)]
 pub struct ChangeBackgroundTexture;
+
+#[derive(Event)]
+pub struct CurrentGameLevelChanged(pub u16);
 
 pub fn on_mouse_click(
     trigger: Trigger<ShootBullets>,
@@ -447,19 +450,21 @@ pub fn on_enemy_health_changed(
 pub fn on_all_enemies_died(
     _trigger: Trigger<AllEnemiesDied>,
     mut commands: Commands,
-    mut current_boss: ResMut<CurrentBoss>,
-    mut current_game_level: ResMut<CurrentGameLevel>,
-    mut current_wave: ResMut<CurrentWave>,
-    current_time: Res<CurrentTime>,
-    mut next_state: ResMut<NextState<GameState>>,
-    player_state: Res<State<GameState>>,
 
-    asset_server: Res<AssetServer>,
-    sprites: Res<SpritesResources>,
+    mut current_boss: ResMut<CurrentBoss>,
+    mut next_state: ResMut<NextState<GameState>>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+
+    current_wave: Res<CurrentWave>,
+    current_time: Res<CurrentTime>,
+    current_game_level: Res<CurrentGameLevel>,
+    player_state: Res<State<GameState>>,
+    asset_server: Res<AssetServer>,
+    sprites: Res<SpritesResources>,
 ) {
+    // TODO: change this to be inside the event handler
     // Add multiplier to score based on the time left
     let mut seconds = current_time.seconds;
     seconds += current_time.minutes * 60;
@@ -471,8 +476,7 @@ pub fn on_all_enemies_died(
 
     if new_wave as usize <= NUMBER_OF_WAVES {
         // update current wave
-        current_wave.0 = new_wave;
-        commands.trigger(CurrentWaveChanged);
+        commands.trigger(CurrentWaveChanged(new_wave));
 
         // Setup new time
         commands.trigger(SetupNewTime);
@@ -493,7 +497,7 @@ pub fn on_all_enemies_died(
         }
 
         // increase level
-        current_game_level.0 = new_level;
+        commands.trigger(CurrentGameLevelChanged(new_level));
 
         // reset current boss
         current_boss.0 = None;
@@ -503,8 +507,7 @@ pub fn on_all_enemies_died(
 
         // reset current wave
         let new_wave = 1;
-        current_wave.0 = new_wave;
-        commands.trigger(CurrentWaveChanged);
+        commands.trigger(CurrentWaveChanged(new_wave));
 
         // Setup new time
         commands.trigger(SetupNewTime);
@@ -535,20 +538,26 @@ pub fn on_all_enemies_died(
     current_boss.0 = Some(current_game_level.0);
 }
 
-pub fn on_wave_changed(
-    _trigger: Trigger<CurrentWaveChanged>,
+pub fn on_current_wave_changed(
+    trigger: Trigger<CurrentWaveChanged>,
+    mut commands: Commands,
+
+    mut current_wave: ResMut<CurrentWave>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+
     current_game_level: Res<CurrentGameLevel>,
-    current_wave: Res<CurrentWave>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
     item_waves: Res<ItemWaves>,
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
-    mut commands: Commands,
-    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
+
+    mut current_wave_ui: Query<
+        (&mut Text, &CurrentWaveUI),
+        (Without<CurrentTimeUI>, Without<CurrentGameLevelUI>),
+    >,
     weapons: Query<(Entity, Option<&Parent>, &Damage), With<Weapon>>,
     items: Query<(Entity, &Item), With<Item>>,
     player_query: Query<Entity, With<Player>>,
@@ -556,6 +565,16 @@ pub fn on_wave_changed(
     let Ok(player_entity) = player_query.get_single() else {
         return;
     };
+
+    // update Current wave
+    let event = trigger.event();
+    let new_wave = event.0;
+    current_wave.0 = new_wave;
+
+    // Update current wave UI
+    if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
+        text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
+    }
 
     // Despawn items and weapons that were spawned on the map
     for (item_entity, item) in items.iter() {
@@ -661,13 +680,6 @@ pub fn on_wave_changed(
 
     // Add new power to the player
     commands.trigger(PowerFound);
-
-    // Update UI
-    if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
-        text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
-    }
-
-    println!("Game level changed to {}", current_game_level.0);
 }
 
 pub fn on_game_over(
@@ -1461,4 +1473,25 @@ pub fn change_background_texture(
         &sprites,
         current_game_level.0,
     );
+}
+
+pub fn on_current_game_level_changed(
+    trigger: Trigger<CurrentGameLevelChanged>,
+    mut current_game_level: ResMut<CurrentGameLevel>,
+
+    mut current_game_level_ui: Query<
+        (&mut Text, &CurrentGameLevelUI),
+        (Without<CurrentTimeUI>, Without<CurrentWaveUI>),
+    >,
+) {
+    let event = trigger.event();
+    let new_level = event.0;
+
+    // Update Current Game Level
+    current_game_level.0 = new_level;
+
+    // update current game level UI
+    if let Ok((mut text, _)) = current_game_level_ui.get_single_mut() {
+        text.sections.first_mut().unwrap().value = format!("Level #{}", new_level);
+    }
 }

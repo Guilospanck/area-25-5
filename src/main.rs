@@ -172,7 +172,7 @@ fn main() {
         .observe(on_game_over)
         .observe(on_restart_click)
         .observe(on_score_changed)
-        .observe(on_wave_changed)
+        .observe(on_current_wave_changed)
         .observe(update_time_ui)
         .observe(on_buff_added)
         .observe(on_buff_add_ui)
@@ -185,5 +185,6 @@ fn main() {
         .observe(maybe_spawn_health_points_pack)
         .observe(setup_new_time)
         .observe(change_background_texture)
+        .observe(on_current_game_level_changed)
         .run();
 }

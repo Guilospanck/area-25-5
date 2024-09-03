@@ -95,7 +95,7 @@ as the time passes (cooldown)
 - [x] Change Item stats based on level
 - [x] Fix number resolution profile ui stats for the damage
 - [x] Add different background to each level
-- [ ] Show which level you are currently
+- [x] Show which level you are currently
 - [ ] Have a pause between levels
 - [ ] Change collision from capsule to Ammo and Weapon sizes
 - [ ] Create different specific characteristics for each boss

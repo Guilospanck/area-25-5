@@ -1,7 +1,7 @@
 use crate::{
-    prelude::*, ChangeBackgroundTexture, CurrentBoss, CurrentGameLevel, CurrentScore, CurrentTime,
-    CurrentTimeUI, CurrentWave, CurrentWaveUI, PlayerHealthChanged, PlayerProfileUISet,
-    ScoreChanged, SetupNewTime,
+    prelude::*, ChangeBackgroundTexture, CurrentBoss, CurrentGameLevelChanged,
+    CurrentGameLevelUI, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave, CurrentWaveUI,
+    PlayerHealthChanged, PlayerProfileUISet, ScoreChanged, SetupNewTime,
 };
 
 #[derive(Component, Clone)]
@@ -16,15 +16,18 @@ pub fn cleanup_system<T: Component>(mut commands: Commands, q: Query<Entity, Wit
 pub fn reset_initial_state(
     mut commands: Commands,
     mut current_boss: ResMut<CurrentBoss>,
-    mut current_game_level: ResMut<CurrentGameLevel>,
     mut current_wave: ResMut<CurrentWave>,
     mut current_time: ResMut<CurrentTime>,
     mut current_score: ResMut<CurrentScore>,
-    mut current_wave_ui: Query<(&mut Text, &CurrentWaveUI), Without<CurrentTimeUI>>,
+    mut current_wave_ui: Query<
+        (&mut Text, &CurrentWaveUI),
+        (Without<CurrentTimeUI>, Without<CurrentGameLevelUI>),
+    >,
 ) {
-    // INFO: maybe create an event for this
     current_boss.0 = None;
-    current_game_level.0 = 1;
+
+    // update current game level and its UI
+    commands.trigger(CurrentGameLevelChanged(1));
 
     // update texture background
     commands.trigger(ChangeBackgroundTexture);
