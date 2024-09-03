@@ -1,7 +1,7 @@
 use crate::{
-    prelude::*, CurrentBoss, CurrentGameLevel, CurrentScore, CurrentTime, CurrentTimeUI,
-    CurrentWave, CurrentWaveUI, PlayerHealthChanged, PlayerProfileUISet, ScoreChanged,
-    SetupNewTime, UpdateTimeUI,
+    prelude::*, ChangeBackgroundTexture, CurrentBoss, CurrentGameLevel, CurrentScore, CurrentTime,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, PlayerHealthChanged, PlayerProfileUISet,
+    ScoreChanged, SetupNewTime,
 };
 
 #[derive(Component, Clone)]
@@ -25,6 +25,9 @@ pub fn reset_initial_state(
     // INFO: maybe create an event for this
     current_boss.0 = None;
     current_game_level.0 = 1;
+
+    // update texture background
+    commands.trigger(ChangeBackgroundTexture);
 
     // Update UI
     current_wave.0 = 1u16;
