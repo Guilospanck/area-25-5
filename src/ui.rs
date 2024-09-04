@@ -1,9 +1,13 @@
 use bevy::{
     color::palettes::css::YELLOW,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
+    time::Stopwatch,
 };
 
-use crate::{prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet};
+use crate::{
+    prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet,
+    SpawnEntitiesForNewWave,
+};
 
 // ############## UI ####################
 #[derive(Component)]
@@ -82,6 +86,9 @@ pub struct GameOverOverlay;
 
 #[derive(Component)]
 pub struct GameWonOverlay;
+
+#[derive(Component)]
+pub struct PauseOverlay;
 
 const MAX_VALUE_BAR: f32 = 100.0;
 const BAR_SCALE: f32 = 0.2;
@@ -883,7 +890,12 @@ pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .id();
 
-    _default_screen(commands, MenuOverlay, vec![one, two]);
+    _default_screen(
+        &mut commands,
+        MenuOverlay,
+        vec![one, two],
+        Color::srgb(0.1, 0.1, 0.1).into(),
+    );
 }
 
 pub fn game_over_screen(
@@ -925,7 +937,12 @@ pub fn game_over_screen(
         })
         .id();
 
-    _default_screen(commands, GameOverOverlay, vec![one, two, three]);
+    _default_screen(
+        &mut commands,
+        GameOverOverlay,
+        vec![one, two, three],
+        Color::srgb(0.1, 0.1, 0.1).into(),
+    );
 }
 
 pub fn game_won_screen(
@@ -967,14 +984,46 @@ pub fn game_won_screen(
         })
         .id();
 
-    _default_screen(commands, GameWonOverlay, vec![one, two, three]);
+    _default_screen(
+        &mut commands,
+        GameWonOverlay,
+        vec![one, two, three],
+        Color::srgb(0.1, 0.1, 0.1).into(),
+    );
+}
+
+pub fn next_wave_screen(commands: &mut Commands, asset_server: &Res<AssetServer>, next_wave: &str) {
+    let font_size = 100.;
+    let one = commands
+        .spawn(_build_custom_text_bundle(
+            asset_server,
+            next_wave,
+            font_size,
+            Color::WHITE,
+        ))
+        .id();
+
+    let next_wave_entity = _default_screen(
+        commands,
+        PauseOverlay,
+        vec![one],
+        Color::srgba(0.1, 0.1, 0.1, 0.1).into(),
+    );
+
+    // TODO: Wait for 2s
+    commands.entity(next_wave_entity).despawn_recursive();
+
+    // after some seconds, spawn entities
+    println!("triggered");
+    commands.trigger(SpawnEntitiesForNewWave);
 }
 
 fn _default_screen<T: Component>(
-    mut commands: Commands,
+    commands: &mut Commands,
     root_node_component: T,
     children_entities: Vec<Entity>,
-) {
+    background_color: BackgroundColor,
+) -> Entity {
     let node_bundle = NodeBundle {
         style: Style {
             width: Val::Percent(100.),
@@ -985,13 +1034,14 @@ fn _default_screen<T: Component>(
             align_items: AlignItems::Center,
             ..default()
         },
-        background_color: Color::srgb(0.1, 0.1, 0.1).into(),
+        background_color,
         ..default()
     };
 
     commands
         .spawn((node_bundle, MENU_UI_LAYER, root_node_component))
-        .push_children(&children_entities);
+        .push_children(&children_entities)
+        .id()
 }
 
 #[derive(Bundle)]

@@ -6,6 +6,7 @@ use crate::{
     audio::hit_weapon_audio,
     equip_player_with_power,
     game_actions::shoot_at_enemies,
+    next_wave_screen,
     player::Player,
     prelude::*,
     render_background_texture, spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar,
@@ -57,6 +58,9 @@ pub struct AllEnemiesDied;
 
 #[derive(Event)]
 pub struct CurrentWaveChanged(pub u16);
+
+#[derive(Event)]
+pub struct SpawnEntitiesForNewWave;
 
 #[derive(Event)]
 pub struct UpdateTimeUI;
@@ -538,15 +542,15 @@ pub fn on_all_enemies_died(
     current_boss.0 = Some(current_game_level.0);
 }
 
-pub fn on_current_wave_changed(
-    trigger: Trigger<CurrentWaveChanged>,
+pub fn spawn_entities_for_new_wave(
+    _trigger: Trigger<SpawnEntitiesForNewWave>,
     mut commands: Commands,
 
-    mut current_wave: ResMut<CurrentWave>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 
+    current_wave: Res<CurrentWave>,
     current_game_level: Res<CurrentGameLevel>,
     enemy_waves: Res<EnemyWaves>,
     weapon_waves: Res<WeaponWaves>,
@@ -554,38 +558,15 @@ pub fn on_current_wave_changed(
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
 
-    mut current_wave_ui: Query<
-        (&mut Text, &CurrentWaveUI),
-        (Without<CurrentTimeUI>, Without<CurrentGameLevelUI>),
-    >,
     weapons: Query<(Entity, Option<&Parent>, &Damage), With<Weapon>>,
-    items: Query<(Entity, &Item), With<Item>>,
     player_query: Query<Entity, With<Player>>,
 ) {
     let Ok(player_entity) = player_query.get_single() else {
         return;
     };
 
-    // update Current wave
-    let event = trigger.event();
-    let new_wave = event.0;
-    current_wave.0 = new_wave;
-
-    // Update current wave UI
-    if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
-        text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
-    }
-
-    // Despawn items and weapons that were spawned on the map
-    for (item_entity, item) in items.iter() {
-        match item.item_type {
-            ItemTypeEnum::Health(_) => continue,
-            _ => commands.entity(item_entity).despawn(),
-        }
-    }
-
+    // Get player's current weapon damage
     let mut optional_players_current_damage: Option<&Damage> = None;
-
     for weapon in weapons.iter() {
         if weapon.1.is_none() {
             commands.entity(weapon.0).despawn();
@@ -593,7 +574,6 @@ pub fn on_current_wave_changed(
             optional_players_current_damage = Some(weapon.2);
         }
     }
-
     let Some(player_current_damage) = optional_players_current_damage else {
         println!("Could not find player's current weapon with its damage");
         return;
@@ -680,6 +660,41 @@ pub fn on_current_wave_changed(
 
     // Add new power to the player
     commands.trigger(PowerFound);
+}
+
+pub fn on_current_wave_changed(
+    trigger: Trigger<CurrentWaveChanged>,
+    mut commands: Commands,
+
+    mut current_wave: ResMut<CurrentWave>,
+    asset_server: Res<AssetServer>,
+
+    mut current_wave_ui: Query<
+        (&mut Text, &CurrentWaveUI),
+        (Without<CurrentTimeUI>, Without<CurrentGameLevelUI>),
+    >,
+    items: Query<(Entity, &Item), With<Item>>,
+) {
+    // Despawn items and weapons that were spawned on the map
+    for (item_entity, item) in items.iter() {
+        match item.item_type {
+            ItemTypeEnum::Health(_) => continue,
+            _ => commands.entity(item_entity).despawn(),
+        }
+    }
+
+    // update Current wave
+    let event = trigger.event();
+    let new_wave = event.0;
+    current_wave.0 = new_wave;
+
+    // Update current wave UI
+    if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
+        text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
+    }
+
+    // spawn pause screen
+    next_wave_screen(&mut commands, &asset_server, &format!("Wave #{new_wave}"));
 }
 
 pub fn on_game_over(
