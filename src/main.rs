@@ -91,7 +91,7 @@ fn main() {
                 .chain(),
         )
         .add_systems(
-            OnEnter(GameState::Alive),
+            OnEnter(GameState::Start),
             (
                 cleanup_system::<MenuOverlay>,
                 cleanup_system::<GameOverOverlay>,
@@ -141,12 +141,16 @@ fn main() {
         .add_systems(OnEnter(GameState::Menu), menu_screen)
         .add_systems(OnEnter(GameState::Dead), game_over_screen)
         .add_systems(OnEnter(GameState::Won), game_won_screen)
+        .add_systems(OnEnter(GameState::Paused), pause_screen)
         .add_systems(
             FixedUpdate,
             (
                 handle_start_game_click.run_if(in_state(GameState::Menu)),
                 handle_restart_click.run_if(in_state(GameState::Dead)),
                 handle_play_again_click.run_if(in_state(GameState::Won)),
+                despawn_paused_screen
+                    .run_if(in_state(GameState::Paused))
+                    .run_if(on_timer(Duration::from_secs(5))),
             ),
         )
         .add_systems(
@@ -186,5 +190,6 @@ fn main() {
         .observe(setup_new_time)
         .observe(change_background_texture)
         .observe(on_current_game_level_changed)
+        .observe(spawn_entities_for_new_wave)
         .run();
 }

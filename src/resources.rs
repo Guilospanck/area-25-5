@@ -48,6 +48,8 @@ pub enum GameState {
     Alive,
     Dead,
     Won,
+    Paused,
+    Start,
 }
 
 #[derive(Resource)]

@@ -96,6 +96,9 @@ as the time passes (cooldown)
 - [x] Fix number resolution profile ui stats for the damage
 - [x] Add different background to each level
 - [x] Show which level you are currently
+- [x] Have a pause between waves
+	- [x] Add pause screen
+	- [x] Add pause between spawnings
 - [ ] Have a pause between levels
 - [ ] Change collision from capsule to Ammo and Weapon sizes
 - [ ] Create different specific characteristics for each boss
@@ -110,6 +113,9 @@ Ongoing:
 Backlog:
 - [ ] Add proper audio and game sound
 - [ ] Improve rendering of circle
+- [ ] Player should be able to "buy" the weapons after each level
+- [ ] Create temporary powers
+- [ ] Add the possiblity to improve weapons and powers with "money"
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
