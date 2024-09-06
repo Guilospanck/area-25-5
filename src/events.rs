@@ -4,13 +4,14 @@ use bevy::{sprite::Mesh2dHandle, window::WindowResized};
 
 use crate::{
     audio::hit_weapon_audio,
-    equip_player_with_power,
+    cleanup_system, equip_player_with_power,
     game_actions::shoot_at_enemies,
-    next_wave_screen,
+    pause_screen,
     player::Player,
     prelude::*,
-    render_background_texture, spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar,
-    spawn_item, spawn_mana_ui_bar, spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
+    render_background_texture, reset_initial_state, setup_player, setup_ui, spawn_boss,
+    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
+    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_boss_type_based_on_game_level, get_item_sprite_based_on_item_type,
@@ -19,11 +20,11 @@ use crate::{
     },
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
-    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameState, HealthBarUI,
-    Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode,
-    Power, PowerLevelUI, PowerSpriteUI, PowerUI, PowerUIRootNode, PowerWaves, ScoreUI, Speed,
-    SpritesResources, TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
-    WindowResolutionResource,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameOverOverlay,
+    GameState, GameWonOverlay, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
+    MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerSpriteUI,
+    PowerUI, PowerUIRootNode, PowerWaves, ScoreUI, Speed, SpritesResources, TileBackground, Weapon,
+    WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -667,13 +668,14 @@ pub fn on_current_wave_changed(
     mut commands: Commands,
 
     mut current_wave: ResMut<CurrentWave>,
-    asset_server: Res<AssetServer>,
 
     mut current_wave_ui: Query<
         (&mut Text, &CurrentWaveUI),
         (Without<CurrentTimeUI>, Without<CurrentGameLevelUI>),
     >,
     items: Query<(Entity, &Item), With<Item>>,
+
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     // Despawn items and weapons that were spawned on the map
     for (item_entity, item) in items.iter() {
@@ -694,7 +696,7 @@ pub fn on_current_wave_changed(
     }
 
     // spawn pause screen
-    next_wave_screen(&mut commands, &asset_server, &format!("Wave #{new_wave}"));
+    next_state.set(GameState::Paused);
 }
 
 pub fn on_game_over(
@@ -713,10 +715,11 @@ pub fn on_restart_click(
     player_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    if *player_state.get() == GameState::Alive {
+    if *player_state.get() == GameState::Start {
         return;
     }
-    next_state.set(GameState::Alive);
+
+    next_state.set(GameState::Start);
 }
 
 pub fn on_score_changed(

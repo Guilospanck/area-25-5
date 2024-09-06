@@ -1,12 +1,11 @@
 use bevy::{
     color::palettes::css::YELLOW,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
-    time::Stopwatch,
 };
 
 use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentScore, ItemTypeEnum, PlayerProfileUISet,
-    SpawnEntitiesForNewWave,
+    prelude::*, CleanupWhenPlayerDies, CurrentScore, CurrentWave, GameState, ItemTypeEnum,
+    PlayerProfileUISet, SpawnEntitiesForNewWave,
 };
 
 // ############## UI ####################
@@ -992,30 +991,42 @@ pub fn game_won_screen(
     );
 }
 
-pub fn next_wave_screen(commands: &mut Commands, asset_server: &Res<AssetServer>, next_wave: &str) {
+pub fn pause_screen(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_wave: Res<CurrentWave>,
+) {
     let font_size = 100.;
     let one = commands
         .spawn(_build_custom_text_bundle(
-            asset_server,
-            next_wave,
+            &asset_server,
+            &format!("Incoming #{} wave...", current_wave.0),
             font_size,
             Color::WHITE,
         ))
         .id();
 
-    let next_wave_entity = _default_screen(
-        commands,
+    let _ = _default_screen(
+        &mut commands,
         PauseOverlay,
         vec![one],
         Color::srgba(0.1, 0.1, 0.1, 0.1).into(),
     );
+}
 
-    // TODO: Wait for 2s
-    commands.entity(next_wave_entity).despawn_recursive();
+pub fn despawn_paused_screen(
+    mut commands: Commands,
+    query: Query<Entity, With<PauseOverlay>>,
+    player_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    let pause_entity = query.get_single().unwrap();
+    commands.entity(pause_entity).despawn_recursive();
 
-    // after some seconds, spawn entities
-    println!("triggered");
-    commands.trigger(SpawnEntitiesForNewWave);
+    if *player_state.get() != GameState::Alive {
+        next_state.set(GameState::Alive);
+        commands.trigger(SpawnEntitiesForNewWave);
+    }
 }
 
 fn _default_screen<T: Component>(
