@@ -6,7 +6,7 @@ use crate::{
     audio::hit_weapon_audio,
     cleanup_system, equip_player_with_power,
     game_actions::shoot_at_enemies,
-    pause_screen,
+    in_between_waves_pause_screen,
     player::Player,
     prelude::*,
     render_background_texture, reset_initial_state, setup_player, setup_ui, spawn_boss,
@@ -695,8 +695,13 @@ pub fn on_current_wave_changed(
         text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
     }
 
-    // spawn pause screen
-    next_state.set(GameState::Paused);
+    // Only show the in-between pause screen if it is from the second
+    // wave onwards, as for the first wave we have the `starting game`
+    // and the `next level` parts
+    if new_wave != 1 {
+        // spawn the in-between wave pause screen
+        next_state.set(GameState::InBetweenWaves);
+    }
 }
 
 pub fn on_game_over(
@@ -1496,11 +1501,11 @@ pub fn change_background_texture(
 pub fn on_current_game_level_changed(
     trigger: Trigger<CurrentGameLevelChanged>,
     mut current_game_level: ResMut<CurrentGameLevel>,
-
     mut current_game_level_ui: Query<
         (&mut Text, &CurrentGameLevelUI),
         (Without<CurrentTimeUI>, Without<CurrentWaveUI>),
     >,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     let event = trigger.event();
     let new_level = event.0;
@@ -1512,4 +1517,7 @@ pub fn on_current_game_level_changed(
     if let Ok((mut text, _)) = current_game_level_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value = format!("Level #{}", new_level);
     }
+
+    // spawn the in-between levels pause screen
+    next_state.set(GameState::InBetweenLevels);
 }

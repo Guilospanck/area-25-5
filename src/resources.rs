@@ -48,7 +48,8 @@ pub enum GameState {
     Alive,
     Dead,
     Won,
-    Paused,
+    InBetweenWaves,
+    InBetweenLevels,
     Start,
 }
 

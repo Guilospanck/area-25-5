@@ -100,6 +100,7 @@ as the time passes (cooldown)
 	- [x] Add pause screen
 	- [x] Add pause between spawnings
 - [ ] Have a pause between levels
+- [ ] Check if powers are being upgraded
 - [ ] Change collision from capsule to Ammo and Weapon sizes
 - [ ] Create different specific characteristics for each boss
 
@@ -116,6 +117,10 @@ Backlog:
 - [ ] Player should be able to "buy" the weapons after each level
 - [ ] Create temporary powers
 - [ ] Add the possiblity to improve weapons and powers with "money"
+- [ ] Add resources to increase mana points
+- [ ] Show number of alive enemies on the screen
+- [ ] Create an item in which the player gains invisibility for some time
+
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
