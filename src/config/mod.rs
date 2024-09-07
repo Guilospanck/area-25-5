@@ -75,4 +75,7 @@ pub const CAPSULE_COLLIDER: Vec2 =
 pub const NUMBER_OF_WAVES: usize = 5;
 pub const NUMBER_OF_LEVELS: usize = 3;
 
+pub const PAUSE_IN_BETWEEN_WAVES: u64 = 2;
+pub const PAUSE_IN_BETWEEN_LEVELS: u64 = 5;
+
 pub const DEGREES_TO_RADIANS: f32 = 0.017_453_292;

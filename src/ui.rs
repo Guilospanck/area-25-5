@@ -4,8 +4,8 @@ use bevy::{
 };
 
 use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentScore, CurrentWave, GameState, ItemTypeEnum,
-    PlayerProfileUISet, SpawnEntitiesForNewWave,
+    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, CurrentWave, GameState,
+    ItemTypeEnum, PlayerProfileUISet, SpawnEntitiesForNewWave,
 };
 
 // ############## UI ####################
@@ -87,7 +87,10 @@ pub struct GameOverOverlay;
 pub struct GameWonOverlay;
 
 #[derive(Component)]
-pub struct PauseOverlay;
+pub struct InBetweenWavesPauseOverlay;
+
+#[derive(Component)]
+pub struct InBetweenLevelsPauseOverlay;
 
 const MAX_VALUE_BAR: f32 = 100.0;
 const BAR_SCALE: f32 = 0.2;
@@ -991,16 +994,35 @@ pub fn game_won_screen(
     );
 }
 
-pub fn pause_screen(
-    mut commands: Commands,
+pub fn in_between_waves_pause_screen(
+    commands: Commands,
     asset_server: Res<AssetServer>,
     current_wave: Res<CurrentWave>,
+) {
+    let title = &format!("Incoming #{} wave...", current_wave.0);
+    _pause_screen(commands, asset_server, title, InBetweenWavesPauseOverlay);
+}
+
+pub fn in_between_levels_pause_screen(
+    commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_game_level: Res<CurrentGameLevel>,
+) {
+    let title = &format!("Level #{}!", current_game_level.0);
+    _pause_screen(commands, asset_server, title, InBetweenLevelsPauseOverlay);
+}
+
+fn _pause_screen<T: Component>(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    title: &str,
+    entity: T,
 ) {
     let font_size = 100.;
     let one = commands
         .spawn(_build_custom_text_bundle(
             &asset_server,
-            &format!("Incoming #{} wave...", current_wave.0),
+            title,
             font_size,
             Color::WHITE,
         ))
@@ -1008,19 +1030,38 @@ pub fn pause_screen(
 
     let _ = _default_screen(
         &mut commands,
-        PauseOverlay,
+        entity,
         vec![one],
         Color::srgba(0.1, 0.1, 0.1, 0.1).into(),
     );
 }
 
-pub fn despawn_paused_screen(
+pub fn despawn_in_between_waves_pause_screen(
+    commands: Commands,
+    query: Query<Entity, With<InBetweenWavesPauseOverlay>>,
+    player_state: Res<State<GameState>>,
+    next_state: ResMut<NextState<GameState>>,
+) {
+    let pause_entity = query.get_single().unwrap();
+    _despawn_pause_screen(commands, pause_entity, player_state, next_state);
+}
+
+pub fn despawn_in_between_levels_pause_screen(
+    commands: Commands,
+    query: Query<Entity, With<InBetweenLevelsPauseOverlay>>,
+    player_state: Res<State<GameState>>,
+    next_state: ResMut<NextState<GameState>>,
+) {
+    let pause_entity = query.get_single().unwrap();
+    _despawn_pause_screen(commands, pause_entity, player_state, next_state);
+}
+
+fn _despawn_pause_screen(
     mut commands: Commands,
-    query: Query<Entity, With<PauseOverlay>>,
+    pause_entity: Entity,
     player_state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    let pause_entity = query.get_single().unwrap();
     commands.entity(pause_entity).despawn_recursive();
 
     if *player_state.get() != GameState::Alive {
