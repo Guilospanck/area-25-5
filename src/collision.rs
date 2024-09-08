@@ -9,7 +9,8 @@ use crate::{
     util::EquippedTypeEnum,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
     Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser, MaybeSpawnEnergyPack,
-    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, Weapon, WeaponFound,
+    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, UpdateAliveEnemiesUI,
+    Weapon, WeaponFound,
 };
 use bevy::math::bounding::BoundingVolume;
 
@@ -610,6 +611,7 @@ fn damage_enemy(
         });
 
         commands.trigger(MaybeSpawnEnergyPack);
+        commands.trigger(UpdateAliveEnemiesUI);
     }
 
     commands.trigger(EnemyHealthChanged {

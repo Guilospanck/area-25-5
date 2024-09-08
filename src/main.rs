@@ -201,5 +201,6 @@ fn main() {
         .observe(change_background_texture)
         .observe(on_current_game_level_changed)
         .observe(spawn_entities_for_new_wave)
+        .observe(update_current_alive_enemies_ui)
         .run();
 }

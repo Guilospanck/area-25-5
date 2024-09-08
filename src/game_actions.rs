@@ -5,8 +5,9 @@ use crate::{
     prelude::*,
     spawn_orc_enemy, spawn_player_stats_ui, spawn_power,
     util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
-    AmmoBundle, Armor, BaseCamera, CurrentBoss, Damage, Health, Mana, PlayAgainButton, PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
-    SpritesResources, StartGameButton, Weapon, WindowResolutionResource,
+    AmmoBundle, Armor, BaseCamera, CurrentBoss, Damage, Health, Mana, PlayAgainButton,
+    PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
+    SpritesResources, StartGameButton, UpdateAliveEnemiesUI, Weapon, WindowResolutionResource,
 };
 
 pub fn change_enemy_direction(
@@ -304,6 +305,9 @@ pub fn make_boss_spawn_enemies(
             Some(spawning_position),
         );
     }
+
+    // Update alive enemies UI
+    commands.trigger(UpdateAliveEnemiesUI);
 }
 
 pub fn handle_click(

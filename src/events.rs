@@ -20,11 +20,11 @@ use crate::{
     },
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
-    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameOverOverlay,
-    GameState, GameWonOverlay, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
-    MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerLevels,
-    PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed, SpritesResources, TileBackground,
-    Weapon, WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves,
+    GameOverOverlay, GameState, GameWonOverlay, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana,
+    ManaBarUI, MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI,
+    PowerLevels, PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed, SpritesResources,
+    TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -65,6 +65,9 @@ pub struct SpawnEntitiesForNewWave;
 
 #[derive(Event)]
 pub struct UpdateTimeUI;
+
+#[derive(Event)]
+pub struct UpdateAliveEnemiesUI;
 
 #[derive(Event)]
 pub struct SetupNewTime;
@@ -541,6 +544,9 @@ pub fn on_all_enemies_died(
 
     // update current boss
     current_boss.0 = Some(current_game_level.0);
+
+    // Update alive enemies UI
+    commands.trigger(UpdateAliveEnemiesUI);
 }
 
 pub fn spawn_entities_for_new_wave(
@@ -606,6 +612,9 @@ pub fn spawn_entities_for_new_wave(
         &mut meshes,
         &mut materials,
     );
+
+    // Update alive enemies UI
+    commands.trigger(UpdateAliveEnemiesUI);
 
     // Spawn more different weapons
     let current_wave_weapon = weapon_waves
@@ -998,6 +1007,19 @@ pub fn update_time_ui(
     if let Ok((mut text, _)) = current_time_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value =
             format!("{:02}:{:02}", current_time.minutes, current_time.seconds);
+    }
+}
+
+pub fn update_current_alive_enemies_ui(
+    _trigger: Trigger<UpdateAliveEnemiesUI>,
+    mut current_alive_enemies_ui: Query<(&mut Text, &EnemiesLeftUI)>,
+    current_alive_enemies: Query<&Enemy, With<Enemy>>,
+) {
+    let alive_enemies = current_alive_enemies.iter().len();
+
+    // Update UI
+    if let Ok((mut text, _)) = current_alive_enemies_ui.get_single_mut() {
+        text.sections.first_mut().unwrap().value = format!("Alive enemies: {}", alive_enemies);
     }
 }
 
