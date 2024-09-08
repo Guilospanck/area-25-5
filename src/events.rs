@@ -22,9 +22,9 @@ use crate::{
     ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
     CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, Enemy, EnemyWaves, GameOverOverlay,
     GameState, GameWonOverlay, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI,
-    MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerSpriteUI,
-    PowerUI, PowerUIRootNode, PowerWaves, ScoreUI, Speed, SpritesResources, TileBackground, Weapon,
-    WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
+    MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerLevels,
+    PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed, SpritesResources, TileBackground,
+    Weapon, WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -658,9 +658,6 @@ pub fn spawn_entities_for_new_wave(
         item_by_wave.quantity,
         current_game_level.0,
     );
-
-    // Add new power to the player
-    commands.trigger(PowerFound);
 }
 
 pub fn on_current_wave_changed(
@@ -1320,8 +1317,8 @@ pub fn on_power_found(
     sprites: Res<SpritesResources>,
     asset_server: Res<AssetServer>,
 
-    current_wave: Res<CurrentWave>,
-    power_waves: Res<PowerWaves>,
+    current_game_level: Res<CurrentGameLevel>,
+    power_levels: Res<PowerLevels>,
 
     player_query: Query<(Entity, &Children, &Player)>,
     player_powers_query: Query<(Entity, &Power)>,
@@ -1330,15 +1327,16 @@ pub fn on_power_found(
         return;
     };
 
-    let current_wave_power = power_waves
+    let mod_power_level_index = ((current_game_level.0 - 1) as usize % NUMBER_OF_POWERS) + 1;
+    let current_level_power = power_levels
         .0
         .iter()
-        .find(|power| power.level == current_wave.0 as usize);
-    if current_wave_power.is_none() {
-        println!("NO POWER MATCHING WAVE FOUND!!!");
+        .find(|power| power.level == mod_power_level_index);
+    if current_level_power.is_none() {
+        println!("NO POWER MATCHING level FOUND!!!");
         return;
     }
-    let power_by_level = current_wave_power.unwrap();
+    let power_by_level = current_level_power.unwrap();
 
     let power_type = power_by_level.power.power_type.clone();
     let keycode = get_key_code_based_on_power_type(power_type.clone());
@@ -1347,9 +1345,11 @@ pub fn on_power_found(
     // it is the same type.
     // The reason is because we want to replace it, not to add a `duplicate`
     // one.
+    let mut power_increase = None;
     for &child in player_children {
         if let Ok(player_powers) = player_powers_query.get(child) {
             if player_powers.1.trigger_key == keycode {
+                power_increase = Some(1.2f32);
                 commands
                     .entity(player_entity)
                     .remove_children(&[player_powers.0]);
@@ -1365,6 +1365,7 @@ pub fn on_power_found(
         &asset_server,
         power_by_level,
         player_entity,
+        power_increase,
     );
 
     commands.trigger(OnUpdatePowerUI {
@@ -1500,6 +1501,7 @@ pub fn change_background_texture(
 
 pub fn on_current_game_level_changed(
     trigger: Trigger<CurrentGameLevelChanged>,
+    mut commands: Commands,
     mut current_game_level: ResMut<CurrentGameLevel>,
     mut current_game_level_ui: Query<
         (&mut Text, &CurrentGameLevelUI),
@@ -1520,4 +1522,7 @@ pub fn on_current_game_level_changed(
 
     // spawn the in-between levels pause screen
     next_state.set(GameState::InBetweenLevels);
+
+    // Add new power to the player
+    commands.trigger(PowerFound);
 }

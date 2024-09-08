@@ -73,7 +73,7 @@ pub const CAPSULE_COLLIDER: Vec2 =
     Vec2::new((CAPSULE_LENGTH + CAPSULE_RADIUS * 2.) / 2., CAPSULE_RADIUS);
 
 pub const NUMBER_OF_WAVES: usize = 5;
-pub const NUMBER_OF_LEVELS: usize = 3;
+pub const NUMBER_OF_LEVELS: usize = 7;
 
 pub const PAUSE_IN_BETWEEN_WAVES: u64 = 2;
 pub const PAUSE_IN_BETWEEN_LEVELS: u64 = 5;

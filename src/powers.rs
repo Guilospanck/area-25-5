@@ -172,6 +172,7 @@ pub fn equip_player_with_power(
 
     power_by_level: &PowerByLevel,
     player_entity: Entity,
+    power_increase: Option<f32>,
 ) {
     let visibility = Visibility::Hidden;
 
@@ -181,12 +182,22 @@ pub fn equip_player_with_power(
         quantity,
     } = power_by_level;
     let PowerType {
-        damage,
-        mana_needed,
+        mut damage,
+        mut mana_needed,
         power_type,
         stopping_condition,
-        max_value,
+        mut max_value,
     } = power;
+
+    // Check for power increase which means that it's a new level
+    // and it's spawning the same power
+    if let Some(increase) = power_increase {
+        damage *= increase;
+        mana_needed *= increase;
+
+        let new_max_value = max_value as f32 * increase;
+        max_value = new_max_value.floor() as u32;
+    }
 
     let keycode = get_key_code_based_on_power_type(power_type.clone());
 
@@ -194,9 +205,9 @@ pub fn equip_player_with_power(
         origin: Vec2::ZERO,
         power_type: power_type.clone(),
         stopping_condition: stopping_condition.clone(),
-        value: *max_value,
-        max_value: *max_value,
-        mana_needed: *mana_needed,
+        value: max_value,
+        max_value,
+        mana_needed,
         trigger_key: keycode,
         quantity: *quantity,
     };
@@ -206,7 +217,7 @@ pub fn equip_player_with_power(
         sprites,
         asset_server,
         power,
-        *damage,
+        damage,
         visibility,
     );
 
