@@ -1,5 +1,6 @@
 use bevy::{
     color::palettes::css::YELLOW,
+    log::tracing_subscriber::fmt::format,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 
@@ -23,6 +24,9 @@ pub struct CurrentWaveUI;
 
 #[derive(Component)]
 pub struct CurrentGameLevelUI;
+
+#[derive(Component)]
+pub struct EnemiesLeftUI;
 
 #[derive(Component)]
 pub struct ScoreUI;
@@ -348,6 +352,44 @@ fn current_game_level(commands: &mut Commands, asset_server: &Res<AssetServer>) 
         ))
         .with_children(|parent| {
             parent.spawn(current_game_level_text);
+        });
+}
+
+fn alive_enemies_left(commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+    let text_style = TextStyle {
+        font: font.clone(),
+        font_size: 20.0,
+        color: Color::Srgba(YELLOW),
+    };
+
+    let alive_enemies_left_text = (
+        TextBundle {
+            text: Text::from_section("Alive enemies: 1", text_style),
+            style: Style { ..default() },
+            ..default()
+        },
+        EnemiesLeftUI,
+        OVERLAY_LAYER,
+    );
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(10.),
+                    left: Val::Px(10.0),
+                    ..default()
+                },
+                ..default()
+            },
+            OVERLAY_LAYER,
+            CleanupWhenPlayerDies,
+        ))
+        .with_children(|parent| {
+            parent.spawn(alive_enemies_left_text);
         });
 }
 
@@ -864,6 +906,7 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     spawn_current_timer_ui(&mut commands, &asset_server);
     spawn_container_buffs_ui(&mut commands);
     spawn_power_ui_root_node(&mut commands);
+    alive_enemies_left(&mut commands, &asset_server);
 }
 
 pub fn menu_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
