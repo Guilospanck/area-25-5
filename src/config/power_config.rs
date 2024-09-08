@@ -4,6 +4,8 @@ pub(crate) const POWER_RANDOM_SEED: u64 = 1242436746771;
 pub(crate) const POWER_SPRITE_SIZE: u8 = 32;
 pub(crate) const POWER_MOVE_SPEED: f32 = 100.0;
 
+pub(crate) const NUMBER_OF_POWERS: usize = 3;
+
 // Laser
 pub(crate) const LASER_POWER_WIDTH: f32 = 300.;
 pub(crate) const LASER_POWER_HEIGHT: f32 = 2.;
@@ -72,31 +74,20 @@ pub struct PowerByLevel {
     pub quantity: u32,
 }
 
-pub const POWERS_PER_WAVE: [PowerByLevel; NUMBER_OF_WAVES] = [
+pub const POWERS_PER_LEVEL: [PowerByLevel; NUMBER_OF_POWERS] = [
     PowerByLevel {
-        level: 2,
+        level: 1,
         power: POWER_LVL_1,
         quantity: 1,
     },
     PowerByLevel {
-        level: 3,
+        level: 2,
         power: POWER_LVL_2,
         quantity: 1,
     },
     PowerByLevel {
-        level: 4,
+        level: 3,
         power: POWER_LVL_3,
-        quantity: 1,
-    },
-    PowerByLevel {
-        level: 5,
-        power: POWER_LVL_1,
-        quantity: 1,
-    },
-    // TODO: remove as the powers are only spawned *after* the wave is done
-    PowerByLevel {
-        level: 6,
-        power: POWER_LVL_1,
         quantity: 1,
     },
 ];

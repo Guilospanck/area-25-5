@@ -36,7 +36,7 @@ pub struct WeaponWaves(pub [WeaponByWave<'static>; NUMBER_OF_WAVES]);
 pub struct ItemWaves(pub [ItemByWave<'static>; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
-pub struct PowerWaves(pub [PowerByLevel; NUMBER_OF_WAVES]);
+pub struct PowerLevels(pub [PowerByLevel; NUMBER_OF_POWERS]);
 
 #[derive(Resource)]
 pub struct SpritesResources(pub Sprites<'static>);
@@ -68,7 +68,7 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
     commands.insert_resource(ItemWaves(ITEMS_PER_WAVE));
-    commands.insert_resource(PowerWaves(POWERS_PER_WAVE));
+    commands.insert_resource(PowerLevels(POWERS_PER_LEVEL));
     commands.insert_resource(SpritesResources(get_sprites()));
     commands.insert_resource(CurrentScore(0.));
     commands.insert_resource(CurrentTime {

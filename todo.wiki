@@ -99,8 +99,9 @@ as the time passes (cooldown)
 - [x] Have a pause between waves
 	- [x] Add pause screen
 	- [x] Add pause between spawnings
-- [ ] Have a pause between levels
-- [ ] Check if powers are being upgraded
+- [x] Have a pause between levels
+- [x] Check if powers are being upgraded
+- [ ] Show number of alive enemies on the screen
 - [ ] Change collision from capsule to Ammo and Weapon sizes
 - [ ] Create different specific characteristics for each boss
 
@@ -118,8 +119,8 @@ Backlog:
 - [ ] Create temporary powers
 - [ ] Add the possiblity to improve weapons and powers with "money"
 - [ ] Add resources to increase mana points
-- [ ] Show number of alive enemies on the screen
 - [ ] Create an item in which the player gains invisibility for some time
+- [ ] Make an auto-shooting
 
 
 MAYBE
@@ -128,7 +129,7 @@ MAYBE
 - [ ] Remove source and ammo_source from WeaponType struct
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] Maybe despawn shields when they hit opponent
-- [ ] Add a pause screen
+- [x] Add a pause screen
 - [ ] Suicide bomb
 
 HISTORY:

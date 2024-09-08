@@ -123,6 +123,10 @@ pub(crate) fn get_boss_type_based_on_game_level(game_level: u16) -> EnemyType {
         1 => BOSS_LVL_1,
         2 => BOSS_LVL_2,
         3 => BOSS_LVL_3,
+        4 => BOSS_LVL_1,
+        5 => BOSS_LVL_2,
+        6 => BOSS_LVL_3,
+        7 => BOSS_LVL_1,
         _ => todo!(),
     }
 }
@@ -170,6 +174,10 @@ pub(crate) fn get_background_texture_based_on_game_level(
         1 => sprites.0.level_1_bg.clone(),
         2 => sprites.0.level_2_bg.clone(),
         3 => sprites.0.level_3_bg.clone(),
+        4 => sprites.0.level_1_bg.clone(),
+        5 => sprites.0.level_2_bg.clone(),
+        6 => sprites.0.level_3_bg.clone(),
+        7 => sprites.0.level_1_bg.clone(),
         _ => unimplemented!(),
     }
 }
