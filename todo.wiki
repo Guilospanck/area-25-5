@@ -103,9 +103,9 @@ as the time passes (cooldown)
 - [x] Check if powers are being upgraded
 - [x] Show number of alive enemies on the screen
 - [x] Increase HP as the time passes (health regen)
+- [x] Add resources to increase mana points
 - [ ] Change collision from capsule to Ammo and Weapon sizes
 - [ ] Create different specific characteristics for each boss
-- [ ] Add resources to increase mana points
 - [ ] Change resources for each level (background and bosses)
 
 Ongoing:

@@ -2,7 +2,7 @@ use chrono::{NaiveTime, Utc};
 
 use crate::{
     prelude::*, util::get_item_sprite_based_on_item_type, AnimationIndices, AnimationTimer, Armor,
-    CleanupWhenPlayerDies, Health, Speed, SpritesResources,
+    CleanupWhenPlayerDies, Health, Mana, Speed, SpritesResources,
 };
 
 /*
@@ -43,6 +43,7 @@ pub enum ItemTypeEnum {
     Armor(Armor),
     Shield(Shield),
     Health(Health),
+    Mana(Mana),
 }
 
 impl Default for ItemTypeEnum {

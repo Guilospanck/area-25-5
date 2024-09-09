@@ -198,6 +198,7 @@ fn main() {
         .observe(despawn_powers)
         .observe(update_power_ui)
         .observe(maybe_spawn_health_points_pack)
+        .observe(maybe_spawn_mana_points_pack)
         .observe(setup_new_time)
         .observe(change_background_texture)
         .observe(on_current_game_level_changed)

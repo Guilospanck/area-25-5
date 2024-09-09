@@ -117,7 +117,10 @@ pub struct OnUpdatePowerUI {
 }
 
 #[derive(Event)]
-pub struct MaybeSpawnEnergyPack;
+pub struct MaybeSpawnHealthPack;
+
+#[derive(Event)]
+pub struct MaybeSpawnManaPack;
 
 #[derive(Event)]
 pub struct GameOver;
@@ -787,7 +790,8 @@ pub fn remove_outdated_buffs(
         match &buff_group.item {
             crate::ItemTypeEnum::Speed(_)
             | crate::ItemTypeEnum::Armor(_)
-            | crate::ItemTypeEnum::Health(_) => false,
+            | crate::ItemTypeEnum::Health(_)
+            | crate::ItemTypeEnum::Mana(_) => false,
             crate::ItemTypeEnum::Shield(shield) => {
                 if shield.duration_seconds.is_none() {
                     return false;
@@ -1490,7 +1494,7 @@ pub fn on_window_resize(
 }
 
 pub fn maybe_spawn_health_points_pack(
-    _trigger: Trigger<MaybeSpawnEnergyPack>,
+    _trigger: Trigger<MaybeSpawnHealthPack>,
     mut commands: Commands,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: Res<SpritesResources>,
@@ -1501,13 +1505,38 @@ pub fn maybe_spawn_health_points_pack(
     let quantity = 1;
     let level = current_game_level.0;
 
-    if chance > CHANCE_TO_SPAWN_HEALTH_POINTS_PACK {
+    if chance < CHANCE_TO_SPAWN_HEALTH_POINTS_PACK {
         spawn_item(
             &mut commands,
             &mut texture_atlas_layout,
             &sprites,
             &asset_server,
             ItemTypeEnum::Health(crate::Health(10.)),
+            quantity,
+            level,
+        );
+    }
+}
+
+pub fn maybe_spawn_mana_points_pack(
+    _trigger: Trigger<MaybeSpawnManaPack>,
+    mut commands: Commands,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
+    sprites: Res<SpritesResources>,
+    current_game_level: Res<CurrentGameLevel>,
+    asset_server: Res<AssetServer>,
+) {
+    let chance = get_random_chance();
+    let quantity = 1;
+    let level = current_game_level.0;
+
+    if chance < CHANCE_TO_SPAWN_MANA_POINTS_PACK {
+        spawn_item(
+            &mut commands,
+            &mut texture_atlas_layout,
+            &sprites,
+            &asset_server,
+            ItemTypeEnum::Mana(crate::Mana(10.)),
             quantity,
             level,
         );
