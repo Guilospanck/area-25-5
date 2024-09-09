@@ -47,7 +47,7 @@ pub struct Sprites<'a> {
     pub arrow: SpriteInfo<'a>,
     pub magic_ball: SpriteInfo<'a>,
     // items
-    pub speed_potion: SpriteInfo<'a>,
+    pub mana_potion: SpriteInfo<'a>,
     pub lightning: SpriteInfo<'a>,
     pub shield: SpriteInfo<'a>,
     pub hp_pack: SpriteInfo<'a>,

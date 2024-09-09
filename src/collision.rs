@@ -8,9 +8,9 @@ use crate::{
     prelude::*,
     util::EquippedTypeEnum,
     AllEnemiesDied, Armor, BaseCamera, Buff, BuffAdded, BuffBundle, BuffGroup, BuffGroupBundle,
-    Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser, MaybeSpawnEnergyPack,
-    PlayerHitAudioTimeout, Power, ScoreChanged, Speed, SpritesResources, UpdateAliveEnemiesUI,
-    Weapon, WeaponFound,
+    Damage, EnemyHealthChanged, GameOver, Health, ItemTypeEnum, Laser, Mana, MaybeSpawnHealthPack,
+    MaybeSpawnManaPack, PlayerHitAudioTimeout, PlayerManaChanged, Power, ScoreChanged, Speed,
+    SpritesResources, UpdateAliveEnemiesUI, Weapon, WeaponFound,
 };
 use bevy::math::bounding::BoundingVolume;
 
@@ -51,9 +51,10 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
 
             match &player_buff.item {
                 // Speed and armor do not deal damage to the enemies
-                ItemTypeEnum::Speed(_) | ItemTypeEnum::Armor(_) | ItemTypeEnum::Health(_) => {
-                    continue
-                }
+                ItemTypeEnum::Speed(_)
+                | ItemTypeEnum::Armor(_)
+                | ItemTypeEnum::Health(_)
+                | ItemTypeEnum::Mana(_) => continue,
                 ItemTypeEnum::Shield(shield) => {
                     if shield.offensive == 0. {
                         continue;
@@ -290,7 +291,17 @@ pub fn check_for_item_collisions(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     sprites: Res<SpritesResources>,
 
-    mut player: Query<(&Transform, &mut Speed, &mut Armor, Entity, &mut Health), With<Player>>,
+    mut player: Query<
+        (
+            &Transform,
+            &mut Speed,
+            &mut Armor,
+            Entity,
+            &mut Health,
+            &mut Mana,
+        ),
+        With<Player>,
+    >,
     items: Query<(Entity, &Transform, &Item)>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
@@ -304,6 +315,7 @@ pub fn check_for_item_collisions(
         mut player_armor,
         player_entity,
         mut player_health,
+        mut player_mana,
     )) = player.get_single_mut()
     else {
         return;
@@ -342,6 +354,19 @@ pub fn check_for_item_collisions(
 
                     commands.trigger(PlayerHealthChanged {
                         health: player_health.0,
+                    });
+                }
+                ItemTypeEnum::Mana(mana) => {
+                    let mut new_mana = player_mana.0 + mana.0;
+
+                    if new_mana > PLAYER_MANA {
+                        new_mana = PLAYER_MANA;
+                    }
+
+                    player_mana.0 = new_mana;
+
+                    commands.trigger(PlayerManaChanged {
+                        mana: player_mana.0,
                     });
                 }
                 ItemTypeEnum::Shield(shield) => {
@@ -610,7 +635,8 @@ fn damage_enemy(
             score: enemy_damage.0,
         });
 
-        commands.trigger(MaybeSpawnEnergyPack);
+        commands.trigger(MaybeSpawnHealthPack);
+        commands.trigger(MaybeSpawnManaPack);
         commands.trigger(UpdateAliveEnemiesUI);
     }
 
