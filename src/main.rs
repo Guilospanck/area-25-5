@@ -22,7 +22,10 @@ fn main() {
             .set(WindowPlugin {
                 primary_window: Some(Window {
                     title: "Area 25.5".into(),
-                    resolution: WindowResolution::new(1600., 900.),
+                    resolution: WindowResolution::new(
+                        INITIAL_WINDOW_RESOLUTION.x_px,
+                        INITIAL_WINDOW_RESOLUTION.y_px,
+                    ),
                     name: Some("area_25_5.app".into()),
                     // Tells Wasm not to override default event handling, like F5, Ctrl+R etc.
                     prevent_default_event_handling: false,
@@ -112,6 +115,7 @@ fn main() {
                 animate_sprite,
                 move_laser_power,
                 move_enemies_towards_player,
+                get_mouse_cursor_position,
             )
                 .in_set(MoveSet),
         )
@@ -119,9 +123,10 @@ fn main() {
             FixedUpdate,
             (
                 move_player,
-                handle_click,
+                handle_click.run_if(single_ammo_shooting),
                 handle_show_player_stats_ui,
                 power_up,
+                enable_disable_autoshooting,
             )
                 .in_set(InputSet),
         )
@@ -175,6 +180,7 @@ fn main() {
                 change_enemy_direction.run_if(on_timer(Duration::from_secs(5))),
                 shoot_at_player.run_if(on_timer(Duration::from_secs(2))),
                 make_boss_spawn_enemies.run_if(on_timer(Duration::from_secs(10))),
+                auto_shoot.run_if(on_timer(Duration::from_millis(200))),
             )
                 .in_set(TimeBasedSet),
         )

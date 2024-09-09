@@ -5,9 +5,10 @@ use crate::{
     prelude::*,
     spawn_orc_enemy, spawn_player_stats_ui, spawn_power,
     util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
-    AmmoBundle, Armor, BaseCamera, CurrentBoss, Damage, Health, Mana, PlayAgainButton,
-    PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
-    SpritesResources, StartGameButton, UpdateAliveEnemiesUI, Weapon, WindowResolutionResource,
+    AmmoBundle, Armor, AutoShootingEnabled, BaseCamera, CurrentBoss, Damage, Health, Mana,
+    MouseDirectionWhenAutoShooting, PlayAgainButton, PlayerManaChanged, PlayerStatsUI, Power,
+    RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, UpdateAliveEnemiesUI,
+    Weapon, WindowResolutionResource,
 };
 
 pub fn change_enemy_direction(
@@ -326,6 +327,65 @@ pub fn handle_click(
         if mouse_button_input.just_pressed(MouseButton::Left) {
             commands.trigger(ShootBullets { pos });
         }
+    }
+}
+
+pub fn auto_shoot(
+    mut commands: Commands,
+    mouse_direction_when_auto_shooting: Res<MouseDirectionWhenAutoShooting>,
+    autoshooting: Res<AutoShootingEnabled>,
+) {
+    if autoshooting.0 {
+        commands.trigger(ShootBullets {
+            pos: Vec2::new(
+                mouse_direction_when_auto_shooting.x_px,
+                mouse_direction_when_auto_shooting.y_px,
+            ),
+        });
+    }
+}
+
+/// Mouse positions are based on top-left corner coordinate system.
+/// 0 --------x
+/// |
+/// |
+/// |
+/// |
+/// y
+///
+pub fn get_mouse_cursor_position(
+    mut evr_cursor: EventReader<CursorMoved>,
+    camera: Query<(&Camera, &GlobalTransform, &BaseCamera)>,
+    windows: Query<&Window>,
+    mut mouse_direction_when_auto_shooting: ResMut<MouseDirectionWhenAutoShooting>,
+) {
+    for ev in evr_cursor.read() {
+        mouse_direction_when_auto_shooting.x_px = ev.position.x;
+        mouse_direction_when_auto_shooting.y_px = ev.position.y;
+
+        let (camera, camera_transform, _) = camera.single();
+        if let Some(pos) = windows
+            .single()
+            .cursor_position()
+            .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+            .map(|ray| ray.origin.truncate())
+        {
+            mouse_direction_when_auto_shooting.x_px = pos.x;
+            mouse_direction_when_auto_shooting.y_px = pos.y;
+        }
+    }
+}
+
+pub fn single_ammo_shooting(autoshooting: Res<AutoShootingEnabled>) -> bool {
+    !autoshooting.0
+}
+
+pub fn enable_disable_autoshooting(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut autoshooting: ResMut<AutoShootingEnabled>,
+) {
+    if keyboard_input.any_just_pressed([KeyCode::KeyM].into_iter()) {
+        autoshooting.0 = !autoshooting.0;
     }
 }
 

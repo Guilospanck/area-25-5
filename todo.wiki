@@ -104,7 +104,11 @@ as the time passes (cooldown)
 - [x] Show number of alive enemies on the screen
 - [x] Increase HP as the time passes (health regen)
 - [x] Add resources to increase mana points
+- [x] Add a pause screen
+- [x] Make an auto-shooting
 - [ ] Change collision from capsule to Ammo and Weapon sizes
+
+Mostly Art:
 - [ ] Create different specific characteristics for each boss
 - [ ] Change resources for each level (background and bosses)
 
@@ -122,7 +126,6 @@ Backlog:
 - [ ] Create temporary powers
 - [ ] Add the possiblity to improve weapons and powers with "money"
 - [ ] Create an item in which the player gains invisibility for some time
-- [ ] Make an auto-shooting
 - [ ] Differentiate between physical and magical damage (armor shield)
 
 
@@ -132,7 +135,6 @@ MAYBE
 - [ ] Remove source and ammo_source from WeaponType struct
 - [ ] Add information about next wave (and some pause maybe)
 - [ ] Maybe despawn shields when they hit opponent
-- [x] Add a pause screen
 - [ ] Suicide bomb
 
 HISTORY:
