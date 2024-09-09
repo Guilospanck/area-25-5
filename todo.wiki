@@ -101,9 +101,12 @@ as the time passes (cooldown)
 	- [x] Add pause between spawnings
 - [x] Have a pause between levels
 - [x] Check if powers are being upgraded
-- [ ] Show number of alive enemies on the screen
+- [x] Show number of alive enemies on the screen
+- [x] Increase HP as the time passes (health regen)
 - [ ] Change collision from capsule to Ammo and Weapon sizes
 - [ ] Create different specific characteristics for each boss
+- [ ] Add resources to increase mana points
+- [ ] Change resources for each level (background and bosses)
 
 Ongoing:
 - [-] Spawn different weapons (Still need more)
@@ -118,9 +121,9 @@ Backlog:
 - [ ] Player should be able to "buy" the weapons after each level
 - [ ] Create temporary powers
 - [ ] Add the possiblity to improve weapons and powers with "money"
-- [ ] Add resources to increase mana points
 - [ ] Create an item in which the player gains invisibility for some time
 - [ ] Make an auto-shooting
+- [ ] Differentiate between physical and magical damage (armor shield)
 
 
 MAYBE

@@ -21,10 +21,11 @@ use crate::{
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
     CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves,
-    GameOverOverlay, GameState, GameWonOverlay, HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana,
-    ManaBarUI, MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power, PowerLevelUI,
-    PowerLevels, PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed, SpritesResources,
-    TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves, WindowResolutionResource,
+    GameOverOverlay, GameState, GameWonOverlay, Health, HealthBarUI, Item, ItemTypeEnum, ItemWaves,
+    Mana, ManaBarUI, MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
+    PowerLevelUI, PowerLevels, PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed,
+    SpritesResources, TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
+    WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -839,6 +840,20 @@ pub fn remove_outdated_buffs(
                 .despawn_recursive();
         }
     }
+}
+
+pub fn refill_health(mut commands: Commands, mut player: Query<&mut Health, With<Player>>) {
+    let Ok(mut player_health) = player.get_single_mut() else {
+        return;
+    };
+
+    if player_health.0 < PLAYER_HEALTH {
+        player_health.0 += 1.0;
+    }
+
+    commands.trigger(PlayerHealthChanged {
+        health: player_health.0,
+    });
 }
 
 pub fn refill_mana(mut commands: Commands, mut player: Query<&mut Mana, With<Player>>) {
