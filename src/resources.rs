@@ -27,6 +27,9 @@ pub struct CurrentTime {
 }
 
 #[derive(Resource)]
+pub struct AutoShootingEnabled(pub bool);
+
+#[derive(Resource)]
 pub struct EnemyWaves(pub [EnemyByWave; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
@@ -59,6 +62,12 @@ pub struct WindowResolutionResource {
     pub y_px: f32,
 }
 
+#[derive(Resource)]
+pub struct MouseDirectionWhenAutoShooting {
+    pub x_px: f32,
+    pub y_px: f32,
+}
+
 pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
     let window = windows.single();
 
@@ -71,6 +80,11 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
     commands.insert_resource(PowerLevels(POWERS_PER_LEVEL));
     commands.insert_resource(SpritesResources(get_sprites()));
     commands.insert_resource(CurrentScore(0.));
+    commands.insert_resource(AutoShootingEnabled(false));
+    commands.insert_resource(MouseDirectionWhenAutoShooting {
+        x_px: 0.0,
+        y_px: 0.0,
+    });
     commands.insert_resource(CurrentTime {
         minutes: 0,
         seconds: 30,
