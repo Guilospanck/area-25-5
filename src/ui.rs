@@ -91,9 +91,6 @@ pub struct GameOverOverlay;
 pub struct GameWonOverlay;
 
 #[derive(Component)]
-pub struct InBetweenWavesPauseOverlay;
-
-#[derive(Component)]
 pub struct InBetweenLevelsPauseOverlay;
 
 const MAX_VALUE_BAR: f32 = 100.0;
@@ -1037,15 +1034,6 @@ pub fn game_won_screen(
     );
 }
 
-pub fn in_between_waves_pause_screen(
-    commands: Commands,
-    asset_server: Res<AssetServer>,
-    current_wave: Res<CurrentWave>,
-) {
-    let title = &format!("Incoming #{} wave...", current_wave.0);
-    _pause_screen(commands, asset_server, title, InBetweenWavesPauseOverlay);
-}
-
 pub fn in_between_levels_pause_screen(
     commands: Commands,
     asset_server: Res<AssetServer>,
@@ -1077,16 +1065,6 @@ fn _pause_screen<T: Component>(
         vec![one],
         Color::srgba(0.1, 0.1, 0.1, 0.1).into(),
     );
-}
-
-pub fn despawn_in_between_waves_pause_screen(
-    commands: Commands,
-    query: Query<Entity, With<InBetweenWavesPauseOverlay>>,
-    player_state: Res<State<GameState>>,
-    next_state: ResMut<NextState<GameState>>,
-) {
-    let pause_entity = query.get_single().unwrap();
-    _despawn_pause_screen(commands, pause_entity, player_state, next_state);
 }
 
 pub fn despawn_in_between_levels_pause_screen(

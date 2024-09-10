@@ -54,6 +54,7 @@ pub fn check_for_offensive_buff_collisions_with_enemy(
                 ItemTypeEnum::Speed(_)
                 | ItemTypeEnum::Armor(_)
                 | ItemTypeEnum::Health(_)
+                | ItemTypeEnum::Invisibility(_)
                 | ItemTypeEnum::Mana(_) => continue,
                 ItemTypeEnum::Shield(shield) => {
                     if shield.offensive == 0. {
@@ -245,16 +246,22 @@ pub fn check_for_player_collisions_to_enemy(
     time: Res<Time>,
     mut audio_timeout: ResMut<PlayerHitAudioTimeout>,
     mut enemies: Query<(&Transform, &Damage, &Enemy), With<Enemy>>,
-    mut player: Query<(&Transform, &mut Health, &Armor), With<Player>>,
+    mut player: Query<(&Transform, &Sprite, &mut Health, &Armor), With<Player>>,
     base_camera: Query<(&Transform, &BaseCamera), Without<Player>>,
 ) {
-    let Ok((player_transform, mut player_health, player_armor)) = player.get_single_mut() else {
+    let Ok((player_transform, player_sprite, mut player_health, player_armor)) =
+        player.get_single_mut()
+    else {
         return;
     };
 
     let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
     };
+
+    if !player_sprite.color.is_fully_opaque() {
+        return;
+    }
 
     // This gets the current player position on the world based on his
     // screen position.
@@ -299,6 +306,7 @@ pub fn check_for_item_collisions(
             Entity,
             &mut Health,
             &mut Mana,
+            &mut Sprite,
         ),
         With<Player>,
     >,
@@ -316,6 +324,7 @@ pub fn check_for_item_collisions(
         player_entity,
         mut player_health,
         mut player_mana,
+        mut player_sprite,
     )) = player.get_single_mut()
     else {
         return;
@@ -379,6 +388,7 @@ pub fn check_for_item_collisions(
                     let layer = PLAYER_LAYER;
                     let scale = Vec3::splat(0.5);
                     let pos = Vec3::new(RADIUS_FROM_PLAYER, RADIUS_FROM_PLAYER, 0.0);
+                    let visibility = Visibility::Visible;
 
                     let buff_group_bundle =
                         BuffGroupBundle::new(item.item_type.clone(), layer.clone());
@@ -394,9 +404,47 @@ pub fn check_for_item_collisions(
                                     pos,
                                     item.item_type.clone(),
                                     layer.clone(),
+                                    visibility,
                                 );
                                 parent.spawn(buff_bundle);
                             }
+                        });
+                    });
+                }
+                ItemTypeEnum::Invisibility(_invisibility) => {
+                    // make player "invisible"
+                    let mut player_color = player_sprite.color.to_srgba();
+                    player_color.alpha = 0.5;
+
+                    player_sprite.color = Color::srgba(
+                        player_color.red,
+                        player_color.green,
+                        player_color.blue,
+                        player_color.alpha,
+                    );
+
+                    // Add new buff to player
+                    let layer = PLAYER_LAYER;
+                    let scale = Vec3::splat(0.5);
+                    let pos = Vec3::splat(0.0);
+                    let visibility = Visibility::Hidden;
+
+                    let buff_group_bundle =
+                        BuffGroupBundle::new(item.item_type.clone(), layer.clone());
+
+                    commands.entity(player_entity).with_children(|parent| {
+                        parent.spawn(buff_group_bundle).with_children(|parent| {
+                            let buff_bundle = BuffBundle::new(
+                                &mut texture_atlas_layout,
+                                &sprites,
+                                &asset_server,
+                                scale,
+                                pos,
+                                item.item_type.clone(),
+                                layer.clone(),
+                                visibility,
+                            );
+                            parent.spawn(buff_bundle);
                         });
                     });
                 }

@@ -106,7 +106,20 @@ as the time passes (cooldown)
 - [x] Add resources to increase mana points
 - [x] Add a pause screen
 - [x] Make an auto-shooting
-- [ ] Change collision from capsule to Ammo and Weapon sizes
+- [x] Create an item in which the player gains invisibility for some time
+- [x] Add information about next wave (and some pause maybe)
+
+Epic:
+- [ ] Player should be able to "buy" the weapons after each level
+	- [ ] Add concept of "gold" (the points?)
+	- [ ] Create UI that will show (un)locked weapons after each level,
+	giving the player the opportunity to improve its weapon or buy a different one.
+	- [ ] Implement the buying feature
+	- [ ] No longer spawn weapons on the game
+
+- [ ] Implement market (weapons, items, powers. player stats)
+
+
 
 Mostly Art:
 - [ ] Create different specific characteristics for each boss
@@ -119,21 +132,22 @@ Ongoing:
 - [-] Add effects (sparkles, explosions)
 - [-] Spawn more waves
 
+
+
 Backlog:
 - [ ] Add proper audio and game sound
+- [ ] Change collision from capsule to Ammo and Weapon sizes
 - [ ] Improve rendering of circle
-- [ ] Player should be able to "buy" the weapons after each level
 - [ ] Create temporary powers
 - [ ] Add the possiblity to improve weapons and powers with "money"
-- [ ] Create an item in which the player gains invisibility for some time
 - [ ] Differentiate between physical and magical damage (armor shield)
+- [ ] Improve game efficiency
 
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING
 - [ ] Limit spawn of bullets to not be too close
 - [ ] Remove source and ammo_source from WeaponType struct
-- [ ] Add information about next wave (and some pause maybe)
 - [ ] Maybe despawn shields when they hit opponent
 - [ ] Suicide bomb
 
