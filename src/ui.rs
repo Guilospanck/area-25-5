@@ -1,11 +1,10 @@
 use bevy::{
     color::palettes::css::YELLOW,
-    log::tracing_subscriber::fmt::format,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 
 use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, CurrentWave, GameState,
+    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, GameState,
     ItemTypeEnum, PlayerProfileUISet, SpawnEntitiesForNewWave,
 };
 

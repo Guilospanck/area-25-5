@@ -4,8 +4,8 @@ use super::*;
 
 pub(crate) const ITEM_RANDOM_SEED: u64 = 1937836746771;
 pub(crate) const ITEM_SPRITE_SIZE: u8 = 32;
-pub(crate) const CHANCE_TO_SPAWN_HEALTH_POINTS_PACK: f32 = 0.7;
-pub(crate) const CHANCE_TO_SPAWN_MANA_POINTS_PACK: f32 = 0.6;
+pub(crate) const CHANCE_TO_SPAWN_HEALTH_POINTS_PACK: f32 = 0.4;
+pub(crate) const CHANCE_TO_SPAWN_MANA_POINTS_PACK: f32 = 0.4;
 pub(crate) const ITEM_BASE_MULTIPLIER_BASED_ON_LEVEL: f32 = 0.2;
 
 #[cfg_attr(

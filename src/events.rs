@@ -8,7 +8,7 @@ use crate::{
     game_actions::shoot_at_enemies,
     player::Player,
     prelude::*,
-    render_background_texture, reset_initial_state, setup_player, setup_ui, spawn_boss,
+    render_background_texture, spawn_boss,
     spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
     spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
@@ -19,9 +19,8 @@ use crate::{
     },
     AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
     ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
-    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves,
-    GameOverOverlay, GameState, GameWonOverlay, Health, HealthBarUI, Item, ItemTypeEnum, ItemWaves,
-    Mana, ManaBarUI, MenuOverlay, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
+    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves, GameState, Health, HealthBarUI, Item, ItemTypeEnum, ItemWaves,
+    Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
     PowerLevelUI, PowerLevels, PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed,
     SpritesResources, TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
     WindowResolutionResource,
@@ -685,6 +684,7 @@ pub fn on_current_wave_changed(
     items: Query<(Entity, &Item), With<Item>>,
 
     mut next_state: ResMut<NextState<GameState>>,
+    player_state: Res<State<GameState>>,
 ) {
     // Despawn items and weapons that were spawned on the map
     for (item_entity, item) in items.iter() {
@@ -703,6 +703,12 @@ pub fn on_current_wave_changed(
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
     }
+
+    if *player_state.get() != GameState::Alive {
+        next_state.set(GameState::Alive);
+    }
+
+    commands.trigger(SpawnEntitiesForNewWave);
 }
 
 pub fn on_game_over(
