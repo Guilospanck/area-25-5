@@ -4,9 +4,8 @@ use bevy::{sprite::Mesh2dHandle, window::WindowResized};
 
 use crate::{
     audio::hit_weapon_audio,
-    cleanup_system, equip_player_with_power,
+    equip_player_with_power,
     game_actions::shoot_at_enemies,
-    in_between_waves_pause_screen,
     player::Player,
     prelude::*,
     render_background_texture, reset_initial_state, setup_player, setup_ui, spawn_boss,
@@ -704,14 +703,6 @@ pub fn on_current_wave_changed(
     if let Ok((mut text, _)) = current_wave_ui.get_single_mut() {
         text.sections.first_mut().unwrap().value = format!("Wave #{}", current_wave.0);
     }
-
-    // Only show the in-between pause screen if it is from the second
-    // wave onwards, as for the first wave we have the `starting game`
-    // and the `next level` parts
-    if new_wave != 1 {
-        // spawn the in-between wave pause screen
-        next_state.set(GameState::InBetweenWaves);
-    }
 }
 
 pub fn on_game_over(
@@ -775,15 +766,17 @@ pub fn tick_timer(mut commands: Commands, mut current_time: ResMut<CurrentTime>)
 
 pub fn remove_outdated_buffs(
     mut commands: Commands,
-    mut player: Query<(&mut Speed, &mut Armor, &Children), With<Player>>,
+    mut player: Query<(&mut Speed, &mut Armor, &mut Sprite, &Children), With<Player>>,
     player_buff_group_query: Query<(Entity, &BuffGroup)>,
 ) {
-    let Ok((_, mut player_armor, player_children)) = player.get_single_mut() else {
+    let Ok((_, mut player_armor, mut player_sprite, player_children)) = player.get_single_mut()
+    else {
         return;
     };
 
     let should_be_despawned = |buff_group: BuffGroup,
                                player_armor: &mut Armor,
+                               player_sprite: &mut Sprite,
                                commands: &mut Commands,
                                buff_ui_despawned: Option<ItemTypeEnum>|
      -> bool {
@@ -819,6 +812,35 @@ pub fn remove_outdated_buffs(
 
                 has_passed
             }
+            crate::ItemTypeEnum::Invisibility(invisibility) => {
+                let start_time = buff_group.start_time;
+                let end_time = Utc::now().time();
+                let diff = end_time - start_time;
+
+                let has_passed =
+                    diff.num_seconds() > invisibility.duration_seconds.try_into().unwrap();
+
+                if has_passed {
+                    // update player transparency
+                    let mut player_color = player_sprite.color.to_srgba();
+                    player_color.alpha = 1.0;
+
+                    player_sprite.color = Color::srgba(
+                        player_color.red,
+                        player_color.green,
+                        player_color.blue,
+                        player_color.alpha,
+                    );
+
+                    if buff_ui_despawned.is_none() {
+                        commands.trigger(BuffUIRemove {
+                            item_type: buff_group.item.clone(),
+                        });
+                    }
+                }
+
+                has_passed
+            }
         }
     };
 
@@ -832,6 +854,7 @@ pub fn remove_outdated_buffs(
         if should_be_despawned(
             player_buff_group.clone(),
             &mut player_armor,
+            &mut player_sprite,
             &mut commands,
             buff_group_ui_despawned.clone(),
         ) {
@@ -1068,6 +1091,7 @@ pub fn on_buff_added(
         match (&buff_type, &item_type) {
             (ItemTypeEnum::Speed(_), ItemTypeEnum::Speed(_))
             | (ItemTypeEnum::Armor(_), ItemTypeEnum::Armor(_))
+            | (ItemTypeEnum::Invisibility(_), ItemTypeEnum::Invisibility(_))
             | (ItemTypeEnum::Shield(_), ItemTypeEnum::Shield(_)) => {
                 buff_counter += 1;
             }
@@ -1235,6 +1259,26 @@ pub fn on_buff_remove_ui(
 
                 break;
             }
+            (ItemTypeEnum::Invisibility(_), ItemTypeEnum::Invisibility(_)) => {
+                if current_buff_counter == 1 {
+                    commands.entity(buff_ui_entity).despawn_recursive();
+                } else {
+                    // remove one counter from UI and from buff
+                    buff_ui.counter -= 1;
+
+                    for &buff_ui_child in buff_ui_children {
+                        let Ok(mut buff_ui_counter_text) = buff_ui_text.get_mut(buff_ui_child)
+                        else {
+                            continue;
+                        };
+
+                        buff_ui_counter_text.sections.first_mut().unwrap().value =
+                            format!("x{}", current_buff_counter - 1);
+                    }
+                }
+
+                break;
+            }
             _ => continue,
         };
     }
@@ -1286,6 +1330,10 @@ pub fn on_buff_add_ui(
         ItemTypeEnum::Armor(armor) => {
             get_item_sprite_based_on_item_type(ItemTypeEnum::Armor(armor.clone()).clone(), &sprites)
         }
+        ItemTypeEnum::Invisibility(invisibility) => get_item_sprite_based_on_item_type(
+            ItemTypeEnum::Invisibility(invisibility.clone()).clone(),
+            &sprites,
+        ),
         ItemTypeEnum::Shield(shield) => get_item_sprite_based_on_item_type(
             ItemTypeEnum::Shield(shield.clone()).clone(),
             &sprites,

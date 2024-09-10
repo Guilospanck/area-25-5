@@ -1,6 +1,6 @@
 use crate::{
-    prelude::*, Armor, Health, ItemTypeEnum, Mana, PowerTypeEnum, Shield, Speed, SpriteInfo,
-    SpritesResources,
+    prelude::*, Armor, Health, Invisibility, ItemTypeEnum, Mana, PowerTypeEnum, Shield, Speed,
+    SpriteInfo, SpritesResources,
 };
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -84,6 +84,7 @@ pub(crate) fn get_item_sprite_based_on_item_type(
         ItemTypeEnum::Shield(_) => sprites.0.diamond.clone(),
         ItemTypeEnum::Health(_) => sprites.0.hp_pack.clone(),
         ItemTypeEnum::Mana(_) => sprites.0.mana_potion.clone(),
+        ItemTypeEnum::Invisibility(_) => sprites.0.invisibility.clone(),
     }
 }
 
@@ -167,6 +168,9 @@ pub(crate) fn get_item_based_on_game_level(item_type: ItemTypeEnum, level: u16) 
         ItemTypeEnum::Mana(Mana(mana)) => {
             let new_mana = mana * multiplier;
             ItemTypeEnum::Mana(crate::Mana(new_mana))
+        }
+        ItemTypeEnum::Invisibility(Invisibility { duration_seconds }) => {
+            ItemTypeEnum::Invisibility(crate::Invisibility { duration_seconds })
         }
     }
 }

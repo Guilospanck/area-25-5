@@ -1,7 +1,6 @@
 use crate::{
     animation::*, prelude::*, spawn_health_bar, sprites::Sprites, AmmoBundle, Armor,
-    CleanupWhenPlayerDies, GameState, Health, Mana, PlayerSpawned, Speed, SpritesResources,
-    WeaponBundle,
+    CleanupWhenPlayerDies, Health, Mana, PlayerSpawned, Speed, SpritesResources, WeaponBundle,
 };
 
 #[derive(Component, Debug, Clone)]

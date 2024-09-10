@@ -52,6 +52,7 @@ pub struct Sprites<'a> {
     pub shield: SpriteInfo<'a>,
     pub hp_pack: SpriteInfo<'a>,
     pub diamond: SpriteInfo<'a>,
+    pub invisibility: SpriteInfo<'a>,
     // ui
     pub profile: SpriteInfo<'a>,
     // powers

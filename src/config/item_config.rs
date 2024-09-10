@@ -1,4 +1,4 @@
-use crate::{Armor, ItemTypeEnum, Shield, Speed};
+use crate::{Armor, Invisibility, ItemTypeEnum, Shield, Speed};
 
 use super::*;
 
@@ -19,6 +19,7 @@ pub enum ItemStatsType {
     Speed,
     Armor,
     Shield,
+    Invisibility,
 }
 
 #[derive(Debug, Clone)]
@@ -42,14 +43,11 @@ const ITEM_WAVE_1: ItemType = ItemType {
 };
 
 const ITEM_WAVE_2: ItemType = ItemType {
-    source: "textures/Items/Diamond.png",
-    item_type: ItemTypeEnum::Shield(Shield {
-        offensive: 0.01,
-        defensive: 10.0,
-        shield_type: crate::ShieldType::Physical,
-        duration_seconds: Some(20),
+    source: "textures/Items/invisibility.png",
+    item_type: ItemTypeEnum::Invisibility(Invisibility {
+        duration_seconds: 9,
     }),
-    item_stats_type: ItemStatsType::Shield,
+    item_stats_type: ItemStatsType::Invisibility,
 };
 
 const ITEM_WAVE_3: ItemType = ItemType {
@@ -84,7 +82,7 @@ pub const ITEMS_PER_WAVE: [ItemByWave; NUMBER_OF_WAVES] = [
     ItemByWave {
         wave: 2,
         item: ITEM_WAVE_2,
-        quantity: 2,
+        quantity: 1,
     },
     ItemByWave {
         wave: 3,

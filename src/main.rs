@@ -147,10 +147,6 @@ fn main() {
         .add_systems(OnEnter(GameState::Dead), game_over_screen)
         .add_systems(OnEnter(GameState::Won), game_won_screen)
         .add_systems(
-            OnEnter(GameState::InBetweenWaves),
-            in_between_waves_pause_screen,
-        )
-        .add_systems(
             OnEnter(GameState::InBetweenLevels),
             in_between_levels_pause_screen,
         )
@@ -160,9 +156,6 @@ fn main() {
                 handle_start_game_click.run_if(in_state(GameState::Menu)),
                 handle_restart_click.run_if(in_state(GameState::Dead)),
                 handle_play_again_click.run_if(in_state(GameState::Won)),
-                despawn_in_between_waves_pause_screen
-                    .run_if(in_state(GameState::InBetweenWaves))
-                    .run_if(on_timer(Duration::from_secs(PAUSE_IN_BETWEEN_WAVES))),
                 despawn_in_between_levels_pause_screen
                     .run_if(in_state(GameState::InBetweenLevels))
                     .run_if(on_timer(Duration::from_secs(PAUSE_IN_BETWEEN_LEVELS))),

@@ -35,6 +35,16 @@ pub struct Shield {
     pub duration_seconds: Option<u64>,
 }
 
+#[cfg_attr(
+    not(feature = "web"),
+    derive(Reflect, Component, Default, Debug, Clone)
+)]
+#[cfg_attr(not(feature = "web"), reflect(Component))]
+#[cfg_attr(feature = "web", derive(Component, Default, Debug, Clone))]
+pub struct Invisibility {
+    pub duration_seconds: u64,
+}
+
 #[cfg_attr(not(feature = "web"), derive(Reflect, Component, Debug, Clone))]
 #[cfg_attr(not(feature = "web"), reflect(Component))]
 #[cfg_attr(feature = "web", derive(Component, Debug, Clone))]
@@ -44,6 +54,7 @@ pub enum ItemTypeEnum {
     Shield(Shield),
     Health(Health),
     Mana(Mana),
+    Invisibility(Invisibility),
 }
 
 impl Default for ItemTypeEnum {
@@ -122,6 +133,7 @@ impl BuffBundle {
         pos: Vec3,
         item_type: ItemTypeEnum,
         layer: RenderLayers,
+        visibility: Visibility,
     ) -> Self {
         Self::_util(
             texture_atlas_layout,
@@ -131,6 +143,7 @@ impl BuffBundle {
             pos,
             item_type,
             layer,
+            visibility,
         )
     }
 
@@ -142,6 +155,7 @@ impl BuffBundle {
         pos: Vec3,
         item_type: ItemTypeEnum,
         layer: RenderLayers,
+        visibility: Visibility,
     ) -> Self {
         let item_sprite = get_item_sprite_based_on_item_type(item_type.clone(), sprites);
         let item_animation = item_sprite.animation.unwrap();
@@ -163,6 +177,7 @@ impl BuffBundle {
                     translation: pos,
                     scale,
                 },
+                visibility,
                 ..default()
             },
             atlas: TextureAtlas {
