@@ -108,15 +108,7 @@ as the time passes (cooldown)
 - [x] Make an auto-shooting
 - [x] Create an item in which the player gains invisibility for some time
 - [x] Add information about next wave (and some pause maybe)
-
-Epic:
-- [ ] Player should be able to "buy" the weapons after each level
-	- [ ] Add concept of "gold" (the points?)
-	- [ ] Create UI that will show (un)locked weapons after each level,
-	giving the player the opportunity to improve its weapon or buy a different one.
-	- [ ] Implement the buying feature
-	- [ ] No longer spawn weapons on the game
-
+- [x] (BUG) Make enemies go to random places when player is invisible
 - [ ] Implement market (weapons, items, powers. player stats)
 
 
@@ -141,7 +133,7 @@ Backlog:
 - [ ] Create temporary powers
 - [ ] Add the possiblity to improve weapons and powers with "money"
 - [ ] Differentiate between physical and magical damage (armor shield)
-- [ ] Improve game efficiency
+- [ ] Optimise game
 
 
 MAYBE

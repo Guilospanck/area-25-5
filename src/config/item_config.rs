@@ -45,7 +45,7 @@ const ITEM_WAVE_1: ItemType = ItemType {
 const ITEM_WAVE_2: ItemType = ItemType {
     source: "textures/Items/invisibility.png",
     item_type: ItemTypeEnum::Invisibility(Invisibility {
-        duration_seconds: 9,
+        duration_seconds: 10,
     }),
     item_stats_type: ItemStatsType::Invisibility,
 };

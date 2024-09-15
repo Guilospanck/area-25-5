@@ -57,19 +57,23 @@ pub fn move_enemies_towards_player(
         (With<Enemy>, Without<Player>, Without<BaseCamera>),
     >,
     time: Res<Time>,
-    player: Query<(&Transform, &Player), (With<Player>, Without<BaseCamera>, Without<Enemy>)>,
+    player: Query<
+        (&Transform, &Sprite, &Player),
+        (With<Player>, Without<BaseCamera>, Without<Enemy>),
+    >,
     base_camera: Query<
         (&Transform, &BaseCamera),
         (With<BaseCamera>, Without<Player>, Without<Enemy>),
     >,
 ) {
-    let mut position = match player.get_single() {
-        Ok(player_position) => Vec2::new(
-            player_position.0.translation.x,
-            player_position.0.translation.y,
-        ),
-        Err(_) => Vec2::splat(0.),
+    let Ok((player_transform, player_sprite, _)) = player.get_single() else {
+        return;
     };
+
+    let mut position = Vec2::new(
+        player_transform.translation.x,
+        player_transform.translation.y,
+    );
 
     let Ok((base_camera_transform, _)) = base_camera.get_single() else {
         return;
@@ -79,6 +83,9 @@ pub fn move_enemies_towards_player(
         position.x + base_camera_transform.translation.x,
         position.y + base_camera_transform.translation.y,
     );
+
+    // check for player visibility
+    let is_player_visible = player_sprite.color.is_fully_opaque();
 
     let limit_x_left =
         (-BACKGROUND_TEXTURE_RESOLUTION.x_px * BACKGROUND_TEXTURE_SCALE + PLAYER_X_MARGIN) / 2.0;
@@ -99,11 +106,12 @@ pub fn move_enemies_towards_player(
         // Enemies have greater speed when charging the player.
         let mut speed = ENEMY_MOVE_SPEED * ENEMY_BOOST_SPEED_WHEN_CHARGING;
 
-        // if the player is gonna walk randomly, then uses the `direction_intention`
+        // If the player is gonna walk randomly or player is invisible,
+        // then uses the `direction_intention`
         // instead of the player's position as the origin for the unit direction vector.
         //
         // It also walks in a slower way.
-        if enemy.is_random {
+        if enemy.is_random || !is_player_visible {
             position = enemy.direction_intention.translation.truncate();
             speed = ENEMY_MOVE_SPEED / ENEMY_BOOST_SPEED_WHEN_CHARGING;
         }
