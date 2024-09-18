@@ -111,8 +111,6 @@ as the time passes (cooldown)
 - [x] (BUG) Make enemies go to random places when player is invisible
 - [ ] Implement market (weapons, items, powers. player stats)
 
-
-
 Mostly Art:
 - [ ] Create different specific characteristics for each boss
 - [ ] Change resources for each level (background and bosses)
@@ -124,8 +122,6 @@ Ongoing:
 - [-] Add effects (sparkles, explosions)
 - [-] Spawn more waves
 
-
-
 Backlog:
 - [ ] Add proper audio and game sound
 - [ ] Change collision from capsule to Ammo and Weapon sizes
@@ -134,7 +130,6 @@ Backlog:
 - [ ] Add the possiblity to improve weapons and powers with "money"
 - [ ] Differentiate between physical and magical damage (armor shield)
 - [ ] Optimise game
-
 
 MAYBE
 - [ ] Check why despawn of enemy/ammo is getting WARNING

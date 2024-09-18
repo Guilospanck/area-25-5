@@ -358,7 +358,6 @@ pub fn auto_shoot(
 /// |
 /// |
 /// |
-/// |
 /// y
 ///
 pub fn get_mouse_cursor_position(

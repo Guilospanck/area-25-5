@@ -4,8 +4,8 @@ use bevy::{
 };
 
 use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, GameState,
-    ItemTypeEnum, PlayerProfileUISet, SpawnEntitiesForNewWave,
+    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, GameState, ItemTypeEnum,
+    PlayerProfileUISet, SpawnEntitiesForNewWave, WindowResolutionResource,
 };
 
 // ############## UI ####################
@@ -69,6 +69,9 @@ pub struct PlayerProfileUIBarsRootNode;
 #[derive(Component)]
 pub struct PlayerStatsUI;
 
+#[derive(Component)]
+pub struct MarketUI;
+
 // ############## BUTTONS ####################
 #[derive(Component)]
 pub struct PlayAgainButton;
@@ -78,6 +81,9 @@ pub struct StartGameButton;
 
 #[derive(Component)]
 pub struct RestartGameButton;
+
+#[derive(Component)]
+pub struct WeaponSelectButton;
 
 // ############## SCREENS ####################
 #[derive(Component)]
@@ -893,6 +899,153 @@ pub fn spawn_player_stats_ui(
     commands
         .entity(parent)
         .push_children(&[player, weapon, armor, speed]);
+}
+
+pub fn spawn_market(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    window_resolution: Res<WindowResolutionResource>,
+    current_score: Res<CurrentScore>,
+) {
+    let current_weapon_sprite = "textures/Weapon/Wand.png";
+    let current_weapon_damage_value = 20.0;
+
+    let width = window_resolution.x_px / 2.0;
+    let height = window_resolution.y_px - 20.0;
+
+    let parent = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    display: Display::Flex,
+                    width: Val::Px(width),
+                    height: Val::Px(height),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.0),
+                    left: Val::Px(window_resolution.y_px / 2.0 - 20.0),
+                    align_items: AlignItems::Stretch,
+                    justify_content: JustifyContent::SpaceAround,
+                    padding: UiRect {
+                        left: Val::Px(10.),
+                        right: Val::ZERO,
+                        top: Val::ZERO,
+                        bottom: Val::ZERO,
+                    },
+                    ..default()
+                },
+                ..default()
+            },
+            MENU_UI_LAYER,
+            MarketUI,
+        ))
+        .id();
+
+    let root_node = |bg_color: Option<BackgroundColor>| {
+        (
+            NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
+                    align_items: AlignItems::FlexStart,
+                    justify_content: JustifyContent::Center,
+                    column_gap: Val::Px(30.),
+                    ..default()
+                },
+                background_color: bg_color
+                    .unwrap_or(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2))),
+                ..default()
+            },
+            MENU_UI_LAYER,
+        )
+    };
+
+    let text_node = |value: &str, commands: &mut Commands, height: Option<f32>| {
+        commands
+            .spawn(NodeBundle {
+                style: Style {
+                    height: Val::Px(height.unwrap_or(70.)),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    flex_wrap: FlexWrap::NoWrap,
+                    ..default()
+                },
+                ..default()
+            })
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    value,
+                    TextStyle {
+                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font_size: 25.0,
+                        ..default()
+                    },
+                ));
+            })
+            .id()
+    };
+
+    let icon_node = |sprite: &str| {
+        (
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(70.0),
+                    height: Val::Px(70.0),
+                    ..default()
+                },
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite.to_owned())),
+        )
+    };
+
+    // market
+    let market_title = text_node("Market", &mut commands, Some(35.));
+    let market = commands
+        .spawn(root_node(None).clone())
+        .add_child(market_title)
+        .id();
+
+    // current gold
+    let gold_title = text_node(
+        &format!("Current gold: {}", current_score.0),
+        &mut commands,
+        Some(35.),
+    );
+    let gold = commands
+        .spawn(root_node(None).clone())
+        .add_child(gold_title)
+        .id();
+
+    // Weapons
+    let weapon_text_node = text_node(
+        &format!("{:.2}", current_weapon_damage_value),
+        &mut commands,
+        None,
+    );
+    let weapon_with_price = commands
+        .spawn(root_node(Some(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)))).clone())
+        .with_children(|parent| {
+            parent.spawn(icon_node(current_weapon_sprite));
+        })
+        .add_child(weapon_text_node)
+        .id();
+
+    let weapon_button = commands
+        .spawn(_build_custom_button(WeaponSelectButton))
+        .add_child(weapon_with_price)
+        .id();
+
+    let weapon = commands
+        .spawn(root_node(None).clone())
+        .add_child(weapon_button)
+        .id();
+
+    commands
+        .entity(parent)
+        .push_children(&[market, gold, weapon]);
 }
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {

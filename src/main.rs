@@ -143,7 +143,7 @@ fn main() {
             )
                 .in_set(CollisionSet),
         )
-        .add_systems(OnEnter(GameState::Menu), menu_screen)
+        .add_systems(OnEnter(GameState::Menu), spawn_market)
         .add_systems(OnEnter(GameState::Dead), game_over_screen)
         .add_systems(OnEnter(GameState::Won), game_won_screen)
         .add_systems(
