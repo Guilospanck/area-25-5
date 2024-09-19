@@ -6,9 +6,10 @@ use crate::{
     spawn_orc_enemy, spawn_player_stats_ui, spawn_power,
     util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, AutoShootingEnabled, BaseCamera, CurrentBoss, Damage, Health, Mana,
-    MouseDirectionWhenAutoShooting, PlayAgainButton, PlayerManaChanged, PlayerStatsUI, Power,
-    RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, UpdateAliveEnemiesUI,
-    Weapon, WindowResolutionResource,
+    MarketDoneButton, MarketDoneEvent, MouseDirectionWhenAutoShooting, PlayAgainButton,
+    PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
+    SpritesResources, StartGameButton, UpdateAliveEnemiesUI, Weapon, WeaponSelectButton,
+    WeaponSelectedEvent, WindowResolutionResource,
 };
 
 pub fn change_enemy_direction(
@@ -646,7 +647,7 @@ pub fn handle_play_again_click(
         Changed<Interaction>,
     >,
 ) {
-    _handle_button_click(commands, interaction_query);
+    _handle_button_click(commands, interaction_query, RestartGame);
 }
 
 // Dead
@@ -657,7 +658,7 @@ pub fn handle_restart_click(
         Changed<Interaction>,
     >,
 ) {
-    _handle_button_click(commands, interaction_query);
+    _handle_button_click(commands, interaction_query, RestartGame);
 }
 
 // Menu
@@ -668,17 +669,50 @@ pub fn handle_start_game_click(
         Changed<Interaction>,
     >,
 ) {
-    _handle_button_click(commands, interaction_query);
+    _handle_button_click(commands, interaction_query, RestartGame);
 }
 
-fn _handle_button_click<T: Component>(
+// Weapon
+pub fn handle_weapon_click(
+    commands: Commands,
+    interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &WeaponSelectButton),
+        Changed<Interaction>,
+    >,
+) {
+    let Ok((_, _, market_done_event)) = interaction_query.get_single() else {
+        return;
+    };
+
+    let weapon_type = market_done_event.weapon_type.clone();
+
+    _handle_button_click(
+        commands,
+        interaction_query,
+        WeaponSelectedEvent { weapon_type },
+    );
+}
+
+// Market Done
+pub fn handle_market_done_click(
+    commands: Commands,
+    interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &MarketDoneButton),
+        Changed<Interaction>,
+    >,
+) {
+    _handle_button_click(commands, interaction_query, MarketDoneEvent);
+}
+
+fn _handle_button_click<T: Component, E: Event + Clone>(
     mut commands: Commands,
     mut interaction_query: Query<(&Interaction, &mut BackgroundColor, &T), Changed<Interaction>>,
+    event: E,
 ) {
     for (interaction, mut background_color, _) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
-                commands.trigger(RestartGame);
+                commands.trigger(event.clone());
             }
             Interaction::Hovered => {
                 *background_color = Color::srgba(26., 50., 27., 0.3).into();

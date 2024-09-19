@@ -83,7 +83,12 @@ pub struct StartGameButton;
 pub struct RestartGameButton;
 
 #[derive(Component)]
-pub struct WeaponSelectButton;
+pub struct WeaponSelectButton {
+    pub weapon_type: WeaponTypeEnum,
+}
+
+#[derive(Component)]
+pub struct MarketDoneButton;
 
 // ############## SCREENS ####################
 #[derive(Component)]
@@ -1034,7 +1039,9 @@ pub fn spawn_market(
         .id();
 
     let weapon_button = commands
-        .spawn(_build_custom_button(WeaponSelectButton))
+        .spawn(_build_custom_button(WeaponSelectButton {
+            weapon_type: WeaponTypeEnum::Bow,
+        }))
         .add_child(weapon_with_price)
         .id();
 
@@ -1043,9 +1050,21 @@ pub fn spawn_market(
         .add_child(weapon_button)
         .id();
 
+    // Done
+    let done_text_node = text_node("Done", &mut commands, None);
+    let done_button = commands
+        .spawn(_build_custom_button(MarketDoneButton))
+        .add_child(done_text_node)
+        .id();
+
+    let market_done = commands
+        .spawn(root_node(None).clone())
+        .add_child(done_button)
+        .id();
+
     commands
         .entity(parent)
-        .push_children(&[market, gold, weapon]);
+        .push_children(&[market, gold, weapon, market_done]);
 }
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {

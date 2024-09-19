@@ -8,22 +8,22 @@ use crate::{
     game_actions::shoot_at_enemies,
     player::Player,
     prelude::*,
-    render_background_texture, spawn_boss,
-    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
-    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
+    render_background_texture, spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar,
+    spawn_item, spawn_mana_ui_bar, spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_boss_type_based_on_game_level, get_item_sprite_based_on_item_type,
         get_key_code_based_on_power_type, get_power_sprite_based_on_power_type, get_random_chance,
-        get_weapon_sprite_based_on_weapon_type,
+        get_weapon_sprite_based_on_weapon_type, EquippedTypeEnum,
     },
-    AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
-    ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
-    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves, GameState, Health, HealthBarUI, Item, ItemTypeEnum, ItemWaves,
-    Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
-    PowerLevelUI, PowerLevels, PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed,
-    SpritesResources, TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
-    WindowResolutionResource,
+    Ammo, AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath,
+    CleanupWhenPlayerDies, ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI,
+    CurrentMarketSelectedWeapon, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
+    CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves, GameState, Health, HealthBarUI, Item,
+    ItemTypeEnum, ItemWaves, Mana, ManaBarUI, MarketUI, PlayerProfileUI,
+    PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerLevels, PowerSpriteUI, PowerUI,
+    PowerUIRootNode, ScoreUI, Speed, SpritesResources, TileBackground, Weapon, WeaponBundle,
+    WeaponUI, WeaponWaves, WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -91,7 +91,7 @@ pub struct BuffUIAdd {
 
 #[derive(Event)]
 pub struct WeaponFound {
-    pub weapon_entity: Entity,
+    pub weapon_entity: Option<Entity>,
     pub weapon: Weapon,
     pub weapon_damage: Damage,
     pub player_entity: Entity,
@@ -123,8 +123,16 @@ pub struct MaybeSpawnManaPack;
 #[derive(Event)]
 pub struct GameOver;
 
-#[derive(Event)]
+#[derive(Event, Clone)]
 pub struct RestartGame;
+
+#[derive(Event, Clone)]
+pub struct WeaponSelectedEvent {
+    pub weapon_type: WeaponTypeEnum,
+}
+
+#[derive(Event, Clone)]
+pub struct MarketDoneEvent;
 
 #[derive(Event)]
 pub struct ScoreChanged {
@@ -734,6 +742,89 @@ pub fn on_restart_click(
     next_state.set(GameState::Start);
 }
 
+pub fn on_weapon_select_click(
+    trigger: Trigger<WeaponSelectedEvent>,
+    mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
+) {
+    let WeaponSelectedEvent { weapon_type } = trigger.event();
+
+    current_market_selected_weapon.0 = Some(weapon_type.clone());
+}
+
+pub fn on_market_done_click(
+    _trigger: Trigger<MarketDoneEvent>,
+    player_state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
+    market_ui_query: Query<Entity, With<MarketUI>>,
+    mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
+
+    player_query: Query<(Entity, &Children), With<Player>>,
+    player_weapon_query: Query<(&Children, Entity, &Weapon)>,
+    player_ammo_query: Query<(Entity, &Ammo)>,
+) {
+    if *player_state.get() == GameState::InBetweenLevels {
+        return;
+    }
+
+    next_state.set(GameState::InBetweenLevels);
+
+    // Get player entity, player weapon and player ammo
+    let Ok((player_entity, player_children)) = player_query.get_single() else {
+        return;
+    };
+    let mut player_weapon = None;
+    let mut player_ammo = None;
+    for &child in player_children {
+        if let Ok(pw) = player_weapon_query.get(child) {
+            player_weapon = Some(pw);
+            for &child in pw.0 {
+                if let Ok(pa) = player_ammo_query.get(child) {
+                    player_ammo = Some(pa);
+                }
+            }
+            break;
+        }
+    }
+    let Some((_, player_weapon_entity, _)) = player_weapon else {
+        return;
+    };
+    let Some((player_ammo_entity, _)) = player_ammo else {
+        return;
+    };
+
+    // Check selected items from market
+    if current_market_selected_weapon.0.is_some() {
+        let weapon_type = current_market_selected_weapon.0.clone().unwrap();
+        let weapon_equipped_by = player_entity;
+        let weapon_equipped_type = EquippedTypeEnum::Player;
+
+        // TODO: change this hardcoded value
+        let weapon_damage = 30f32;
+
+        commands.trigger(WeaponFound {
+            weapon_entity: None,
+            weapon: Weapon {
+                weapon_type,
+                equipped_by: weapon_equipped_by,
+                equipped_type: weapon_equipped_type,
+            },
+            weapon_damage: Damage(weapon_damage),
+            player_entity,
+            player_weapon_entity,
+            player_ammo_entity,
+        });
+
+        current_market_selected_weapon.0 = None;
+    }
+
+    // despawn market ui
+    let Ok(market_ui_entity) = market_ui_query.get_single() else {
+        return;
+    };
+    commands.entity(market_ui_entity).despawn_recursive();
+}
+
 pub fn on_score_changed(
     trigger: Trigger<ScoreChanged>,
     mut current_score: ResMut<CurrentScore>,
@@ -1209,7 +1300,9 @@ pub fn on_weapon_found(
     hit_weapon_audio(&asset_server, &mut commands);
 
     // remove collided weapon
-    commands.entity(*weapon_entity).despawn();
+    if weapon_entity.is_some() {
+        commands.entity(weapon_entity.unwrap()).despawn();
+    }
 
     // update UI
     commands
@@ -1640,9 +1733,9 @@ pub fn on_current_game_level_changed(
         text.sections.first_mut().unwrap().value = format!("Level #{}", new_level);
     }
 
-    // spawn the in-between levels pause screen
-    next_state.set(GameState::InBetweenLevels);
-
     // Add new power to the player
     commands.trigger(PowerFound);
+
+    // spawn the in-between levels pause screen
+    next_state.set(GameState::Market);
 }
