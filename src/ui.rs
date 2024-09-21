@@ -912,6 +912,7 @@ pub fn spawn_market(
     window_resolution: Res<WindowResolutionResource>,
     current_score: Res<CurrentScore>,
 ) {
+    // TODO: these two need to be changed. They need to be dynamic
     let current_weapon_sprite = "textures/Weapon/Wand.png";
     let current_weapon_damage_value = 20.0;
 
@@ -960,7 +961,7 @@ pub fn spawn_market(
                     ..default()
                 },
                 background_color: bg_color
-                    .unwrap_or(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.2))),
+                    .unwrap_or(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 1.0))),
                 ..default()
             },
             MENU_UI_LAYER,
