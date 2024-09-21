@@ -748,7 +748,10 @@ pub fn on_weapon_select_click(
 ) {
     let WeaponSelectedEvent { weapon_type } = trigger.event();
 
-    current_market_selected_weapon.0 = Some(weapon_type.clone());
+    *current_market_selected_weapon = CurrentMarketSelectedWeapon {
+        weapon_type: Some(weapon_type.clone()),
+        is_selected: !current_market_selected_weapon.is_selected,
+    };
 }
 
 pub fn on_market_done_click(
@@ -769,7 +772,7 @@ pub fn on_market_done_click(
 
     next_state.set(GameState::InBetweenLevels);
 
-    // Get player entity, player weapon and player ammo
+    // Get player entity, weapon and ammo
     let Ok((player_entity, player_children)) = player_query.get_single() else {
         return;
     };
@@ -794,8 +797,8 @@ pub fn on_market_done_click(
     };
 
     // Check selected items from market
-    if current_market_selected_weapon.0.is_some() {
-        let weapon_type = current_market_selected_weapon.0.clone().unwrap();
+    if current_market_selected_weapon.weapon_type.is_some() {
+        let weapon_type = current_market_selected_weapon.weapon_type.clone().unwrap();
         let weapon_equipped_by = player_entity;
         let weapon_equipped_type = EquippedTypeEnum::Player;
 
@@ -815,7 +818,7 @@ pub fn on_market_done_click(
             player_ammo_entity,
         });
 
-        current_market_selected_weapon.0 = None;
+        current_market_selected_weapon.weapon_type = None;
     }
 
     // despawn market ui

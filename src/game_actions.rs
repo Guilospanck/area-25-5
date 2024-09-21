@@ -5,10 +5,10 @@ use crate::{
     prelude::*,
     spawn_orc_enemy, spawn_player_stats_ui, spawn_power,
     util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
-    AmmoBundle, Armor, AutoShootingEnabled, BaseCamera, CurrentBoss, Damage, Health, Mana,
-    MarketDoneButton, MarketDoneEvent, MouseDirectionWhenAutoShooting, PlayAgainButton,
-    PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton, Speed,
-    SpritesResources, StartGameButton, UpdateAliveEnemiesUI, Weapon, WeaponSelectButton,
+    AmmoBundle, Armor, AutoShootingEnabled, BaseCamera, CurrentBoss, CurrentMarketSelectedWeapon,
+    Damage, Health, Mana, MarketDoneButton, MarketDoneEvent, MouseDirectionWhenAutoShooting,
+    PlayAgainButton, PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton,
+    Speed, SpritesResources, StartGameButton, UpdateAliveEnemiesUI, Weapon, WeaponSelectButton,
     WeaponSelectedEvent, WindowResolutionResource,
 };
 
@@ -647,7 +647,7 @@ pub fn handle_play_again_click(
         Changed<Interaction>,
     >,
 ) {
-    _handle_button_click(commands, interaction_query, RestartGame);
+    _handle_button_click(commands, interaction_query, RestartGame, false);
 }
 
 // Dead
@@ -658,7 +658,7 @@ pub fn handle_restart_click(
         Changed<Interaction>,
     >,
 ) {
-    _handle_button_click(commands, interaction_query, RestartGame);
+    _handle_button_click(commands, interaction_query, RestartGame, false);
 }
 
 // Menu
@@ -669,7 +669,7 @@ pub fn handle_start_game_click(
         Changed<Interaction>,
     >,
 ) {
-    _handle_button_click(commands, interaction_query, RestartGame);
+    _handle_button_click(commands, interaction_query, RestartGame, false);
 }
 
 // Weapon
@@ -679,17 +679,19 @@ pub fn handle_weapon_click(
         (&Interaction, &mut BackgroundColor, &WeaponSelectButton),
         Changed<Interaction>,
     >,
+    current_market_selected_weapon: Res<CurrentMarketSelectedWeapon>,
 ) {
-    let Ok((_, _, market_done_event)) = interaction_query.get_single() else {
+    let Ok((_, _, weapon_button)) = interaction_query.get_single() else {
         return;
     };
 
-    let weapon_type = market_done_event.weapon_type.clone();
+    let weapon_type = weapon_button.weapon_type.clone();
 
     _handle_button_click(
         commands,
         interaction_query,
         WeaponSelectedEvent { weapon_type },
+        current_market_selected_weapon.is_selected,
     );
 }
 
@@ -701,24 +703,34 @@ pub fn handle_market_done_click(
         Changed<Interaction>,
     >,
 ) {
-    _handle_button_click(commands, interaction_query, MarketDoneEvent);
+    _handle_button_click(commands, interaction_query, MarketDoneEvent, false);
 }
 
 fn _handle_button_click<T: Component, E: Event + Clone>(
     mut commands: Commands,
     mut interaction_query: Query<(&Interaction, &mut BackgroundColor, &T), Changed<Interaction>>,
     event: E,
+    is_selected: bool,
 ) {
     for (interaction, mut background_color, _) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 commands.trigger(event.clone());
+                if is_selected {
+                    *background_color = Color::BLACK.into();
+                } else {
+                    *background_color = Color::srgba(26., 50., 27., 0.3).into();
+                }
             }
             Interaction::Hovered => {
-                *background_color = Color::srgba(26., 50., 27., 0.3).into();
+                if !is_selected {
+                    *background_color = Color::srgba(26., 50., 27., 0.3).into();
+                }
             }
             Interaction::None => {
-                *background_color = Color::BLACK.into();
+                if !is_selected {
+                    *background_color = Color::BLACK.into();
+                }
             }
         }
     }

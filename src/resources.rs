@@ -45,7 +45,10 @@ pub struct PowerLevels(pub [PowerByLevel; NUMBER_OF_POWERS]);
 pub struct SpritesResources(pub Sprites<'static>);
 
 #[derive(Resource)]
-pub struct CurrentMarketSelectedWeapon(pub Option<WeaponTypeEnum>);
+pub struct CurrentMarketSelectedWeapon {
+    pub weapon_type: Option<WeaponTypeEnum>,
+    pub is_selected: bool,
+}
 
 #[derive(States, Default, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum GameState {
@@ -76,7 +79,10 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
 
     commands.insert_resource(CurrentWave(1));
     commands.insert_resource(CurrentBoss(None));
-    commands.insert_resource(CurrentMarketSelectedWeapon(None));
+    commands.insert_resource(CurrentMarketSelectedWeapon {
+        weapon_type: None,
+        is_selected: false,
+    });
     commands.insert_resource(CurrentGameLevel(1));
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));

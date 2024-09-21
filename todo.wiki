@@ -111,6 +111,9 @@ as the time passes (cooldown)
 - [x] (BUG) Make enemies go to random places when player is invisible
 - [ ] Implement market (weapons, items, powers. player stats)
 
+- [ ] (BUG) Weapons damage are not being spawned correctly per level (?).
+	Actually this might become deprecated after the market is implemented.
+
 Mostly Art:
 - [ ] Create different specific characteristics for each boss
 - [ ] Change resources for each level (background and bosses)
