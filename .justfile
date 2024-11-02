@@ -1,6 +1,9 @@
 default:
   just --list
 
+run:
+  cargo run --features not_web
+
 clippy:
   cargo clippy --all-targets -- -D warnings
 
@@ -23,7 +26,7 @@ bind-web:
     ./target/wasm32-unknown-unknown/wasm-release/area_25_5.wasm
 
 optimise-web:
-  ~/binaryen-version_118/bin/wasm-opt -Oz -o ./out/area_25_5_bg.wasm ./out/area_25_5_bg.wasm
+  ~/binaryen-version_120_b/bin/wasm-opt -Oz -o ./out/area_25_5_bg.wasm ./out/area_25_5_bg.wasm
 
 web: build-web bind-web optimise-web
   cp -R ./assets ./out
