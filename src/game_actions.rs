@@ -685,13 +685,26 @@ pub fn handle_weapon_click(
         return;
     };
 
-    let weapon_type = weapon_button.weapon_type.clone();
+    let is_weapon_selected = current_market_selected_weapon.is_selected;
+
+    let mut weapon_type = None;
+    let mut weapon_damage = None;
+    if is_weapon_selected {
+        weapon_type = Some(weapon_button.weapon_type.clone());
+        weapon_damage = Some(weapon_button.weapon_damage);
+    }
+
+    println!("handle weapon click: {}", is_weapon_selected);
 
     _handle_button_click(
         commands,
         interaction_query,
-        WeaponSelectedEvent { weapon_type },
-        current_market_selected_weapon.is_selected,
+        WeaponSelectedEvent {
+            weapon_type,
+            weapon_damage,
+            is_weapon_selected,
+        },
+        is_weapon_selected,
     );
 }
 

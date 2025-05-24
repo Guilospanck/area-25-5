@@ -4,8 +4,8 @@ use bevy::{
 };
 
 use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, GameState, ItemTypeEnum,
-    PlayerProfileUISet, SpawnEntitiesForNewWave, WindowResolutionResource,
+    prelude::*, CleanupWhenPlayerDies, CurrentAvailableWeapon, CurrentGameLevel, CurrentScore,
+    GameState, ItemTypeEnum, PlayerProfileUISet, SpawnEntitiesForNewWave, WindowResolutionResource,
 };
 
 // ############## UI ####################
@@ -85,6 +85,7 @@ pub struct RestartGameButton;
 #[derive(Component)]
 pub struct WeaponSelectButton {
     pub weapon_type: WeaponTypeEnum,
+    pub weapon_damage: f32,
 }
 
 #[derive(Component)]
@@ -911,10 +912,12 @@ pub fn spawn_market(
     asset_server: Res<AssetServer>,
     window_resolution: Res<WindowResolutionResource>,
     current_score: Res<CurrentScore>,
+    current_available_weapon: Res<CurrentAvailableWeapon>,
 ) {
-    // TODO: these two need to be changed. They need to be dynamic
+    // TODO: This needs to be dynamic
     let current_weapon_sprite = "textures/Weapon/Wand.png";
-    let current_weapon_damage_value = 20.0;
+
+    let current_weapon_damage_value: f32 = current_available_weapon.weapon_damage;
 
     let width = window_resolution.x_px / 2.0;
     let height = window_resolution.y_px - 20.0;
@@ -1042,6 +1045,7 @@ pub fn spawn_market(
     let weapon_button = commands
         .spawn(_build_custom_button(WeaponSelectButton {
             weapon_type: WeaponTypeEnum::Bow,
+            weapon_damage: current_weapon_damage_value,
         }))
         .add_child(weapon_with_price)
         .id();

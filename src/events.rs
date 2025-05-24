@@ -17,10 +17,10 @@ use crate::{
         get_weapon_sprite_based_on_weapon_type, EquippedTypeEnum,
     },
     Ammo, AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath,
-    CleanupWhenPlayerDies, ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI,
-    CurrentMarketSelectedWeapon, CurrentScore, CurrentTime, CurrentTimeUI, CurrentWave,
-    CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves, GameState, Health, HealthBarUI, Item,
-    ItemTypeEnum, ItemWaves, Mana, ManaBarUI, MarketUI, PlayerProfileUI,
+    CleanupWhenPlayerDies, ContainerBuffsUI, CurrentAvailableWeapon, CurrentBoss, CurrentGameLevel,
+    CurrentGameLevelUI, CurrentMarketSelectedWeapon, CurrentScore, CurrentTime, CurrentTimeUI,
+    CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves, GameState, Health,
+    HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI, MarketUI, PlayerProfileUI,
     PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerLevels, PowerSpriteUI, PowerUI,
     PowerUIRootNode, ScoreUI, Speed, SpritesResources, TileBackground, Weapon, WeaponBundle,
     WeaponUI, WeaponWaves, WindowResolutionResource,
@@ -128,7 +128,9 @@ pub struct RestartGame;
 
 #[derive(Event, Clone)]
 pub struct WeaponSelectedEvent {
-    pub weapon_type: WeaponTypeEnum,
+    pub weapon_type: Option<WeaponTypeEnum>,
+    pub weapon_damage: Option<f32>,
+    pub is_weapon_selected: bool,
 }
 
 #[derive(Event, Clone)]
@@ -566,6 +568,7 @@ pub fn spawn_entities_for_new_wave(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut current_available_weapon: ResMut<CurrentAvailableWeapon>,
 
     current_wave: Res<CurrentWave>,
     current_game_level: Res<CurrentGameLevel>,
@@ -626,7 +629,7 @@ pub fn spawn_entities_for_new_wave(
     // Update alive enemies UI
     commands.trigger(UpdateAliveEnemiesUI);
 
-    // Spawn more different weapons
+    // Spawn more different weapons (only via Market)
     let current_wave_weapon = weapon_waves
         .0
         .iter()
@@ -649,15 +652,10 @@ pub fn spawn_entities_for_new_wave(
         weapon_by_level.weapon.base_damage = player_current_damage.0 * base_damage_multiplier;
     }
 
-    spawn_weapon(
-        &mut commands,
-        &weapon_by_level,
-        &mut texture_atlas_layout,
-        &sprites,
-        &asset_server,
-        player_entity,
-        crate::util::EquippedTypeEnum::Player,
-    );
+    // INFO: we are not anymore spawning weapons. Every weapon upgrade is done
+    // via the Market
+    current_available_weapon.weapon_damage = weapon_by_level.weapon.base_damage;
+    current_available_weapon.weapon_type = weapon_by_level.weapon.weapon_type;
 
     let current_wave_item = item_waves
         .0
@@ -742,15 +740,23 @@ pub fn on_restart_click(
     next_state.set(GameState::Start);
 }
 
+// TODO: the toggle button is not working. Check the `is_weapon_selected`
 pub fn on_weapon_select_click(
     trigger: Trigger<WeaponSelectedEvent>,
     mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
 ) {
-    let WeaponSelectedEvent { weapon_type } = trigger.event();
+    let WeaponSelectedEvent {
+        weapon_type,
+        weapon_damage,
+        is_weapon_selected,
+    } = trigger.event();
+
+    println!("on weapon_select click: {}", is_weapon_selected);
 
     *current_market_selected_weapon = CurrentMarketSelectedWeapon {
-        weapon_type: Some(weapon_type.clone()),
-        is_selected: !current_market_selected_weapon.is_selected,
+        weapon_type: weapon_type.clone(),
+        is_selected: *is_weapon_selected,
+        weapon_damage: *weapon_damage,
     };
 }
 
@@ -798,12 +804,11 @@ pub fn on_market_done_click(
 
     // Check selected items from market
     if current_market_selected_weapon.weapon_type.is_some() {
+        println!("Here: {:?}", current_market_selected_weapon.weapon_type);
         let weapon_type = current_market_selected_weapon.weapon_type.clone().unwrap();
+        let weapon_damage = current_market_selected_weapon.weapon_damage.unwrap();
         let weapon_equipped_by = player_entity;
         let weapon_equipped_type = EquippedTypeEnum::Player;
-
-        // TODO: change this hardcoded value
-        let weapon_damage = 30f32;
 
         commands.trigger(WeaponFound {
             weapon_entity: None,
@@ -818,7 +823,9 @@ pub fn on_market_done_click(
             player_ammo_entity,
         });
 
+        // Reset current selected weapon
         current_market_selected_weapon.weapon_type = None;
+        current_market_selected_weapon.weapon_damage = None;
     }
 
     // despawn market ui

@@ -48,6 +48,13 @@ pub struct SpritesResources(pub Sprites<'static>);
 pub struct CurrentMarketSelectedWeapon {
     pub weapon_type: Option<WeaponTypeEnum>,
     pub is_selected: bool,
+    pub weapon_damage: Option<f32>,
+}
+
+#[derive(Resource)]
+pub struct CurrentAvailableWeapon {
+    pub weapon_type: WeaponTypeEnum,
+    pub weapon_damage: f32,
 }
 
 #[derive(States, Default, Clone, PartialEq, Eq, Hash, Debug)]
@@ -82,6 +89,11 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
     commands.insert_resource(CurrentMarketSelectedWeapon {
         weapon_type: None,
         is_selected: false,
+        weapon_damage: None,
+    });
+    commands.insert_resource(CurrentAvailableWeapon {
+        weapon_type: WeaponTypeEnum::Wand,
+        weapon_damage: 20.0,
     });
     commands.insert_resource(CurrentGameLevel(1));
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));

@@ -122,7 +122,7 @@ Ongoing:
 - [-] Spawn different weapons (Still need more)
 - [-] Spawn different enemies
 - [-] Spawn different potions
-- [-] Add effects (sparkles, explosions)
+- [-] Add effects (sparkles, explosions)
 - [-] Spawn more waves
 
 Backlog:
