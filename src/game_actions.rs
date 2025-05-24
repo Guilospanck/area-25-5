@@ -673,7 +673,7 @@ pub fn handle_start_game_click(
 }
 
 // Weapon
-pub fn handle_weapon_click(
+pub fn handle_weapon_market_interactivity(
     commands: Commands,
     interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &WeaponSelectButton),
@@ -685,7 +685,12 @@ pub fn handle_weapon_click(
         return;
     };
 
-    let is_weapon_selected = current_market_selected_weapon.is_selected;
+    let mut is_weapon_selected = current_market_selected_weapon.is_selected;
+
+    let interaction = interaction_query.get_single().unwrap();
+    if *interaction.0 == Interaction::Pressed {
+        is_weapon_selected = !is_weapon_selected
+    }
 
     let mut weapon_type = None;
     let mut weapon_damage = None;
@@ -693,8 +698,6 @@ pub fn handle_weapon_click(
         weapon_type = Some(weapon_button.weapon_type.clone());
         weapon_damage = Some(weapon_button.weapon_damage);
     }
-
-    println!("handle weapon click: {}", is_weapon_selected);
 
     _handle_button_click(
         commands,
@@ -730,9 +733,9 @@ fn _handle_button_click<T: Component, E: Event + Clone>(
             Interaction::Pressed => {
                 commands.trigger(event.clone());
                 if is_selected {
-                    *background_color = Color::BLACK.into();
-                } else {
                     *background_color = Color::srgba(26., 50., 27., 0.3).into();
+                } else {
+                    *background_color = Color::BLACK.into();
                 }
             }
             Interaction::Hovered => {

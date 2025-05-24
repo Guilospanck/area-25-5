@@ -740,7 +740,7 @@ pub fn on_restart_click(
     next_state.set(GameState::Start);
 }
 
-// TODO: the toggle button is not working. Check the `is_weapon_selected`
+// Handles weapon click while on the market
 pub fn on_weapon_select_click(
     trigger: Trigger<WeaponSelectedEvent>,
     mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
@@ -750,8 +750,6 @@ pub fn on_weapon_select_click(
         weapon_damage,
         is_weapon_selected,
     } = trigger.event();
-
-    println!("on weapon_select click: {}", is_weapon_selected);
 
     *current_market_selected_weapon = CurrentMarketSelectedWeapon {
         weapon_type: weapon_type.clone(),
@@ -804,11 +802,12 @@ pub fn on_market_done_click(
 
     // Check selected items from market
     if current_market_selected_weapon.weapon_type.is_some() {
-        println!("Here: {:?}", current_market_selected_weapon.weapon_type);
         let weapon_type = current_market_selected_weapon.weapon_type.clone().unwrap();
         let weapon_damage = current_market_selected_weapon.weapon_damage.unwrap();
         let weapon_equipped_by = player_entity;
         let weapon_equipped_type = EquippedTypeEnum::Player;
+
+        // TODO: reduce player's gold
 
         commands.trigger(WeaponFound {
             weapon_entity: None,

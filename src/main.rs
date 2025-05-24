@@ -157,7 +157,7 @@ fn main() {
                 handle_start_game_click.run_if(in_state(GameState::Menu)),
                 handle_restart_click.run_if(in_state(GameState::Dead)),
                 handle_play_again_click.run_if(in_state(GameState::Won)),
-                handle_weapon_click,
+                handle_weapon_market_interactivity,
                 handle_market_done_click,
                 despawn_in_between_levels_pause_screen
                     .run_if(in_state(GameState::InBetweenLevels))
