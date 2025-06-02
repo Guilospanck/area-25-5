@@ -5,7 +5,8 @@ use bevy::{
 
 use crate::{
     prelude::*, CleanupWhenPlayerDies, CurrentAvailableWeapon, CurrentGameLevel, CurrentScore,
-    GameState, ItemTypeEnum, PlayerProfileUISet, SpawnEntitiesForNewWave, WindowResolutionResource,
+    GameState, ItemTypeEnum, MarketItems, PlayerProfileUISet, SpawnEntitiesForNewWave,
+    WindowResolutionResource,
 };
 
 // ############## UI ####################
@@ -912,13 +913,8 @@ pub fn spawn_market(
     asset_server: Res<AssetServer>,
     window_resolution: Res<WindowResolutionResource>,
     current_score: Res<CurrentScore>,
-    current_available_weapon: Res<CurrentAvailableWeapon>,
+    market_items: Res<MarketItems>,
 ) {
-    // TODO: This needs to be dynamic
-    let current_weapon_sprite = "textures/Weapon/Wand.png";
-
-    let current_weapon_damage_value: f32 = current_available_weapon.weapon_damage;
-
     let width = window_resolution.x_px / 2.0;
     let height = window_resolution.y_px - 20.0;
 
@@ -1028,32 +1024,76 @@ pub fn spawn_market(
         .add_child(gold_title)
         .id();
 
-    // Weapons
-    let weapon_text_node = text_node(
-        &format!("{:.2}", current_weapon_damage_value),
-        &mut commands,
-        None,
-    );
-    let weapon_with_price = commands
-        .spawn(root_node(Some(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)))).clone())
-        .with_children(|parent| {
-            parent.spawn(icon_node(current_weapon_sprite));
-        })
-        .add_child(weapon_text_node)
-        .id();
+    let build_market_item_based_on_type = |market_item: MarketItem| {
+        match &market_item.market_type {
+            MarketTypes::Weapon(weapon_type) => {
+                let market_item_text_node = text_node(
+                    &format!("{:.2}🏅 {:.2}⚔️", market_item.cost, market_item.stat),
+                    &mut commands,
+                    None,
+                );
 
-    let weapon_button = commands
-        .spawn(_build_custom_button(WeaponSelectButton {
-            weapon_type: WeaponTypeEnum::Bow,
-            weapon_damage: current_weapon_damage_value,
-        }))
-        .add_child(weapon_with_price)
-        .id();
+                let market_item_with_price = commands
+                    .spawn(
+                        root_node(Some(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)))).clone(),
+                    )
+                    .with_children(|parent| {
+                        parent.spawn(icon_node(market_item.sprite));
+                    })
+                    .add_child(market_item_text_node)
+                    .id();
 
-    let weapon = commands
-        .spawn(root_node(None).clone())
-        .add_child(weapon_button)
-        .id();
+                let hey = _build_custom_button(WeaponSelectButton {
+                    weapon_type: WeaponTypeEnum::Bow,
+                    weapon_damage: market_item.stat,
+                });
+
+                // match weapon_type {
+                //     A::Foo => println!("Specifically, it's Foo!"),
+                //     A::Bar => println!("Specifically, it's Bar!"),
+                // }
+
+                let market_item_button = commands.spawn(hey).add_child(market_item_with_price).id();
+
+                let item = commands
+                    .spawn(root_node(None).clone())
+                    .add_child(market_item_button)
+                    .id();
+            }
+        }
+    };
+
+    // Market items
+    let mut items = Vec::new();
+    for market_item in market_items.0.iter() {
+        let market_item_text_node = text_node(
+            &format!("Cost: {:.2}", market_item.cost),
+            &mut commands,
+            None,
+        );
+        let market_item_with_price = commands
+            .spawn(root_node(Some(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)))).clone())
+            .with_children(|parent| {
+                parent.spawn(icon_node(market_item.sprite));
+            })
+            .add_child(market_item_text_node)
+            .id();
+
+        let market_item_button = commands
+            .spawn(_build_custom_button(WeaponSelectButton {
+                weapon_type: WeaponTypeEnum::Bow,
+                weapon_damage: market_item.stat,
+            }))
+            .add_child(market_item_with_price)
+            .id();
+
+        let item = commands
+            .spawn(root_node(None).clone())
+            .add_child(market_item_button)
+            .id();
+
+        items.push(item);
+    }
 
     // Done
     let done_text_node = text_node("Done", &mut commands, None);
@@ -1067,9 +1107,11 @@ pub fn spawn_market(
         .add_child(done_button)
         .id();
 
-    commands
-        .entity(parent)
-        .push_children(&[market, gold, weapon, market_done]);
+    let mut children = vec![market, gold];
+    children.extend(items);
+    children.push(market_done);
+
+    commands.entity(parent).push_children(&children);
 }
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {

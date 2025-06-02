@@ -5,6 +5,7 @@ pub use bevy::render::view::RenderLayers;
 pub mod buff_config;
 pub mod enemy_config;
 pub mod item_config;
+pub mod market_config;
 pub mod power_config;
 pub mod weapon_config;
 
@@ -12,6 +13,7 @@ pub mod weapon_config;
 pub(crate) use buff_config::*;
 pub use enemy_config::*;
 pub use item_config::*;
+pub use market_config::*;
 pub use power_config::*;
 pub use weapon_config::*;
 
