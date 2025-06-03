@@ -696,7 +696,6 @@ pub fn handle_weapon_market_interactivity(
     }
 
     let weapon_cost = weapon_button.weapon_cost;
-    println!("is_weapon_selected: {is_weapon_selected}, weapon_cost: {weapon_cost}");
 
     // Do not allow "buying" weapon if not enough gold.
     if is_weapon_selected && weapon_cost > current_gold {

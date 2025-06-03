@@ -768,6 +768,7 @@ pub fn on_market_done_click(
     mut commands: Commands,
     market_ui_query: Query<Entity, With<MarketUI>>,
     mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
+    mut current_score: ResMut<CurrentScore>,
 
     player_query: Query<(Entity, &Children), With<Player>>,
     player_weapon_query: Query<(&Children, Entity, &Weapon)>,
@@ -781,6 +782,7 @@ pub fn on_market_done_click(
 
     // Get player entity, weapon and ammo
     let Ok((player_entity, player_children)) = player_query.get_single() else {
+        println!("NO PLAYER");
         return;
     };
     let mut player_weapon = None;
@@ -797,9 +799,11 @@ pub fn on_market_done_click(
         }
     }
     let Some((_, player_weapon_entity, _)) = player_weapon else {
+        println!("NO WEAPON");
         return;
     };
     let Some((player_ammo_entity, _)) = player_ammo else {
+        println!("NO AMMO");
         return;
     };
 
@@ -810,7 +814,13 @@ pub fn on_market_done_click(
         let weapon_equipped_by = player_entity;
         let weapon_equipped_type = EquippedTypeEnum::Player;
 
-        // TODO: reduce player's gold
+        // Reduce player's gold
+        let weapon_cost = current_market_selected_weapon.weapon_cost.unwrap_or(0.);
+        current_score.0 -= weapon_cost;
+
+        commands.trigger(ScoreChanged {
+            score: -weapon_cost,
+        });
 
         commands.trigger(WeaponFound {
             weapon_entity: None,

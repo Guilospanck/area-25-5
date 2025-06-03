@@ -68,8 +68,7 @@ fn main() {
 
     app.insert_resource(Msaa::Off)
         // states
-        // FIXME: go back to Menu
-        .insert_state(GameState::Market)
+        .insert_state(GameState::Menu)
         // system sets
         .configure_sets(
             FixedUpdate,

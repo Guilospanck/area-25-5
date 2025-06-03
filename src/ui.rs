@@ -957,7 +957,7 @@ pub fn spawn_market(
                     height: Val::Percent(100.),
                     align_items: AlignItems::FlexStart,
                     justify_content: JustifyContent::Center,
-                    column_gap: Val::Px(30.),
+                    column_gap: Val::Px(20.),
                     ..default()
                 },
                 background_color: bg_color.unwrap_or(Color::BLACK.into()),
@@ -1029,6 +1029,7 @@ pub fn spawn_market(
         .id();
 
     // Market items
+
     let mut items = Vec::new();
 
     let mut build_market_item_based_on_type =
@@ -1092,8 +1093,25 @@ pub fn spawn_market(
         .add_child(done_button)
         .id();
 
+    let mut items_container = commands.spawn((
+        NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            ..default()
+        },
+        MENU_UI_LAYER,
+    ));
+
+    items_container.push_children(&items);
+
     let mut children = vec![market, gold];
-    children.extend(items);
+    children.push(items_container.id());
     children.push(market_done);
 
     commands.entity(parent).push_children(&children);

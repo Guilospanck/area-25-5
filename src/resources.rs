@@ -38,9 +38,8 @@ pub struct WeaponWaves(pub [WeaponByWave<'static>; NUMBER_OF_WAVES]);
 #[derive(Resource)]
 pub struct ItemWaves(pub [ItemByWave<'static>; NUMBER_OF_WAVES]);
 
-// TODO: change the `1` to another thing.
 #[derive(Resource)]
-pub struct MarketItems(pub [MarketItem; 1]);
+pub struct MarketItems(pub [MarketItem; NUMBER_OF_MARKET_ITEMS]);
 
 #[derive(Resource)]
 pub struct PowerLevels(pub [PowerByLevel; NUMBER_OF_POWERS]);

@@ -20,4 +20,13 @@ const WAND_MARKET: MarketItem = MarketItem {
     market_type: MarketTypes::Weapon(WeaponTypeEnum::Wand),
 };
 
-pub const MARKET_ITEMS: [MarketItem; 1] = [WAND_MARKET];
+const BOW_MARKET: MarketItem = MarketItem {
+    sprite: "textures/Weapon/Bow.png",
+    cost: 80.0,
+    stat: 22.0,
+    market_type: MarketTypes::Weapon(WeaponTypeEnum::Bow),
+};
+
+pub const NUMBER_OF_MARKET_ITEMS: usize = 2;
+
+pub const MARKET_ITEMS: [MarketItem; NUMBER_OF_MARKET_ITEMS] = [WAND_MARKET, BOW_MARKET];
