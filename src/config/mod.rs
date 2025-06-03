@@ -5,6 +5,7 @@ pub use bevy::render::view::RenderLayers;
 pub mod buff_config;
 pub mod enemy_config;
 pub mod item_config;
+pub mod market_config;
 pub mod power_config;
 pub mod weapon_config;
 
@@ -12,6 +13,7 @@ pub mod weapon_config;
 pub(crate) use buff_config::*;
 pub use enemy_config::*;
 pub use item_config::*;
+pub use market_config::*;
 pub use power_config::*;
 pub use weapon_config::*;
 
@@ -25,7 +27,7 @@ pub(crate) const TILE_Z_INDEX: f32 = 0.;
 pub(crate) const CHAR_Z_INDEX: f32 = 1.;
 pub(crate) const UI_Z_INDEX: f32 = 2.;
 
-pub(crate) const PLAYER_MOVE_SPEED: f32 = 150.0;
+pub(crate) const PLAYER_MOVE_SPEED: f32 = 600.0;
 pub(crate) const PLAYER_ARMOR: f32 = 0.0;
 pub(crate) const PLAYER_HEALTH: f32 = 1000.;
 pub(crate) const PLAYER_MANA: f32 = 100.;

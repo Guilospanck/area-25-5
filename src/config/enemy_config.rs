@@ -98,21 +98,21 @@ pub const ENEMIES_PER_WAVE: [EnemyByWave; NUMBER_OF_WAVES] = [
     EnemyByWave {
         wave: 2,
         enemy: ENEMY_WAVE_2,
-        quantity: 3,
+        quantity: 1,
     },
     EnemyByWave {
         wave: 3,
         enemy: ENEMY_WAVE_3,
-        quantity: 15,
+        quantity: 1,
     },
     EnemyByWave {
         wave: 4,
         enemy: ENEMY_WAVE_4,
-        quantity: 20,
+        quantity: 1,
     },
     EnemyByWave {
         wave: 5,
         enemy: ENEMY_WAVE_5,
-        quantity: 25,
+        quantity: 1,
     },
 ];

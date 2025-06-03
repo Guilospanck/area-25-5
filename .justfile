@@ -36,3 +36,6 @@ web: build-web bind-web optimise-web
 run-web:
   npx http-server ./out -o
 
+run:
+  cargo run .
+

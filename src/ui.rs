@@ -4,9 +4,13 @@ use bevy::{
 };
 
 use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, GameState,
-    ItemTypeEnum, PlayerProfileUISet, SpawnEntitiesForNewWave,
+    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, GameState, ItemTypeEnum,
+    MarketItems, PlayerProfileUISet, SpawnEntitiesForNewWave, WindowResolutionResource,
 };
+
+const COLOR_DISABLED: Color = Color::srgba(1.0, 1.0, 1.0, 0.3);
+const COLOR_TRANSPARENT: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
+const COLOR_MARKET_BG: Color = Color::srgba(1.0, 1.0, 1.0, 0.1);
 
 // ############## UI ####################
 #[derive(Component)]
@@ -69,6 +73,9 @@ pub struct PlayerProfileUIBarsRootNode;
 #[derive(Component)]
 pub struct PlayerStatsUI;
 
+#[derive(Component)]
+pub struct MarketUI;
+
 // ############## BUTTONS ####################
 #[derive(Component)]
 pub struct PlayAgainButton;
@@ -78,6 +85,16 @@ pub struct StartGameButton;
 
 #[derive(Component)]
 pub struct RestartGameButton;
+
+#[derive(Component)]
+pub struct WeaponSelectButton {
+    pub weapon_type: WeaponTypeEnum,
+    pub weapon_damage: f32,
+    pub weapon_cost: f32,
+}
+
+#[derive(Component)]
+pub struct MarketDoneButton;
 
 // ############## SCREENS ####################
 #[derive(Component)]
@@ -893,6 +910,222 @@ pub fn spawn_player_stats_ui(
     commands
         .entity(parent)
         .push_children(&[player, weapon, armor, speed]);
+}
+
+pub fn spawn_market(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    window_resolution: Res<WindowResolutionResource>,
+    current_score: Res<CurrentScore>,
+    market_items: Res<MarketItems>,
+    current_game_level: Res<CurrentGameLevel>,
+) {
+    let width = window_resolution.x_px / 2.0;
+    let height = window_resolution.y_px - 20.0;
+
+    let current_multiplier = current_game_level.0 as f32;
+
+    let parent = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    display: Display::Flex,
+                    width: Val::Px(width),
+                    height: Val::Px(height),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.0),
+                    left: Val::Px(window_resolution.y_px / 2.0 - 20.0),
+                    align_items: AlignItems::Stretch,
+                    justify_content: JustifyContent::SpaceAround,
+                    padding: UiRect {
+                        left: Val::Px(10.),
+                        right: Val::ZERO,
+                        top: Val::ZERO,
+                        bottom: Val::ZERO,
+                    },
+                    ..default()
+                },
+                ..default()
+            },
+            MENU_UI_LAYER,
+            MarketUI,
+        ))
+        .id();
+
+    let root_node = |bg_color: Option<BackgroundColor>| {
+        (
+            NodeBundle {
+                style: Style {
+                    display: Display::Flex,
+                    flex_direction: FlexDirection::Row,
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
+                    align_items: AlignItems::FlexStart,
+                    justify_content: JustifyContent::Center,
+                    column_gap: Val::Px(20.),
+                    ..default()
+                },
+                background_color: bg_color.unwrap_or(COLOR_MARKET_BG.into()),
+                ..default()
+            },
+            MENU_UI_LAYER,
+        )
+    };
+
+    let text_node =
+        |value: &str, commands: &mut Commands, height: Option<f32>, text_color: Option<Color>| {
+            commands
+                .spawn(NodeBundle {
+                    style: Style {
+                        height: Val::Px(height.unwrap_or(70.)),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        flex_wrap: FlexWrap::NoWrap,
+                        ..default()
+                    },
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        value,
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 25.0,
+                            color: text_color.unwrap_or(Color::WHITE),
+                        },
+                    ));
+                })
+                .id()
+        };
+
+    let icon_node = |sprite: &str| {
+        (
+            NodeBundle {
+                style: Style {
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    width: Val::Px(50.0),
+                    height: Val::Px(50.0),
+                    ..default()
+                },
+                ..default()
+            },
+            UiImage::new(asset_server.load(sprite.to_owned())),
+        )
+    };
+
+    // market
+    let market_title = text_node("Market", &mut commands, Some(35.), None);
+    let market = commands
+        .spawn(root_node(None).clone())
+        .add_child(market_title)
+        .id();
+
+    let current_gold = current_score.0;
+
+    // current gold
+    let gold_title = text_node(
+        &format!("Current gold: {}", current_gold),
+        &mut commands,
+        Some(35.),
+        None,
+    );
+    let gold = commands
+        .spawn(root_node(None).clone())
+        .add_child(gold_title)
+        .id();
+
+    // Market items
+
+    let mut items = Vec::new();
+
+    let mut build_market_item_based_on_type =
+        |market_item: MarketItem, disabled: bool| match &market_item.market_type {
+            MarketTypes::Weapon(weapon_type) => {
+                let mut text_color = Color::WHITE;
+                if disabled {
+                    text_color = COLOR_DISABLED;
+                }
+
+                let market_item_text_node = text_node(
+                    &format!(
+                        "{:.2} G {:.2} Atk",
+                        market_item.cost * current_multiplier,
+                        market_item.stat * current_multiplier
+                    ),
+                    &mut commands,
+                    None,
+                    Some(text_color),
+                );
+
+                let market_item_with_price = commands
+                    .spawn(root_node(Some(BackgroundColor(COLOR_TRANSPARENT))).clone())
+                    .with_children(|parent| {
+                        parent.spawn(icon_node(market_item.sprite));
+                    })
+                    .add_child(market_item_text_node)
+                    .id();
+
+                let weapon = _build_custom_button(WeaponSelectButton {
+                    weapon_type: weapon_type.clone(),
+                    weapon_damage: market_item.stat,
+                    weapon_cost: market_item.cost,
+                });
+
+                let market_item_button = commands
+                    .spawn(weapon)
+                    .add_child(market_item_with_price)
+                    .id();
+
+                let item = commands
+                    .spawn(root_node(None).clone())
+                    .add_child(market_item_button)
+                    .id();
+
+                items.push(item);
+            }
+        };
+
+    for market_item in market_items.0.iter() {
+        let is_disabled = (market_item.cost * current_multiplier) > current_gold;
+        build_market_item_based_on_type(market_item.clone(), is_disabled);
+    }
+
+    // Done
+    let done_text_node = text_node("Done", &mut commands, None, None);
+    let done_button = commands
+        .spawn(_build_custom_button(MarketDoneButton))
+        .add_child(done_text_node)
+        .id();
+
+    let market_done = commands
+        .spawn(root_node(None).clone())
+        .add_child(done_button)
+        .id();
+
+    let mut items_container = commands.spawn((
+        NodeBundle {
+            style: Style {
+                display: Display::Flex,
+                flex_direction: FlexDirection::Column,
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            ..default()
+        },
+        MENU_UI_LAYER,
+    ));
+
+    items_container.push_children(&items);
+
+    let mut children = vec![market, gold];
+    children.push(items_container.id());
+    children.push(market_done);
+
+    commands.entity(parent).push_children(&children);
 }
 
 pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {

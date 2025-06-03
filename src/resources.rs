@@ -39,10 +39,27 @@ pub struct WeaponWaves(pub [WeaponByWave<'static>; NUMBER_OF_WAVES]);
 pub struct ItemWaves(pub [ItemByWave<'static>; NUMBER_OF_WAVES]);
 
 #[derive(Resource)]
+pub struct MarketItems(pub [MarketItem; NUMBER_OF_MARKET_ITEMS]);
+
+#[derive(Resource)]
 pub struct PowerLevels(pub [PowerByLevel; NUMBER_OF_POWERS]);
 
 #[derive(Resource)]
 pub struct SpritesResources(pub Sprites<'static>);
+
+#[derive(Resource)]
+pub struct CurrentMarketSelectedWeapon {
+    pub weapon_type: Option<WeaponTypeEnum>,
+    pub is_selected: bool,
+    pub weapon_damage: Option<f32>,
+    pub weapon_cost: Option<f32>,
+}
+
+#[derive(Resource)]
+pub struct CurrentAvailableWeapon {
+    pub weapon_type: WeaponTypeEnum,
+    pub weapon_damage: f32,
+}
 
 #[derive(States, Default, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum GameState {
@@ -53,6 +70,7 @@ pub enum GameState {
     Won,
     InBetweenLevels,
     Start,
+    Market,
 }
 
 #[derive(Resource)]
@@ -72,10 +90,21 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
 
     commands.insert_resource(CurrentWave(1));
     commands.insert_resource(CurrentBoss(None));
+    commands.insert_resource(CurrentMarketSelectedWeapon {
+        weapon_type: None,
+        is_selected: false,
+        weapon_damage: None,
+        weapon_cost: None,
+    });
+    commands.insert_resource(CurrentAvailableWeapon {
+        weapon_type: WeaponTypeEnum::Wand,
+        weapon_damage: 20.0,
+    });
     commands.insert_resource(CurrentGameLevel(1));
     commands.insert_resource(EnemyWaves(ENEMIES_PER_WAVE));
     commands.insert_resource(WeaponWaves(WEAPONS_PER_WAVE));
     commands.insert_resource(ItemWaves(ITEMS_PER_WAVE));
+    commands.insert_resource(MarketItems(MARKET_ITEMS));
     commands.insert_resource(PowerLevels(POWERS_PER_LEVEL));
     commands.insert_resource(SpritesResources(get_sprites()));
     commands.insert_resource(CurrentScore(0.));

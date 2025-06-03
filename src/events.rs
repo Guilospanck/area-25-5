@@ -8,22 +8,22 @@ use crate::{
     game_actions::shoot_at_enemies,
     player::Player,
     prelude::*,
-    render_background_texture, spawn_boss,
-    spawn_enemy, spawn_health_bar, spawn_health_ui_bar, spawn_item, spawn_mana_ui_bar,
-    spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
+    render_background_texture, spawn_boss, spawn_enemy, spawn_health_bar, spawn_health_ui_bar,
+    spawn_item, spawn_mana_ui_bar, spawn_power_ui, spawn_profile_ui, spawn_weapon, spawn_weapon_ui,
     ui::HealthBar,
     util::{
         get_boss_type_based_on_game_level, get_item_sprite_based_on_item_type,
         get_key_code_based_on_power_type, get_power_sprite_based_on_power_type, get_random_chance,
-        get_weapon_sprite_based_on_weapon_type,
+        get_weapon_sprite_based_on_weapon_type, EquippedTypeEnum,
     },
-    AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath, CleanupWhenPlayerDies,
-    ContainerBuffsUI, CurrentBoss, CurrentGameLevel, CurrentGameLevelUI, CurrentScore, CurrentTime,
-    CurrentTimeUI, CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves, GameState, Health, HealthBarUI, Item, ItemTypeEnum, ItemWaves,
-    Mana, ManaBarUI, PlayerProfileUI, PlayerProfileUIBarsRootNode, Power,
-    PowerLevelUI, PowerLevels, PowerSpriteUI, PowerUI, PowerUIRootNode, ScoreUI, Speed,
-    SpritesResources, TileBackground, Weapon, WeaponBundle, WeaponUI, WeaponWaves,
-    WindowResolutionResource,
+    Ammo, AmmoBundle, Armor, BaseCamera, Buff, BuffGroup, BuffsUI, CircleOfDeath,
+    CleanupWhenPlayerDies, ContainerBuffsUI, CurrentAvailableWeapon, CurrentBoss, CurrentGameLevel,
+    CurrentGameLevelUI, CurrentMarketSelectedWeapon, CurrentScore, CurrentTime, CurrentTimeUI,
+    CurrentWave, CurrentWaveUI, Damage, EnemiesLeftUI, Enemy, EnemyWaves, GameState, Health,
+    HealthBarUI, Item, ItemTypeEnum, ItemWaves, Mana, ManaBarUI, MarketUI, PlayerProfileUI,
+    PlayerProfileUIBarsRootNode, Power, PowerLevelUI, PowerLevels, PowerSpriteUI, PowerUI,
+    PowerUIRootNode, ScoreUI, Speed, SpritesResources, TileBackground, Weapon, WeaponBundle,
+    WeaponUI, WeaponWaves, WindowResolutionResource,
 };
 
 #[derive(Event)]
@@ -91,7 +91,7 @@ pub struct BuffUIAdd {
 
 #[derive(Event)]
 pub struct WeaponFound {
-    pub weapon_entity: Entity,
+    pub weapon_entity: Option<Entity>,
     pub weapon: Weapon,
     pub weapon_damage: Damage,
     pub player_entity: Entity,
@@ -123,8 +123,19 @@ pub struct MaybeSpawnManaPack;
 #[derive(Event)]
 pub struct GameOver;
 
-#[derive(Event)]
+#[derive(Event, Clone)]
 pub struct RestartGame;
+
+#[derive(Event, Clone)]
+pub struct WeaponSelectedInMarketEvent {
+    pub weapon_type: Option<WeaponTypeEnum>,
+    pub weapon_damage: Option<f32>,
+    pub is_weapon_selected: bool,
+    pub weapon_cost: Option<f32>,
+}
+
+#[derive(Event, Clone)]
+pub struct MarketDoneEvent;
 
 #[derive(Event)]
 pub struct ScoreChanged {
@@ -558,6 +569,7 @@ pub fn spawn_entities_for_new_wave(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut current_available_weapon: ResMut<CurrentAvailableWeapon>,
 
     current_wave: Res<CurrentWave>,
     current_game_level: Res<CurrentGameLevel>,
@@ -618,7 +630,7 @@ pub fn spawn_entities_for_new_wave(
     // Update alive enemies UI
     commands.trigger(UpdateAliveEnemiesUI);
 
-    // Spawn more different weapons
+    // Spawn more different weapons (only via Market)
     let current_wave_weapon = weapon_waves
         .0
         .iter()
@@ -641,15 +653,10 @@ pub fn spawn_entities_for_new_wave(
         weapon_by_level.weapon.base_damage = player_current_damage.0 * base_damage_multiplier;
     }
 
-    spawn_weapon(
-        &mut commands,
-        &weapon_by_level,
-        &mut texture_atlas_layout,
-        &sprites,
-        &asset_server,
-        player_entity,
-        crate::util::EquippedTypeEnum::Player,
-    );
+    // INFO: we are not anymore spawning weapons. Every weapon upgrade is done
+    // via the Market
+    current_available_weapon.weapon_damage = weapon_by_level.weapon.base_damage;
+    current_available_weapon.weapon_type = weapon_by_level.weapon.weapon_type;
 
     let current_wave_item = item_waves
         .0
@@ -732,6 +739,116 @@ pub fn on_restart_click(
     }
 
     next_state.set(GameState::Start);
+}
+
+// Handles weapon click while on the market
+pub fn on_weapon_select_click(
+    trigger: Trigger<WeaponSelectedInMarketEvent>,
+    mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
+) {
+    let WeaponSelectedInMarketEvent {
+        weapon_type,
+        weapon_damage,
+        is_weapon_selected,
+        weapon_cost,
+    } = trigger.event();
+
+    *current_market_selected_weapon = CurrentMarketSelectedWeapon {
+        weapon_type: weapon_type.clone(),
+        is_selected: *is_weapon_selected,
+        weapon_damage: *weapon_damage,
+        weapon_cost: *weapon_cost,
+    };
+}
+
+pub fn on_market_done_click(
+    _trigger: Trigger<MarketDoneEvent>,
+    player_state: Res<State<GameState>>,
+    current_game_level: Res<CurrentGameLevel>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
+    market_ui_query: Query<Entity, With<MarketUI>>,
+    mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
+
+    player_query: Query<(Entity, &Children), With<Player>>,
+    player_weapon_query: Query<(&Children, Entity, &Weapon)>,
+    player_ammo_query: Query<(Entity, &Ammo)>,
+) {
+    if *player_state.get() == GameState::InBetweenLevels {
+        return;
+    }
+
+    next_state.set(GameState::InBetweenLevels);
+
+    let current_multiplier = current_game_level.0 as f32;
+
+    // Get player entity, weapon and ammo
+    let Ok((player_entity, player_children)) = player_query.get_single() else {
+        println!("NO PLAYER");
+        return;
+    };
+    let mut player_weapon = None;
+    let mut player_ammo = None;
+    for &child in player_children {
+        if let Ok(pw) = player_weapon_query.get(child) {
+            player_weapon = Some(pw);
+            for &child in pw.0 {
+                if let Ok(pa) = player_ammo_query.get(child) {
+                    player_ammo = Some(pa);
+                }
+            }
+            break;
+        }
+    }
+    let Some((_, player_weapon_entity, _)) = player_weapon else {
+        println!("NO WEAPON");
+        return;
+    };
+    let Some((player_ammo_entity, _)) = player_ammo else {
+        println!("NO AMMO");
+        return;
+    };
+
+    // Check selected items from market
+    if current_market_selected_weapon.weapon_type.is_some() {
+        let weapon_type = current_market_selected_weapon.weapon_type.clone().unwrap();
+        let weapon_equipped_by = player_entity;
+        let weapon_equipped_type = EquippedTypeEnum::Player;
+
+        let weapon_damage =
+            current_market_selected_weapon.weapon_damage.unwrap_or(1.) * current_multiplier;
+
+        // Reduce player's gold (with level multiplier)
+        let weapon_cost =
+            current_market_selected_weapon.weapon_cost.unwrap_or(1.) * current_multiplier;
+
+        commands.trigger(ScoreChanged {
+            score: -weapon_cost,
+        });
+
+        commands.trigger(WeaponFound {
+            weapon_entity: None,
+            weapon: Weapon {
+                weapon_type,
+                equipped_by: weapon_equipped_by,
+                equipped_type: weapon_equipped_type,
+            },
+            weapon_damage: Damage(weapon_damage),
+            player_entity,
+            player_weapon_entity,
+            player_ammo_entity,
+        });
+
+        // Reset current selected weapon
+        current_market_selected_weapon.weapon_type = None;
+        current_market_selected_weapon.weapon_damage = None;
+    }
+
+    // despawn market ui
+    let Ok(market_ui_entity) = market_ui_query.get_single() else {
+        return;
+    };
+    commands.entity(market_ui_entity).despawn_recursive();
 }
 
 pub fn on_score_changed(
@@ -1209,7 +1326,9 @@ pub fn on_weapon_found(
     hit_weapon_audio(&asset_server, &mut commands);
 
     // remove collided weapon
-    commands.entity(*weapon_entity).despawn();
+    if weapon_entity.is_some() {
+        commands.entity(weapon_entity.unwrap()).despawn();
+    }
 
     // update UI
     commands
@@ -1640,9 +1759,9 @@ pub fn on_current_game_level_changed(
         text.sections.first_mut().unwrap().value = format!("Level #{}", new_level);
     }
 
-    // spawn the in-between levels pause screen
-    next_state.set(GameState::InBetweenLevels);
-
     // Add new power to the player
     commands.trigger(PowerFound);
+
+    // spawn the in-between levels pause screen
+    next_state.set(GameState::Market);
 }

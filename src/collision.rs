@@ -534,7 +534,7 @@ pub fn check_for_weapon_collisions(
         // we despawn it and swap our current weapon by the new one
         if player_collider.intersects(&weapon_collider) {
             commands.trigger(WeaponFound {
-                weapon_entity,
+                weapon_entity: Some(weapon_entity),
                 weapon: weapon.clone(),
                 weapon_damage: weapon_damage.clone(),
                 player_entity,
