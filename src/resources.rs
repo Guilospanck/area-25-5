@@ -53,6 +53,7 @@ pub struct CurrentMarketSelectedWeapon {
     pub weapon_type: Option<WeaponTypeEnum>,
     pub is_selected: bool,
     pub weapon_damage: Option<f32>,
+    pub weapon_cost: Option<f32>,
 }
 
 #[derive(Resource)]
@@ -94,6 +95,7 @@ pub fn setup_resources(mut commands: Commands, windows: Query<&Window>) {
         weapon_type: None,
         is_selected: false,
         weapon_damage: None,
+        weapon_cost: None,
     });
     commands.insert_resource(CurrentAvailableWeapon {
         weapon_type: WeaponTypeEnum::Wand,

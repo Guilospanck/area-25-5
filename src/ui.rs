@@ -87,6 +87,7 @@ pub struct RestartGameButton;
 pub struct WeaponSelectButton {
     pub weapon_type: WeaponTypeEnum,
     pub weapon_damage: f32,
+    pub weapon_cost: f32,
 }
 
 #[derive(Component)]
@@ -959,38 +960,38 @@ pub fn spawn_market(
                     column_gap: Val::Px(30.),
                     ..default()
                 },
-                background_color: bg_color
-                    .unwrap_or(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 1.0))),
+                background_color: bg_color.unwrap_or(Color::BLACK.into()),
                 ..default()
             },
             MENU_UI_LAYER,
         )
     };
 
-    let text_node = |value: &str, commands: &mut Commands, height: Option<f32>| {
-        commands
-            .spawn(NodeBundle {
-                style: Style {
-                    height: Val::Px(height.unwrap_or(70.)),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    flex_wrap: FlexWrap::NoWrap,
-                    ..default()
-                },
-                ..default()
-            })
-            .with_children(|parent| {
-                parent.spawn(TextBundle::from_section(
-                    value,
-                    TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 25.0,
+    let text_node =
+        |value: &str, commands: &mut Commands, height: Option<f32>, text_color: Option<Color>| {
+            commands
+                .spawn(NodeBundle {
+                    style: Style {
+                        height: Val::Px(height.unwrap_or(70.)),
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::Center,
+                        flex_wrap: FlexWrap::NoWrap,
                         ..default()
                     },
-                ));
-            })
-            .id()
-    };
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn(TextBundle::from_section(
+                        value,
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 25.0,
+                            color: text_color.unwrap_or(Color::WHITE),
+                        },
+                    ));
+                })
+                .id()
+        };
 
     let icon_node = |sprite: &str| {
         (
@@ -1007,17 +1008,20 @@ pub fn spawn_market(
     };
 
     // market
-    let market_title = text_node("Market", &mut commands, Some(35.));
+    let market_title = text_node("Market", &mut commands, Some(35.), None);
     let market = commands
         .spawn(root_node(None).clone())
         .add_child(market_title)
         .id();
 
+    let current_gold = current_score.0;
+
     // current gold
     let gold_title = text_node(
-        &format!("Current gold: {}", current_score.0),
+        &format!("Current gold: {}", current_gold),
         &mut commands,
         Some(35.),
+        None,
     );
     let gold = commands
         .spawn(root_node(None).clone())
@@ -1027,49 +1031,57 @@ pub fn spawn_market(
     // Market items
     let mut items = Vec::new();
 
-    let mut build_market_item_based_on_type = |market_item: MarketItem| match &market_item
-        .market_type
-    {
-        MarketTypes::Weapon(weapon_type) => {
-            let market_item_text_node = text_node(
-                &format!(
-                    "{:.2} Gold {:.2} Attack",
-                    market_item.cost, market_item.stat
-                ),
-                &mut commands,
-                None,
-            );
+    let mut build_market_item_based_on_type =
+        |market_item: MarketItem, disabled: bool| match &market_item.market_type {
+            MarketTypes::Weapon(weapon_type) => {
+                let mut text_color = Color::WHITE;
+                if disabled {
+                    text_color = Color::srgba(1.0, 1.0, 1.0, 0.5);
+                }
 
-            let market_item_with_price = commands
-                .spawn(root_node(Some(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)))).clone())
-                .with_children(|parent| {
-                    parent.spawn(icon_node(market_item.sprite));
-                })
-                .add_child(market_item_text_node)
-                .id();
+                let market_item_text_node = text_node(
+                    &format!("{:.2} G {:.2} Atk", market_item.cost, market_item.stat),
+                    &mut commands,
+                    None,
+                    Some(text_color),
+                );
 
-            let hey = _build_custom_button(WeaponSelectButton {
-                weapon_type: weapon_type.clone(),
-                weapon_damage: market_item.stat,
-            });
+                let market_item_with_price = commands
+                    .spawn(
+                        root_node(Some(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)))).clone(),
+                    )
+                    .with_children(|parent| {
+                        parent.spawn(icon_node(market_item.sprite));
+                    })
+                    .add_child(market_item_text_node)
+                    .id();
 
-            let market_item_button = commands.spawn(hey).add_child(market_item_with_price).id();
+                let weapon = _build_custom_button(WeaponSelectButton {
+                    weapon_type: weapon_type.clone(),
+                    weapon_damage: market_item.stat,
+                    weapon_cost: market_item.cost,
+                });
 
-            let item = commands
-                .spawn(root_node(None).clone())
-                .add_child(market_item_button)
-                .id();
+                let market_item_button = commands
+                    .spawn(weapon)
+                    .add_child(market_item_with_price)
+                    .id();
 
-            items.push(item);
-        }
-    };
+                let item = commands
+                    .spawn(root_node(None).clone())
+                    .add_child(market_item_button)
+                    .id();
+
+                items.push(item);
+            }
+        };
 
     for market_item in market_items.0.iter() {
-        build_market_item_based_on_type(market_item.clone());
+        build_market_item_based_on_type(market_item.clone(), market_item.cost > current_gold);
     }
 
     // Done
-    let done_text_node = text_node("Done", &mut commands, None);
+    let done_text_node = text_node("Done", &mut commands, None, None);
     let done_button = commands
         .spawn(_build_custom_button(MarketDoneButton))
         .add_child(done_text_node)

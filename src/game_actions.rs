@@ -6,10 +6,10 @@ use crate::{
     spawn_orc_enemy, spawn_player_stats_ui, spawn_power,
     util::{get_random_chance, get_unit_direction_vector, get_weapon_sprite_based_on_weapon_type},
     AmmoBundle, Armor, AutoShootingEnabled, BaseCamera, CurrentBoss, CurrentMarketSelectedWeapon,
-    Damage, Health, Mana, MarketDoneButton, MarketDoneEvent, MouseDirectionWhenAutoShooting,
-    PlayAgainButton, PlayerManaChanged, PlayerStatsUI, Power, RestartGame, RestartGameButton,
-    Speed, SpritesResources, StartGameButton, UpdateAliveEnemiesUI, Weapon, WeaponSelectButton,
-    WeaponSelectedEvent, WindowResolutionResource,
+    CurrentScore, Damage, Health, Mana, MarketDoneButton, MarketDoneEvent,
+    MouseDirectionWhenAutoShooting, PlayAgainButton, PlayerManaChanged, PlayerStatsUI, Power,
+    RestartGame, RestartGameButton, Speed, SpritesResources, StartGameButton, UpdateAliveEnemiesUI,
+    Weapon, WeaponSelectButton, WeaponSelectedInMarketEvent, WindowResolutionResource,
 };
 
 pub fn change_enemy_direction(
@@ -680,16 +680,27 @@ pub fn handle_weapon_market_interactivity(
         Changed<Interaction>,
     >,
     current_market_selected_weapon: Res<CurrentMarketSelectedWeapon>,
+    current_score: Res<CurrentScore>,
 ) {
     let Ok((_, _, weapon_button)) = interaction_query.get_single() else {
         return;
     };
+
+    let current_gold = current_score.0;
 
     let mut is_weapon_selected = current_market_selected_weapon.is_selected;
 
     let interaction = interaction_query.get_single().unwrap();
     if *interaction.0 == Interaction::Pressed {
         is_weapon_selected = !is_weapon_selected
+    }
+
+    let weapon_cost = weapon_button.weapon_cost;
+    println!("is_weapon_selected: {is_weapon_selected}, weapon_cost: {weapon_cost}");
+
+    // Do not allow "buying" weapon if not enough gold.
+    if is_weapon_selected && weapon_cost > current_gold {
+        return;
     }
 
     let mut weapon_type = None;
@@ -702,10 +713,11 @@ pub fn handle_weapon_market_interactivity(
     _handle_button_click(
         commands,
         interaction_query,
-        WeaponSelectedEvent {
+        WeaponSelectedInMarketEvent {
             weapon_type,
             weapon_damage,
             is_weapon_selected,
+            weapon_cost: Some(weapon_cost),
         },
         is_weapon_selected,
     );

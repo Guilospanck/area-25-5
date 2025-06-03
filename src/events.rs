@@ -127,10 +127,11 @@ pub struct GameOver;
 pub struct RestartGame;
 
 #[derive(Event, Clone)]
-pub struct WeaponSelectedEvent {
+pub struct WeaponSelectedInMarketEvent {
     pub weapon_type: Option<WeaponTypeEnum>,
     pub weapon_damage: Option<f32>,
     pub is_weapon_selected: bool,
+    pub weapon_cost: Option<f32>,
 }
 
 #[derive(Event, Clone)]
@@ -742,19 +743,21 @@ pub fn on_restart_click(
 
 // Handles weapon click while on the market
 pub fn on_weapon_select_click(
-    trigger: Trigger<WeaponSelectedEvent>,
+    trigger: Trigger<WeaponSelectedInMarketEvent>,
     mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
 ) {
-    let WeaponSelectedEvent {
+    let WeaponSelectedInMarketEvent {
         weapon_type,
         weapon_damage,
         is_weapon_selected,
+        weapon_cost,
     } = trigger.event();
 
     *current_market_selected_weapon = CurrentMarketSelectedWeapon {
         weapon_type: weapon_type.clone(),
         is_selected: *is_weapon_selected,
         weapon_damage: *weapon_damage,
+        weapon_cost: *weapon_cost,
     };
 }
 
