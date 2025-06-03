@@ -764,11 +764,11 @@ pub fn on_weapon_select_click(
 pub fn on_market_done_click(
     _trigger: Trigger<MarketDoneEvent>,
     player_state: Res<State<GameState>>,
+    current_game_level: Res<CurrentGameLevel>,
     mut next_state: ResMut<NextState<GameState>>,
     mut commands: Commands,
     market_ui_query: Query<Entity, With<MarketUI>>,
     mut current_market_selected_weapon: ResMut<CurrentMarketSelectedWeapon>,
-    mut current_score: ResMut<CurrentScore>,
 
     player_query: Query<(Entity, &Children), With<Player>>,
     player_weapon_query: Query<(&Children, Entity, &Weapon)>,
@@ -779,6 +779,8 @@ pub fn on_market_done_click(
     }
 
     next_state.set(GameState::InBetweenLevels);
+
+    let current_multiplier = current_game_level.0 as f32;
 
     // Get player entity, weapon and ammo
     let Ok((player_entity, player_children)) = player_query.get_single() else {
@@ -810,13 +812,15 @@ pub fn on_market_done_click(
     // Check selected items from market
     if current_market_selected_weapon.weapon_type.is_some() {
         let weapon_type = current_market_selected_weapon.weapon_type.clone().unwrap();
-        let weapon_damage = current_market_selected_weapon.weapon_damage.unwrap();
         let weapon_equipped_by = player_entity;
         let weapon_equipped_type = EquippedTypeEnum::Player;
 
-        // Reduce player's gold
-        let weapon_cost = current_market_selected_weapon.weapon_cost.unwrap_or(0.);
-        current_score.0 -= weapon_cost;
+        let weapon_damage =
+            current_market_selected_weapon.weapon_damage.unwrap_or(1.) * current_multiplier;
+
+        // Reduce player's gold (with level multiplier)
+        let weapon_cost =
+            current_market_selected_weapon.weapon_cost.unwrap_or(1.) * current_multiplier;
 
         commands.trigger(ScoreChanged {
             score: -weapon_cost,

@@ -918,9 +918,12 @@ pub fn spawn_market(
     window_resolution: Res<WindowResolutionResource>,
     current_score: Res<CurrentScore>,
     market_items: Res<MarketItems>,
+    current_game_level: Res<CurrentGameLevel>,
 ) {
     let width = window_resolution.x_px / 2.0;
     let height = window_resolution.y_px - 20.0;
+
+    let current_multiplier = current_game_level.0 as f32;
 
     let parent = commands
         .spawn((
@@ -1046,7 +1049,11 @@ pub fn spawn_market(
                 }
 
                 let market_item_text_node = text_node(
-                    &format!("{:.2} G {:.2} Atk", market_item.cost, market_item.stat),
+                    &format!(
+                        "{:.2} G {:.2} Atk",
+                        market_item.cost * current_multiplier,
+                        market_item.stat * current_multiplier
+                    ),
                     &mut commands,
                     None,
                     Some(text_color),
@@ -1081,7 +1088,8 @@ pub fn spawn_market(
         };
 
     for market_item in market_items.0.iter() {
-        build_market_item_based_on_type(market_item.clone(), market_item.cost > current_gold);
+        let is_disabled = (market_item.cost * current_multiplier) > current_gold;
+        build_market_item_based_on_type(market_item.clone(), is_disabled);
     }
 
     // Done

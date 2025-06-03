@@ -15,7 +15,7 @@ pub struct MarketItem {
 
 const WAND_MARKET: MarketItem = MarketItem {
     sprite: "textures/Weapon/Wand.png",
-    cost: 10.0,
+    cost: 40.0,
     stat: 12.0,
     market_type: MarketTypes::Weapon(WeaponTypeEnum::Wand),
 };
