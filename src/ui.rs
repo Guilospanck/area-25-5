@@ -4,10 +4,13 @@ use bevy::{
 };
 
 use crate::{
-    prelude::*, CleanupWhenPlayerDies, CurrentAvailableWeapon, CurrentGameLevel, CurrentScore,
-    GameState, ItemTypeEnum, MarketItems, PlayerProfileUISet, SpawnEntitiesForNewWave,
-    WindowResolutionResource,
+    prelude::*, CleanupWhenPlayerDies, CurrentGameLevel, CurrentScore, GameState, ItemTypeEnum,
+    MarketItems, PlayerProfileUISet, SpawnEntitiesForNewWave, WindowResolutionResource,
 };
+
+const COLOR_DISABLED: Color = Color::srgba(1.0, 1.0, 1.0, 0.3);
+const COLOR_TRANSPARENT: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
+const COLOR_MARKET_BG: Color = Color::srgba(1.0, 1.0, 1.0, 0.1);
 
 // ############## UI ####################
 #[derive(Component)]
@@ -960,7 +963,7 @@ pub fn spawn_market(
                     column_gap: Val::Px(20.),
                     ..default()
                 },
-                background_color: bg_color.unwrap_or(Color::BLACK.into()),
+                background_color: bg_color.unwrap_or(COLOR_MARKET_BG.into()),
                 ..default()
             },
             MENU_UI_LAYER,
@@ -997,8 +1000,10 @@ pub fn spawn_market(
         (
             NodeBundle {
                 style: Style {
-                    width: Val::Px(70.0),
-                    height: Val::Px(70.0),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    width: Val::Px(50.0),
+                    height: Val::Px(50.0),
                     ..default()
                 },
                 ..default()
@@ -1037,7 +1042,7 @@ pub fn spawn_market(
             MarketTypes::Weapon(weapon_type) => {
                 let mut text_color = Color::WHITE;
                 if disabled {
-                    text_color = Color::srgba(1.0, 1.0, 1.0, 0.5);
+                    text_color = COLOR_DISABLED;
                 }
 
                 let market_item_text_node = text_node(
@@ -1048,9 +1053,7 @@ pub fn spawn_market(
                 );
 
                 let market_item_with_price = commands
-                    .spawn(
-                        root_node(Some(BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)))).clone(),
-                    )
+                    .spawn(root_node(Some(BackgroundColor(COLOR_TRANSPARENT))).clone())
                     .with_children(|parent| {
                         parent.spawn(icon_node(market_item.sprite));
                     })
